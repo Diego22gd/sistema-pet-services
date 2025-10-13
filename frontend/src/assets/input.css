@@ -1,0 +1,83 @@
+/* =======================================
+   🎨 Input CSS para Tailwind (sistema mascotas)
+   ======================================= */
+
+/* 1. Cargar capas base de Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 2. Estilos globales */
+html, body {
+  @apply bg-neutral-bg text-neutral-dark font-sans;
+  margin: 0;
+  padding: 0;
+}
+
+/* 3. Encabezados */
+h1 {
+  @apply text-3xl font-bold text-primary;
+}
+h2 {
+  @apply text-2xl font-semibold text-neutral-dark;
+}
+h3 {
+  @apply text-xl font-medium text-neutral-dark;
+}
+
+/* 4. Textos */
+p {
+  @apply text-base text-neutral-dark;
+}
+small {
+  @apply text-sm text-neutral-medium;
+}
+
+/* 5. Links */
+a {
+  @apply text-secondary hover:text-secondary-dark transition-colors;
+}
+
+/* 6. Botones */
+.btn-primary {
+  @apply bg-secondary text-white px-4 py-2 rounded-lg shadow hover:bg-secondary-dark transition;
+}
+.btn-secondary {
+  @apply bg-primary-mint text-white px-4 py-2 rounded-lg shadow hover:bg-state-success transition;
+}
+.btn-danger {
+  @apply bg-state-error text-white px-4 py-2 rounded-lg shadow hover:opacity-90 transition;
+}
+.btn-warning {
+  @apply bg-state-warning text-white px-4 py-2 rounded-lg shadow hover:opacity-90 transition;
+}
+.btn-success {
+  @apply bg-state-success text-white px-4 py-2 rounded-lg shadow hover:opacity-90 transition;
+}
+
+/* 7. Navbar */
+.navbar {
+  @apply bg-primary text-white px-6 py-3 flex items-center justify-between shadow-md;
+}
+.navbar a {
+  @apply text-white hover:text-neutral-light mx-2 transition;
+}
+
+/* 8. Cards / secciones */
+.card {
+  @apply bg-white shadow rounded-2xl p-4;
+}
+.card-header {
+  @apply font-semibold text-neutral-dark mb-2;
+}
+.card-body {
+  @apply text-neutral-medium;
+}
+
+/* 9. Formularios */
+input, select, textarea {
+  @apply border border-neutral-medium rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-secondary;
+}
+label {
+  @apply block text-sm font-medium text-neutral-dark mb-1;
+}
