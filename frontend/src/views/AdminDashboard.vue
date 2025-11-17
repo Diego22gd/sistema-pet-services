@@ -18,14 +18,16 @@
           <p class="text-3xl font-bold text-primary-mint">{{ stats.appointmentsToday }}</p>
         </div>
         <div class="bg-neutral-light shadow rounded-2xl p-6">
-          <h2 class="text-sm text-neutral-medium">Ingresos</h2>
-          <p class="text-3xl font-bold text-primary-mint">${{ stats.revenue }}</p>
+          <h2 class="text-sm text-neutral-medium">Suscripciones Activas</h2>
+          <p class="text-3xl font-bold text-primary-mint">{{ stats.subscriptionsActive }}</p>
         </div>
       </div>
 
       <!-- Gráfico -->
       <div class="bg-neutral-light shadow rounded-2xl p-6 mb-8">
-        <h2 class="text-lg font-semibold text-neutral-dark mb-4">Tendencia de Citas</h2>
+        <h2 class="text-lg font-semibold text-neutral-dark mb-4">
+          Citas por Día (Semana Actual)
+        </h2>
         <canvas id="appointmentsChart"></canvas>
       </div>
     </div>
@@ -35,6 +37,8 @@
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
 import Chart from "chart.js/auto";
+import api from "@/api/api";
+import { useUserStore } from "@/stores/userStore";
 
 export default {
   name: "AdminDashboard",
@@ -42,36 +46,61 @@ export default {
   data() {
     return {
       stats: {
-        clients: 120,
-        providers: 35,
-        appointmentsToday: 18,
-        revenue: 4500,
+        clients: 0,
+        providers: 0,
+        appointmentsToday: 0,
+        subscriptionsActive: 0,
+        appointmentsPerDay: [],
       },
+      chart: null,
     };
   },
   methods: {
-    initChart() {
+    async loadStats() {
+      const userStore = useUserStore();
+      const token = userStore.token;
+
+      try {
+        const { data } = await api.get("/admin/dashboard", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        this.stats = data;
+        this.renderChart();
+      } catch (error) {
+        console.error("❌ Error al cargar estadísticas:", error);
+      }
+    },
+    renderChart() {
       const ctx = document.getElementById("appointmentsChart").getContext("2d");
-      new Chart(ctx, {
-        type: "line",
+
+      if (this.chart) this.chart.destroy();
+
+      this.chart = new Chart(ctx, {
+        type: "bar",
         data: {
-          labels: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
+          labels: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
           datasets: [
             {
               label: "Citas",
-              data: [5, 8, 6, 10, 7, 12, 9],
+              data: this.stats.appointmentsPerDay,
+              backgroundColor: "rgba(16,185,129,0.6)",
               borderColor: "#10B981",
-              backgroundColor: "rgba(16,185,129,0.2)",
-              fill: true,
-              tension: 0.3,
+              borderWidth: 2,
+              borderRadius: 6,
             },
           ],
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+          },
         },
       });
     },
   },
   mounted() {
-    this.initChart();
+    this.loadStats();
   },
 };
 </script>

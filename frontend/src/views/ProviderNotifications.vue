@@ -7,7 +7,7 @@
       <div class="space-y-4">
         <div 
           v-for="notification in notifications" 
-          :key="notification.id" 
+          :key="notification._id" 
           class="flex items-start p-4 bg-neutral-light rounded-2xl shadow hover:shadow-md transition"
         >
           <!-- Icono -->
@@ -33,7 +33,7 @@
 
           <!-- Estado leído/no leído -->
           <button 
-            @click="markAsRead(notification.id)" 
+            @click="markAsRead(notification._id)" 
             class="ml-4 text-xs px-3 py-1 rounded-lg"
             :class="notification.read ? 'bg-gray-200 text-gray-600' : 'bg-primary-mint text-white'"
           >
@@ -47,42 +47,65 @@
 
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
+import api from "@/api/api"; // CORRECTO
 
 export default {
   name: "ProviderNotifications",
   components: { ProviderLayout },
+
   data() {
     return {
-      notifications: [
-        { id: 1, type: "appointment", title: "Nueva cita reservada", message: "Juan Pérez reservó una cita para Firulais.", date: "26/08/2025 - 09:15 AM", read: false },
-        { id: 2, type: "cancel", title: "Cita cancelada", message: "Ana Gómez canceló la cita de Mishi.", date: "26/08/2025 - 08:40 AM", read: false },
-        { id: 3, type: "reminder", title: "Recordatorio", message: "Tienes 5 citas programadas para hoy.", date: "25/08/2025 - 07:00 PM", read: true },
-        { id: 4, type: "system", title: "Mensaje del sistema", message: "Recuerda actualizar la información de tu negocio.", date: "24/08/2025 - 06:30 PM", read: true },
-      ]
+      notifications: [],
+      loading: true
     };
   },
+
+  async created() {
+    await this.loadNotifications();
+  },
+
   methods: {
+    async loadNotifications() {
+      try {
+        const providerId = localStorage.getItem("userId");
+
+        const res = await api.get(`/provider-notifications/${providerId}`);
+        this.notifications = res.data;
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async markAsRead(id) {
+      try {
+        await api.put(`/provider-notifications/${id}/read`);
+        const notif = this.notifications.find(n => n._id === id);
+        if (notif) notif.read = true;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
     icon(type) {
       switch (type) {
         case "appointment": return "📅";
         case "cancel": return "❌";
-        case "reminder": return "⏰";
+        case "approval": return "✔️";
         case "system": return "⚙️";
         default: return "🔔";
       }
     },
+
     iconBg(type) {
       switch (type) {
         case "appointment": return "bg-green-200";
         case "cancel": return "bg-red-200";
-        case "reminder": return "bg-yellow-200";
-        case "system": return "bg-blue-200";
+        case "approval": return "bg-blue-300";
+        case "system": return "bg-gray-200";
         default: return "bg-gray-200";
       }
-    },
-    markAsRead(id) {
-      const notif = this.notifications.find(n => n.id === id);
-      if (notif) notif.read = true;
     }
   }
 };

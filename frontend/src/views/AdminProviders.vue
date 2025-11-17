@@ -35,7 +35,7 @@
           <tbody>
             <tr
               v-for="provider in filteredProviders"
-              :key="provider.id"
+              :key="provider._id"
               :class="provider.paused ? 'bg-yellow-100' : ''"
               class="border-b hover:bg-neutral-light/50 transition"
             >
@@ -46,7 +46,7 @@
               <td class="px-4 py-2">
                 <div class="flex flex-col gap-1">
                   <span :class="isExpired(provider.expirationDate) ? 'text-red-600 font-semibold' : ''">
-                    {{ provider.subscriptionType }} (Expires: {{ provider.expirationDate }})
+                    {{ provider.subscriptionType || 'N/A' }} (Expires: {{ provider.expirationDate || 'N/A' }})
                   </span>
                   <div class="flex gap-2 mt-1">
                     <button
@@ -74,7 +74,7 @@
                   Edit
                 </button>
                 <button
-                  @click="deleteProvider(provider.id)"
+                  @click="deleteProvider(provider._id)"
                   class="px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600"
                 >
                   Delete
@@ -89,12 +89,37 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Modal -->
+      <div
+        v-if="showModal"
+        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-lg">
+          <h2 class="text-xl font-semibold mb-4">
+            {{ editingProvider ? 'Edit Provider' : 'Add Provider' }}
+          </h2>
+          <form @submit.prevent="saveProvider" class="space-y-3">
+            <input v-model="form.name" type="text" placeholder="Name" class="w-full border rounded-lg px-3 py-2" required />
+            <input v-model="form.email" type="email" placeholder="Email" class="w-full border rounded-lg px-3 py-2" required />
+            <input v-model="form.phone" type="text" placeholder="Phone" class="w-full border rounded-lg px-3 py-2" />
+            <input v-model="form.service" type="text" placeholder="Service" class="w-full border rounded-lg px-3 py-2" />
+            <div class="flex justify-end gap-2 mt-4">
+              <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+              <button type="submit" class="px-4 py-2 bg-primary-mint text-white rounded-lg">
+                {{ editingProvider ? 'Save Changes' : 'Add' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </AdminLayout>
 </template>
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import api from "@/api/api";
 
 export default {
   name: "AdminProviders",
@@ -102,40 +127,113 @@ export default {
   data() {
     return {
       searchQuery: "",
-      providers: [
-        { id: 1, name: "VetClinic Center", email: "clinic@example.com", phone: "555-1111", service: "Veterinary", subscriptionType: "Monthly", startDate: "2025-08-01", expirationDate: "2025-09-01", paused: false },
-        { id: 2, name: "Happy Pets Grooming", email: "grooming@example.com", phone: "555-2222", service: "Grooming", subscriptionType: "Monthly", startDate: "2025-07-15", expirationDate: "2025-08-15", paused: false },
-        { id: 3, name: "PetWalkers Co", email: "walkers@example.com", phone: "555-3333", service: "Walking", subscriptionType: "Monthly", startDate: "2025-08-10", expirationDate: "2025-09-10", paused: false },
-      ]
+      providers: [],
+      showModal: false,
+      editingProvider: null,
+      form: {
+        name: "",
+        email: "",
+        phone: "",
+        service: "",
+        subscriptionType: "Monthly",
+        startDate: "",
+        expirationDate: "",
+        paused: false,
+      },
     };
   },
   computed: {
     filteredProviders() {
       if (!this.searchQuery) return this.providers;
-      return this.providers.filter(p => p.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
-    }
+      return this.providers.filter((p) =>
+        p.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    },
   },
   methods: {
-    isExpired(expirationDate) {
-      return new Date(expirationDate) < new Date();
+    async fetchProviders() {
+      try {
+        const { data } = await api.get("/admin/providers");
+        this.providers = data;
+      } catch (err) {
+        console.error("Error fetching providers:", err);
+      }
+    },
+    isExpired(date) {
+      if (!date) return false;
+      return new Date(date) < new Date();
     },
     pauseSubscription(provider) {
       provider.paused = true;
+      this.updateProvider(provider);
     },
     resumeSubscription(provider) {
       provider.paused = false;
+      this.updateProvider(provider);
     },
     renewSubscription(provider) {
-      let currentExp = new Date(provider.expirationDate);
-      currentExp.setMonth(currentExp.getMonth() + 1);
-      provider.expirationDate = currentExp.toISOString().split('T')[0];
+      if (!provider.expirationDate) return;
+      const exp = new Date(provider.expirationDate);
+      exp.setMonth(exp.getMonth() + 1);
+      provider.expirationDate = exp.toISOString().split("T")[0];
+      this.updateProvider(provider);
+    },
+    async updateProvider(provider) {
+      try {
+        await api.put(`/admin/providers/${provider._id}`, provider);
+      } catch (err) {
+        console.error("Error updating provider:", err);
+      }
+    },
+    openModal() {
+      this.showModal = true;
+      this.editingProvider = null;
+      this.form = {
+        name: "",
+        email: "",
+        phone: "",
+        service: "",
+        subscriptionType: "Monthly",
+        startDate: "",
+        expirationDate: "",
+        paused: false,
+      };
+    },
+    closeModal() {
+      this.showModal = false;
     },
     editProvider(provider) {
-      alert(`Edit provider: ${provider.name}`);
+      this.editingProvider = provider;
+      this.form = { ...provider };
+      this.showModal = true;
     },
-    deleteProvider(id) {
-      this.providers = this.providers.filter(p => p.id !== id);
-    }
-  }
+    async saveProvider() {
+      try {
+        if (this.editingProvider) {
+          const { data } = await api.put(`/admin/providers/${this.editingProvider._id}`, this.form);
+          const index = this.providers.findIndex((p) => p._id === data._id);
+          this.providers.splice(index, 1, data);
+        } else {
+          const { data } = await api.post("/admin/providers", this.form);
+          this.providers.push(data);
+        }
+        this.closeModal();
+      } catch (err) {
+        console.error("Error saving provider:", err);
+      }
+    },
+    async deleteProvider(id) {
+      if (!confirm("Are you sure you want to delete this provider?")) return;
+      try {
+        await api.delete(`/admin/providers/${id}`);
+        this.providers = this.providers.filter((p) => p._id !== id);
+      } catch (err) {
+        console.error("Error deleting provider:", err);
+      }
+    },
+  },
+  mounted() {
+    this.fetchProviders();
+  },
 };
 </script>

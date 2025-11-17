@@ -9,14 +9,17 @@
           <h2 class="text-xl font-semibold text-neutral-dark">Citas Atendidas</h2>
           <p class="text-3xl font-bold text-primary-mint">{{ stats.completed }}</p>
         </div>
+
         <div class="bg-neutral-light shadow rounded-2xl p-6 text-center">
           <h2 class="text-xl font-semibold text-neutral-dark">Canceladas</h2>
           <p class="text-3xl font-bold text-red-500">{{ stats.cancelled }}</p>
         </div>
+
         <div class="bg-neutral-light shadow rounded-2xl p-6 text-center">
           <h2 class="text-xl font-semibold text-neutral-dark">Pendientes</h2>
           <p class="text-3xl font-bold text-yellow-500">{{ stats.pending }}</p>
         </div>
+
         <div class="bg-neutral-light shadow rounded-2xl p-6 text-center">
           <h2 class="text-xl font-semibold text-neutral-dark">Ingresos</h2>
           <p class="text-3xl font-bold text-secondary">${{ stats.revenue }}</p>
@@ -34,47 +37,59 @@
 
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import Chart from "chart.js/auto";
+import api from "@/api/api"; // usa tu axios configurado
 
 export default {
   name: "ProviderReports",
   components: { ProviderLayout },
-  data() {
-    return {
-      stats: {
-        completed: 120,
-        cancelled: 15,
-        pending: 8,
-        revenue: 3200
-      }
-    };
-  },
+
   setup() {
-    onMounted(() => {
-      const ctx = document.getElementById("appointmentsChart");
-      new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: ["Enero", "Febrero", "Marzo", "Abril", "Mayo"],
-          datasets: [
-            {
-              label: "Citas",
-              data: [20, 35, 40, 25, 50],
-              borderColor: "#34d399",
-              fill: false,
-              tension: 0.3
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: true }
-          }
-        }
-      });
+    const stats = ref({
+      completed: 0,
+      cancelled: 0,
+      pending: 0,
+      revenue: 0
     });
+
+    onMounted(async () => {
+      try {
+        // CORRECTO: usa tu endpoint del backend
+        const { data } = await api.get("/provider/reports");
+
+        stats.value = data.stats;
+
+        // Inicializar gráfico
+        const ctx = document.getElementById("appointmentsChart");
+
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: data.chart.labels,
+            datasets: [
+              {
+                label: "Citas por mes",
+                data: data.chart.data,
+                borderColor: "#34d399",
+                fill: false,
+                tension: 0.3
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: true }
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Error cargando reportes:", error);
+      }
+    });
+
+    return { stats };
   }
 };
 </script>

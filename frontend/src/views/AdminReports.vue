@@ -6,10 +6,8 @@
         <h2 class="text-xl font-bold mb-6 flex items-center gap-2 text-neutral-dark">📊 Reports</h2>
         <nav class="flex flex-col space-y-3">
           <button @click="activeTab = 'overview'" :class="tabClass('overview')">Overview</button>
-          <button @click="activeTab = 'revenue'" :class="tabClass('revenue')">Revenue</button>
-          <button @click="activeTab = 'services'" :class="tabClass('services')">Services</button>
           <button @click="activeTab = 'appointments'" :class="tabClass('appointments')">Appointments</button>
-          <button @click="activeTab = 'detailed'" :class="tabClass('detailed')">Detailed Reports</button>
+          <button @click="activeTab = 'services'" :class="tabClass('services')">Services</button>
         </nav>
       </aside>
 
@@ -38,50 +36,19 @@
           </div>
         </section>
 
-        <!-- Revenue -->
-        <section v-if="activeTab === 'revenue'">
-          <h1 class="text-3xl font-bold mb-8 text-neutral-dark">Monthly Revenue</h1>
-          <div class="bg-white shadow rounded-2xl p-6">
-            <canvas id="revenueChart" style="height: 320px;"></canvas>
+        <!-- Appointments -->
+        <section v-if="activeTab === 'appointments'">
+          <h1 class="text-3xl font-bold mb-8 text-neutral-dark">Appointments Status</h1>
+          <div class="bg-white shadow rounded-2xl p-6 h-[420px]">
+            <canvas id="statusChart" style="height: 100%;"></canvas>
           </div>
         </section>
 
         <!-- Services -->
         <section v-if="activeTab === 'services'">
           <h1 class="text-3xl font-bold mb-8 text-neutral-dark">Most Requested Services</h1>
-          <div class="bg-white shadow rounded-2xl p-6">
-            <canvas id="servicesChart" style="height: 320px;"></canvas>
-          </div>
-        </section>
-
-        <!-- Appointments -->
-        <section v-if="activeTab === 'appointments'">
-          <h1 class="text-3xl font-bold mb-8 text-neutral-dark">Appointments Status</h1>
-          <div class="bg-white shadow rounded-2xl p-6 h-280 max-h-[80%]">
-            <canvas id="statusChart" style="height: 520px;"></canvas>
-          </div>
-        </section>
-
-        <!-- Detailed Reports -->
-        <section v-if="activeTab === 'detailed'">
-          <h1 class="text-3xl font-bold mb-8 text-neutral-dark">Detailed Reports</h1>
-          <div class="bg-white shadow rounded-2xl p-6 overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-primary-mint text-white">
-                <tr>
-                  <th class="px-4 py-2">Report</th>
-                  <th class="px-4 py-2">Value</th>
-                  <th class="px-4 py-2">Last Update</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="report in detailedReports" :key="report.id" class="border-b hover:bg-neutral-light/50">
-                  <td class="px-4 py-2">{{ report.title }}</td>
-                  <td class="px-4 py-2">{{ report.value }}</td>
-                  <td class="px-4 py-2">{{ report.date }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="bg-white shadow rounded-2xl p-6 h-[420px]">
+            <canvas id="servicesChart" style="height: 100%;"></canvas>
           </div>
         </section>
       </main>
@@ -91,95 +58,109 @@
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
-import { watch, onMounted, ref } from "vue";
+import { ref, watch, onMounted } from "vue";
 import Chart from "chart.js/auto";
+import axios from "axios";
 
 export default {
   name: "AdminReports",
   components: { AdminLayout },
   setup() {
     const activeTab = ref("overview");
+    const stats = ref({ clients: 0, providers: 0, appointments: 0, revenue: 0 });
     const charts = ref({});
 
-    const stats = {
-      clients: 320,
-      providers: 58,
-      appointments: 145,
-      revenue: 12500,
-    };
-
-    const detailedReports = [
-      { id: 1, title: "Top Provider", value: "Happy Pets Grooming", date: "2025-08-20" },
-      { id: 2, title: "Most Popular Service", value: "Grooming", date: "2025-08-20" },
-      { id: 3, title: "Average Revenue per Appointment", value: "$85", date: "2025-08-20" },
-      { id: 4, title: "Cancelled Appointments", value: "12", date: "2025-08-20" },
-    ];
-
-    const initCharts = (tab) => {
-      if (charts.value[tab]) charts.value[tab].destroy();
-
-      if (tab === "revenue") {
-        const ctx = document.getElementById("revenueChart").getContext("2d");
-        charts.value[tab] = new Chart(ctx, {
-          type: "line",
-          data: {
-            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"],
-            datasets: [
-              {
-                label: "Revenue",
-                data: [8000, 9500, 11000, 9000, 12000, 13000, 12500, 14000],
-                borderColor: "#10B981",
-                backgroundColor: "rgba(16,185,129,0.2)",
-                fill: true,
-                tension: 0.3,
-              },
-            ],
-          },
-        });
-      }
-
-      if (tab === "services") {
-        const ctx = document.getElementById("servicesChart").getContext("2d");
-        charts.value[tab] = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: ["Grooming", "Veterinary", "Walking", "Training", "Daycare"],
-            datasets: [
-              {
-                label: "Appointments",
-                data: [50, 40, 30, 20, 15],
-                backgroundColor: ["#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#6366F1"],
-              },
-            ],
-          },
-        });
-      }
-
-      if (tab === "appointments") {
-        const ctx = document.getElementById("statusChart").getContext("2d");
-        charts.value[tab] = new Chart(ctx, {
-          type: "doughnut",
-          data: {
-            labels: ["Pending", "Completed", "Cancelled"],
-            datasets: [
-              {
-                data: [45, 80, 20],
-                backgroundColor: ["#F59E0B", "#10B981", "#EF4444"],
-              },
-            ],
-          },
-        });
+    // 🔹 Obtener datos de resumen
+    const fetchStats = async () => {
+      try {
+        const { data } = await axios.get("/api/admin/reports/overview");
+        stats.value = data;
+      } catch (error) {
+        console.error("Error fetching overview stats:", error);
       }
     };
 
+    // 🔹 Obtener datos de citas
+    const fetchAppointmentsData = async () => {
+      try {
+        const { data } = await axios.get("/api/admin/reports/appointments");
+        renderAppointmentsChart(data);
+      } catch (error) {
+        console.error("Error fetching appointment data:", error);
+      }
+    };
+
+    // 🔹 Renderizar gráfico de citas por estado
+    const renderAppointmentsChart = (data) => {
+      if (charts.value.appointments) charts.value.appointments.destroy();
+
+      const ctx = document.getElementById("statusChart").getContext("2d");
+
+      charts.value.appointments = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Pendiente", "Confirmada", "Reprogramada", "Cancelada"],
+          datasets: [
+            {
+              data: [data.pending, data.confirmed, data.rescheduled, data.cancelled],
+              backgroundColor: ["#F59E0B", "#10B981", "#3B82F6", "#EF4444"],
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "bottom" },
+          },
+        },
+      });
+    };
+
+    // 🔹 Obtener datos de servicios
+    const fetchServicesData = async () => {
+      try {
+        const { data } = await axios.get("/api/admin/reports/services");
+        renderServicesChart(data);
+      } catch (error) {
+        console.error("Error fetching services data:", error);
+      }
+    };
+
+    // 🔹 Renderizar gráfico de servicios más solicitados
+    const renderServicesChart = (data) => {
+      if (charts.value.services) charts.value.services.destroy();
+
+      const ctx = document.getElementById("servicesChart").getContext("2d");
+
+      charts.value.services = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: data.map((s) => s.service),
+          datasets: [
+            {
+              label: "Appointments",
+              data: data.map((s) => s.count),
+              backgroundColor: "#10B981",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+          },
+        },
+      });
+    };
+
+    // 🔹 Cambio de pestaña
     watch(activeTab, (newTab) => {
-      if (["revenue", "services", "appointments"].includes(newTab)) {
-        setTimeout(() => initCharts(newTab), 200);
-      }
+      if (newTab === "appointments") fetchAppointmentsData();
+      if (newTab === "services") fetchServicesData();
     });
 
     onMounted(() => {
-      if (activeTab.value !== "overview") initCharts(activeTab.value);
+      fetchStats();
     });
 
     const tabClass = (tab) =>
@@ -189,12 +170,7 @@ export default {
           : "text-neutral-dark hover:bg-primary-mint hover:text-white"
       }`;
 
-    return {
-      activeTab,
-      stats,
-      detailedReports,
-      tabClass,
-    };
+    return { activeTab, stats, tabClass };
   },
 };
 </script>

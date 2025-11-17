@@ -29,17 +29,16 @@
           <tbody>
             <tr
               v-for="appointment in filteredAppointments"
-              :key="appointment.id"
-              class="border-b hover:bg-neutral-light/50"
+              :key="appointment._id"
+              class="border-b hover:bg-neutral-light/50 transition"
             >
-              <td class="px-4 py-2">{{ appointment.client }}</td>
-              <td class="px-4 py-2">{{ appointment.provider }}</td>
-              <td class="px-4 py-2">{{ appointment.service }}</td>
-              <td class="px-4 py-2">{{ appointment.date }}</td>
+              <td class="px-4 py-2">{{ appointment.clientId?.name || 'N/A' }}</td>
+              <td class="px-4 py-2">{{ appointment.providerId?.name || 'N/A' }}</td>
+              <td class="px-4 py-2">{{ appointment.service || 'N/A' }}</td>
+              <td class="px-4 py-2">{{ formatDate(appointment.date) }}</td>
               <td class="px-4 py-2">
                 <span
-                  :class="[
-                    'px-2 py-1 rounded-lg text-xs font-semibold',
+                  :class="[ 'px-2 py-1 rounded-lg text-xs font-semibold',
                     appointment.status === 'Pending'
                       ? 'bg-yellow-200 text-yellow-800'
                       : appointment.status === 'Completed'
@@ -64,7 +63,7 @@
                   Cancel
                 </button>
                 <button
-                  @click="deleteAppointment(appointment.id)"
+                  @click="deleteAppointment(appointment._id)"
                   class="px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600"
                 >
                   Delete
@@ -85,6 +84,7 @@
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import api from "@/api/api";
 
 export default {
   name: "AdminAppointments",
@@ -92,51 +92,53 @@ export default {
   data() {
     return {
       searchQuery: "",
-      appointments: [
-        {
-          id: 1,
-          client: "Ana Pérez",
-          provider: "VetClinic Center",
-          service: "Veterinary",
-          date: "2025-08-30 10:00",
-          status: "Pending",
-        },
-        {
-          id: 2,
-          client: "Carlos Ruiz",
-          provider: "Happy Pets Grooming",
-          service: "Grooming",
-          date: "2025-08-31 14:00",
-          status: "Completed",
-        },
-        {
-          id: 3,
-          client: "María López",
-          provider: "PetWalkers Co",
-          service: "Walking",
-          date: "2025-09-01 09:00",
-          status: "Pending",
-        },
-      ],
+      appointments: [],
     };
   },
   computed: {
     filteredAppointments() {
       if (!this.searchQuery) return this.appointments;
+      const query = this.searchQuery.toLowerCase();
       return this.appointments.filter(
         (a) =>
-          a.client.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          a.provider.toLowerCase().includes(this.searchQuery.toLowerCase())
+          a.clientId?.name?.toLowerCase().includes(query) ||
+          a.providerId?.name?.toLowerCase().includes(query)
       );
     },
   },
   methods: {
-    changeStatus(appointment, newStatus) {
-      appointment.status = newStatus;
+    async fetchAppointments() {
+      try {
+        const { data } = await api.get("/admin/appointments");
+        this.appointments = data;
+      } catch (err) {
+        console.error("Error fetching appointments:", err);
+      }
     },
-    deleteAppointment(id) {
-      this.appointments = this.appointments.filter((a) => a.id !== id);
+    formatDate(date) {
+      return new Date(date).toLocaleString();
     },
+    async changeStatus(appointment, newStatus) {
+      try {
+        const { data } = await api.put(`/admin/appointments/${appointment._id}/status`, { status: newStatus });
+        const index = this.appointments.findIndex((a) => a._id === data._id);
+        this.appointments.splice(index, 1, data);
+      } catch (err) {
+        console.error("Error updating status:", err);
+      }
+    },
+    async deleteAppointment(id) {
+      if (!confirm("Are you sure you want to delete this appointment?")) return;
+      try {
+        await api.delete(`/admin/appointments/${id}`);
+        this.appointments = this.appointments.filter((a) => a._id !== id);
+      } catch (err) {
+        console.error("Error deleting appointment:", err);
+      }
+    },
+  },
+  mounted() {
+    this.fetchAppointments();
   },
 };
 </script>
