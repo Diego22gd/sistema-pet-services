@@ -1,6 +1,6 @@
 import Appointment from "../models/Appointment.js";
 import User from "../models/User.js";
-import Provider from "../models/Provider.js";
+import Provider from "../models/User.js";
 
 // 📊 Resumen general
 export const getOverview = async (req, res) => {

@@ -30,15 +30,17 @@
         <p class="text-neutral-medium text-sm">{{ card.description }}</p>
       </div>
     </div>
+    <Chatbot />
   </ProviderLayout>
 </template>
 
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 
 export default {
   name: "ProviderDashboard",
-  components: { ProviderLayout },
+  components: { ProviderLayout, Chatbot },
   data() {
     return {
       unreadNotifications: 3,

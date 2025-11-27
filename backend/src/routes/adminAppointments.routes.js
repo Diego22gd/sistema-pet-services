@@ -1,15 +1,17 @@
-// routes/adminAppointments.routes.js
 import express from "express";
 import {
-  getAppointments,
+  getProviderAppointments,
   updateAppointmentStatus,
-  deleteAppointment,
-} from "../controllers/adminAppointments.controller.js";
+  createManualAppointment
+} from "../controllers/providerAppointmentsController.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getAppointments);
-router.put("/:id/status", updateAppointmentStatus);
-router.delete("/:id", deleteAppointment);
+router.use(protect); // Todas requieren autenticación
+
+router.get("/", getProviderAppointments); // ahora no necesita params
+router.put("/:id", updateAppointmentStatus);
+router.post("/", createManualAppointment);
 
 export default router;

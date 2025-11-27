@@ -32,18 +32,21 @@
         <canvas id="appointmentsChart"></canvas>
       </div>
     </div>
+    <Chatbot />
   </ProviderLayout>
+ 
 </template>
 
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import { onMounted, ref } from "vue";
 import Chart from "chart.js/auto";
 import api from "@/api/api"; // usa tu axios configurado
 
 export default {
   name: "ProviderReports",
-  components: { ProviderLayout },
+  components: { ProviderLayout,Chatbot },
 
   setup() {
     const stats = ref({

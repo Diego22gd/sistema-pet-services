@@ -1,42 +1,63 @@
 // src/api/api.js
 import axios from "axios";
 
-// ✅ URL base de tu backend
+// ======================================
+// ⚙️ CONFIGURACIÓN BASE DEL CLIENTE AXIOS
+// ======================================
 const API = axios.create({
-  baseURL: "http://localhost:4000/api", // ajusta el puerto si es distinto
+  baseURL: "http://localhost:4000/api", 
 });
 
-// ✅ Interceptor para añadir el token automáticamente
+// ======================================
+// 🔐 INTERCEPTOR: AGREGA TOKEN A TODAS LAS PETICIONES
+// ======================================
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// ===============================
-// 🔹 ENDPOINTS DE SERVICIOS
-// ===============================
+// =======================================================
+// 🐾 PETS — Mascotas del usuario (lo usa Services.vue)
+// =======================================================
+export const getUserPets = () => API.get("/pets");   // <-- IMPORTANTE
 
-// Crear un servicio (proveedor o admin)
+// =======================================================
+// 🛎️ APPOINTMENTS — Reservas
+// =======================================================
+export const createAppointment = (data) => API.post("/appointments", data);
+
+export const getAppointmentsByUser = (userId) =>
+  API.get(`/appointments/user/${userId}`);
+
+export const cancelAppointment = (appointmentId) =>
+  API.patch(`/appointments/${appointmentId}/cancel`);
+
+export const rescheduleAppointment = (appointmentId, data) =>
+  API.patch(`/appointments/${appointmentId}/reschedule`, data);
+
+export const getAppointmentById = (appointmentId) =>
+  API.get(`/appointments/${appointmentId}`);
+
+// =======================================================
+// 🧼 SERVICES — Servicios para mascotas
+// =======================================================
 export const createService = (data) => API.post("/services", data);
+export const getAllServices = () => API.get("/services");
 
-// Obtener servicios (admin = todos, provider = propios)
-export const getServices = () => API.get("/services");
+// Para vista cliente
+export const getClientServices = () => API.get("/client/services");
 
-// Actualizar servicio
 export const updateService = (id, data) => API.put(`/services/${id}`, data);
-
-// Eliminar servicio
 export const deleteService = (id) => API.delete(`/services/${id}`);
-
-// Cambiar estado del servicio (solo admin)
 export const changeServiceStatus = (id, status) =>
   API.patch(`/services/${id}/status`, { status });
 
-// ===============================
-// 🔹 ENDPOINTS DE USUARIO
-// ===============================
+// =======================================================
+// 👤 AUTENTICACIÓN
+// =======================================================
 export const registerUser = (data) => API.post("/users/register", data);
 export const loginUser = (data) => API.post("/users/login", data);
 
+// Default export
 export default API;

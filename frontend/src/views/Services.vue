@@ -16,7 +16,7 @@
         </div>
       </div>
 
-      <!-- Grid -->
+      <!-- Grid de servicios -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         <div 
           v-for="service in filteredServices" 
@@ -28,40 +28,44 @@
           <p class="font-bold text-primary-mint">${{ service.price }}</p>
           <p class="text-xs text-neutral-dark mb-4">Proveedor: {{ service.providerName }}</p>
 
-          <div class="mt-auto flex flex-col gap-2">
-            <button 
-              class="w-full bg-secondary text-white py-1 rounded-lg hover:bg-secondary-dark transition"
-              @click="openReservationModal(service)"
-            >
-              Reservar
-            </button>
-          </div>
+          <button 
+            class="w-full bg-secondary text-white py-1 rounded-lg hover:bg-secondary-dark transition mt-auto"
+            @click="openReservationModal(service)"
+          >
+            Reservar
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Modal de reserva -->
-    <div v-if="showReservationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <!-- Modal -->
+    <div 
+      v-if="showReservationModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
       <div class="bg-white rounded-2xl shadow-lg w-full max-w-xl p-6 relative">
-        <button @click="closeReservationModal" class="absolute top-3 right-3 text-neutral-medium hover:text-neutral-dark">✕</button>
+        <button @click="closeReservationModal" 
+                class="absolute top-3 right-3 text-neutral-medium hover:text-neutral-dark">✕</button>
 
-        <h2 class="text-2xl font-bold mb-2 text-neutral-dark">Reservar: {{ selectedService.name }}</h2>
+        <h2 class="text-2xl font-bold mb-2 text-neutral-dark">
+          Reservar: {{ selectedService.name }}
+        </h2>
+
         <p class="text-neutral-dark mb-4">Precio: ${{ selectedService.price }}</p>
 
-        <!-- Seleccionar mascota -->
-        <label class="block mb-2 font-medium text-neutral-dark">Selecciona tu mascota:</label>
-        <select v-model="selectedPetId" class="w-full p-2 border border-neutral-medium rounded mb-4">
+        <label class="block mb-2 font-medium">Selecciona tu mascota:</label>
+        <select v-model="selectedPetId" class="w-full p-2 border rounded mb-4">
           <option disabled value="">Selecciona una mascota</option>
           <option v-for="pet in userPets" :key="pet._id" :value="pet._id">
             {{ pet.name }} ({{ pet.type }})
           </option>
         </select>
 
-        <label class="block mb-2 font-medium text-neutral-dark">Fecha:</label>
-        <input type="date" v-model="reservationDate" class="w-full p-2 border border-neutral-medium rounded mb-4">
+        <label class="block mb-2 font-medium">Fecha:</label>
+        <input type="date" v-model="reservationDate" class="w-full p-2 border rounded mb-4" />
 
-        <label class="block mb-2 font-medium text-neutral-dark">Hora:</label>
-        <select v-model="reservationTime" class="w-full p-2 border border-neutral-medium rounded mb-4">
+        <label class="block mb-2 font-medium">Hora:</label>
+        <select v-model="reservationTime" class="w-full p-2 border rounded mb-4">
           <option disabled value="">Selecciona un horario</option>
           <option v-for="hour in availableHours" :key="hour" :value="hour">{{ hour }}</option>
         </select>
@@ -70,21 +74,26 @@
           class="w-full bg-primary-mint text-white py-2 rounded-lg hover:bg-state-success transition"
           @click="confirmReservation"
         >
-          Confirmar
+          Confirmar Reserva
         </button>
       </div>
     </div>
+
+    <!-- CHATBOT FLOTANTE -->
+    <Chatbot />
   </Layout>
 </template>
 
 <script>
-import Layout from '@/components/Layout.vue'
-import api from '@/api/api'
-import { useUserStore } from '@/stores/userStore'
+import Layout from "@/components/Layout.vue";
+import Chatbot from "@/components/Chatbot.vue";
+
+import { useUserStore } from "@/stores/userStore";
+import api from "@/api/api";
 
 export default {
-  name: "Services",
-  components: { Layout },
+  components: { Layout, Chatbot },
+
   data() {
     return {
       services: [],
@@ -96,50 +105,45 @@ export default {
       reservationTime: "",
       selectedPetId: "",
       availableHours: ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00"],
-    }
+    };
   },
 
   computed: {
     filteredServices() {
-      return this.services.filter(s =>
+      return this.services.filter((s) =>
         s.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
         s.description.toLowerCase().includes(this.searchQuery.toLowerCase())
-      )
-    }
+      );
+    },
   },
 
   async created() {
-    const userStore = useUserStore()
-    const token = userStore.token
-
-    if (!token) return this.$router.push('/login')
+    const userStore = useUserStore();
+    if (!userStore.token) return this.$router.push("/login");
 
     try {
-      const servicesRes = await api.get('/client/services')
-      const petsRes = await api.get('/pets', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const servicesRes = await api.get("/client/services");
+      const petsRes = await api.get("/pets");
 
-      this.services = servicesRes.data
-      this.userPets = petsRes.data
-
-    } catch (error) {
-      console.error("Error cargando datos:", error)
+      this.services = servicesRes.data;
+      this.userPets = petsRes.data;
+    } catch (err) {
+      console.error("Error cargando servicios:", err);
     }
   },
 
   methods: {
     openReservationModal(service) {
-      this.selectedService = service
-      this.showReservationModal = true
+      this.selectedService = service;
+      this.showReservationModal = true;
     },
 
     closeReservationModal() {
-      this.showReservationModal = false
-      this.selectedService = null
-      this.reservationDate = ""
-      this.reservationTime = ""
-      this.selectedPetId = ""
+      this.showReservationModal = false;
+      this.selectedService = null;
+      this.reservationDate = "";
+      this.reservationTime = "";
+      this.selectedPetId = "";
     },
 
     async confirmReservation() {
@@ -148,29 +152,21 @@ export default {
         return;
       }
 
-      const userStore = useUserStore();
-      const token = userStore.token;
-
       try {
-        await api.post(
-          "/appointments",
-          {
-            petId: this.selectedPetId,
-            serviceId: this.selectedService._id,
-            date: this.reservationDate,
-            time: this.reservationTime
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await api.post("/appointments", {
+          petId: this.selectedPetId,
+          serviceId: this.selectedService._id,
+          date: this.reservationDate,
+          time: this.reservationTime
+        });
 
-        alert("Reserva exitosa");
+        alert("Reserva creada correctamente");
         this.closeReservationModal();
-
       } catch (error) {
-        console.error(error);
-        alert("Error al crear la reserva");
+        console.error("Error creando la cita:", error);
+        alert(error.response?.data?.message || "Error al crear la cita");
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>

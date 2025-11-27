@@ -1,21 +1,22 @@
 <template>
   <AdminLayout>
-    <div class="px-6 max-w-6xl mx-auto w-full pt-10">
+    <div class="px-6 max-w-7xl mx-auto pt-6 w-full">
+
       <h1 class="text-2xl font-bold mb-6 text-neutral-dark">Appointments Management</h1>
 
-      <!-- Barra de búsqueda -->
-      <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+      <!-- Buscador -->
+      <div class="flex justify-between mb-6">
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search by client or provider..."
-          class="w-full md:w-1/3 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-mint outline-none"
+          placeholder="Search by client, provider or service..."
+          class="px-4 py-2 border rounded-lg w-full md:w-1/3"
         />
       </div>
 
-      <!-- Tabla de citas -->
+      <!-- Tabla -->
       <div class="bg-neutral-light shadow rounded-2xl overflow-hidden">
-        <table class="w-full text-left border-collapse">
+        <table class="w-full text-left">
           <thead class="bg-primary-mint text-white">
             <tr>
               <th class="px-4 py-2">Client</th>
@@ -26,86 +27,143 @@
               <th class="px-4 py-2">Actions</th>
             </tr>
           </thead>
+
           <tbody>
             <tr
-              v-for="appointment in filteredAppointments"
-              :key="appointment._id"
-              class="border-b hover:bg-neutral-light/50 transition"
+              v-for="appt in filteredAppointments"
+              :key="appt._id"
+              class="border-b hover:bg-neutral-light/60"
             >
-              <td class="px-4 py-2">{{ appointment.clientId?.name || 'N/A' }}</td>
-              <td class="px-4 py-2">{{ appointment.providerId?.name || 'N/A' }}</td>
-              <td class="px-4 py-2">{{ appointment.service || 'N/A' }}</td>
-              <td class="px-4 py-2">{{ formatDate(appointment.date) }}</td>
               <td class="px-4 py-2">
-                <span
-                  :class="[ 'px-2 py-1 rounded-lg text-xs font-semibold',
-                    appointment.status === 'Pending'
-                      ? 'bg-yellow-200 text-yellow-800'
-                      : appointment.status === 'Completed'
-                      ? 'bg-green-200 text-green-800'
-                      : 'bg-red-200 text-red-800'
-                  ]"
-                >
-                  {{ appointment.status }}
+                {{ appt.userId?.name }} {{ appt.userId?.lastname }} <br />
+                <small>{{ appt.userId?.email }}</small>
+              </td>
+
+              <td class="px-4 py-2">
+                {{ appt.providerId?.businessName }} <br />
+                <small>{{ appt.providerId?.serviceType }}</small>
+              </td>
+
+              <td class="px-4 py-2">{{ appt.service }}</td>
+
+              <td class="px-4 py-2">
+                {{ formatDate(appt.date) }}
+              </td>
+
+              <td class="px-4 py-2">
+                <span :class="statusClass(appt.status)">
+                  {{ appt.status }}
                 </span>
               </td>
+
               <td class="px-4 py-2 flex gap-2">
                 <button
-                  @click="changeStatus(appointment, 'Completed')"
-                  class="px-3 py-1 text-xs bg-green-500 text-white rounded-lg hover:bg-green-600"
-                >
-                  Complete
-                </button>
+                  @click="openEditModal(appt)"
+                  class="px-3 py-1 text-xs bg-blue-500 text-white rounded"
+                >Edit</button>
+
                 <button
-                  @click="changeStatus(appointment, 'Cancelled')"
-                  class="px-3 py-1 text-xs bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-                >
-                  Cancel
-                </button>
+                  @click="changeStatus(appt._id, 'confirmed')"
+                  class="px-3 py-1 text-xs bg-green-500 text-white rounded"
+                >Confirm</button>
+
                 <button
-                  @click="deleteAppointment(appointment._id)"
-                  class="px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600"
-                >
-                  Delete
-                </button>
+                  @click="changeStatus(appt._id, 'cancelled')"
+                  class="px-3 py-1 text-xs bg-yellow-500 text-white rounded"
+                >Cancel</button>
+
+                <button
+                  @click="deleteAppointment(appt._id)"
+                  class="px-3 py-1 text-xs bg-red-500 text-white rounded"
+                >Delete</button>
               </td>
             </tr>
+
             <tr v-if="filteredAppointments.length === 0">
-              <td colspan="6" class="px-4 py-4 text-center text-neutral-medium">
+              <td colspan="6" class="px-4 py-3 text-center text-neutral-medium">
                 No appointments found.
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <!-- Modal editar -->
+      <div
+        v-if="showModal"
+        class="fixed inset-0 bg-black/40 flex justify-center items-center z-50"
+      >
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+          <h2 class="text-xl font-semibold mb-4">Edit Appointment</h2>
+
+          <form @submit.prevent="saveChanges">
+            <label class="block mb-2 font-medium">Date</label>
+            <input
+              v-model="form.date"
+              type="datetime-local"
+              class="w-full border rounded px-3 py-2 mb-4"
+            />
+
+            <div class="flex justify-end gap-3">
+              <button
+                @click="closeModal"
+                class="px-4 py-2 bg-gray-300 rounded"
+                type="button"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                class="px-4 py-2 bg-primary-mint text-white rounded"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </div>
+    <Chatbot />
   </AdminLayout>
 </template>
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
 
 export default {
   name: "AdminAppointments",
-  components: { AdminLayout },
+
+  components: { AdminLayout, Chatbot },
+
   data() {
     return {
-      searchQuery: "",
       appointments: [],
+      searchQuery: "",
+      showModal: false,
+      form: {
+        _id: "",
+        date: "",
+      },
     };
   },
+
   computed: {
     filteredAppointments() {
-      if (!this.searchQuery) return this.appointments;
-      const query = this.searchQuery.toLowerCase();
-      return this.appointments.filter(
-        (a) =>
-          a.clientId?.name?.toLowerCase().includes(query) ||
-          a.providerId?.name?.toLowerCase().includes(query)
-      );
+      const q = this.searchQuery.toLowerCase();
+      return this.appointments.filter((a) => {
+        return (
+          a.userId?.name.toLowerCase().includes(q) ||
+          a.providerId?.businessName.toLowerCase().includes(q) ||
+          a.service.toLowerCase().includes(q)
+        );
+      });
     },
   },
+
   methods: {
     async fetchAppointments() {
       try {
@@ -115,28 +173,52 @@ export default {
         console.error("Error fetching appointments:", err);
       }
     },
+
     formatDate(date) {
       return new Date(date).toLocaleString();
     },
-    async changeStatus(appointment, newStatus) {
-      try {
-        const { data } = await api.put(`/admin/appointments/${appointment._id}/status`, { status: newStatus });
-        const index = this.appointments.findIndex((a) => a._id === data._id);
-        this.appointments.splice(index, 1, data);
-      } catch (err) {
-        console.error("Error updating status:", err);
-      }
+
+    statusClass(status) {
+      return {
+        pending: "text-yellow-600 font-semibold",
+        confirmed: "text-green-600 font-semibold",
+        cancelled: "text-red-600 font-semibold",
+      }[status];
     },
+
+    openEditModal(appt) {
+      this.form = {
+        _id: appt._id,
+        date: appt.date.slice(0, 16),
+      };
+      this.showModal = true;
+    },
+
+    closeModal() {
+      this.showModal = false;
+    },
+
+    async saveChanges() {
+      await api.put(`/admin/appointments/${this.form._id}`, {
+        date: this.form.date,
+      });
+      this.showModal = false;
+      this.fetchAppointments();
+    },
+
+    async changeStatus(id, status) {
+      await api.put(`/admin/appointments/${id}`, { status });
+      this.fetchAppointments();
+    },
+
     async deleteAppointment(id) {
-      if (!confirm("Are you sure you want to delete this appointment?")) return;
-      try {
-        await api.delete(`/admin/appointments/${id}`);
-        this.appointments = this.appointments.filter((a) => a._id !== id);
-      } catch (err) {
-        console.error("Error deleting appointment:", err);
-      }
+      if (!confirm("Are you sure?")) return;
+
+      await api.delete(`/admin/appointments/${id}`);
+      this.fetchAppointments();
     },
   },
+
   mounted() {
     this.fetchAppointments();
   },

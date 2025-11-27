@@ -1,29 +1,23 @@
-// backend/routes/appointments.routes.js
+// routes/appointmentRoutes.js
 import express from "express";
-import {
-  getAppointmentsByUser,
-  createAppointment,
-  cancelAppointment,
-  rescheduleAppointment,
-  getAppointmentById
-} from "../controllers/appointmentController.js";
 import { protect } from "../middlewares/authMiddleware.js";
+import {
+  createAppointment,
+  getAppointmentsByUser,
+  getAppointmentById,
+  cancelAppointment,
+  rescheduleAppointment
+} from "../controllers/appointmentController.js";
 
 const router = express.Router();
 
-// Obtener todas las citas de un usuario
-router.get("/user/:userId", protect, getAppointmentsByUser);
-
-// Obtener una cita específica
-router.get("/:appointmentId", protect, getAppointmentById);
-
-// Crear una cita
 router.post("/", protect, createAppointment);
+router.get("/user/me", protect, getAppointmentsByUser);
+router.get("/:id", protect, getAppointmentById);
 
-// Cancelar una cita
-router.put("/:appointmentId/cancel", protect, cancelAppointment);
+// Cancelar cita
+router.patch("/:id/cancel", protect, cancelAppointment);
 
-// Reprogramar una cita
-router.put("/:appointmentId/reschedule", protect, rescheduleAppointment);
-
+// Reprogramar cita
+router.patch("/:id/reschedule", protect, rescheduleAppointment);
 export default router;

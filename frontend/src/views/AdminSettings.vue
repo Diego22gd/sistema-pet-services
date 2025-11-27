@@ -51,15 +51,17 @@
         </button>
       </div>
     </div>
+    <Chatbot />
   </AdminLayout>
 </template>
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 
 export default {
   name: "AdminSettings",
-  components: { AdminLayout },
+  components: { AdminLayout , Chatbot },
   data() {
     return {
       settings: {

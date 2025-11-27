@@ -42,16 +42,18 @@
         </div>
       </div>
     </div>
+    <Chatbot />
   </ProviderLayout>
 </template>
 
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api"; // CORRECTO
 
 export default {
   name: "ProviderNotifications",
-  components: { ProviderLayout },
+  components: { ProviderLayout , Chatbot},
 
   data() {
     return {

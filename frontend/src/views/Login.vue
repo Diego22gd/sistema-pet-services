@@ -1,19 +1,36 @@
 <template>
   <div class="min-h-screen flex flex-col bg-neutral-bg pt-24">
-    <!-- HEADER -->
-    <header class="fixed top-0 left-0 right-0 w-full z-50 bg-primary-mint text-white flex justify-between items-center py-4 shadow-md">
-      <div class="text-2xl font-bold px-6">🐾 PetServices</div>
-      <nav class="px-6">
-        <router-link
-          to="/"
-          class="bg-white text-primary-mint px-4 py-2 rounded-lg font-semibold shadow hover:bg-neutral-light transition"
-        >
-          🏠 Home
-        </router-link>
-      </nav>
+    <!-- HEADER MEJORADO -->
+    <header class="fixed top-0 left-0 right-0 w-full z-50 bg-gradient-to-r bg-primary-mint to-teal-500 text-white shadow-xl">
+      <div class="container mx-auto px-6">
+        <div class="flex justify-between items-center py-4">
+          <!-- Logo con diseño mejorado -->
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shadow-lg border border-white/20">
+              <span class="text-2xl">🐾</span>
+            </div>
+            <div class="text-2xl font-bold bg-gradient-to-r from-white to-gray-100 bg-clip-text text-transparent">
+              PetServices
+            </div>
+          </div>
+
+          <!-- Botón Home mejorado -->
+          <nav>
+            <router-link
+              to="/"
+              class="bg-white text-primary-mint px-4 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 flex items-center space-x-2 hover:bg-neutral-light"
+            >
+              <span>Volver al Inicio</span>
+            </router-link>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Línea decorativa inferior -->
+      <div class="h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
     </header>
 
-    <!-- LOGIN -->
+    <!-- Resto del código del login se mantiene igual -->
     <div class="flex justify-center items-center flex-grow px-4 pt-24">
       <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-lg">
         <h2 class="text-3xl font-bold text-primary text-center mb-6">Iniciar Sesión</h2>
@@ -43,7 +60,7 @@
 
           <button
             type="submit"
-            class="w-full bg-primary-mint text-white font-bold py-3 rounded-lg hover:bg-state-success transition"
+            class="w-full bg-primary-mint text-white font-bold py-3 rounded-lg hover:bg-state-success transition transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
           >
             Entrar
           </button>
@@ -53,25 +70,27 @@
           </p>
         </form>
 
-        <!-- Botones de registro separados -->
-        <div class="text-center text-neutral-medium mt-6 space-x-4">
+        <!-- Botones de registro mejorados -->
+        <div class="text-center text-neutral-medium mt-6 space-y-4">
           <button
             @click="showRegisterClient = true"
-            class="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary-dark transition"
+            class="w-full bg-secondary text-white px-6 py-3 rounded-lg font-semibold hover:bg-secondary-dark transition transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
           >
-            🐶 Registrarse como Cliente
+            <span>🐶</span>
+            <span>Registrarse como Cliente</span>
           </button>
           <button
             @click="showRegisterProvider = true"
-            class="bg-primary-mint text-white px-4 py-2 rounded-lg hover:bg-state-success transition"
+            class="w-full bg-primary-mint text-white px-6 py-3 rounded-lg font-semibold hover:bg-state-success transition transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
           >
-            🏥 Registrarse como Proveedor
+            <span>🏥</span>
+            <span>Registrarse como Proveedor</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- MODAL REGISTRO CLIENTE -->
+    <!-- Los modales y footer se mantienen igual -->
     <div v-if="showRegisterClient" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl relative overflow-y-auto max-h-[90vh]">
         <button @click="showRegisterClient = false" class="absolute top-3 right-3 text-neutral-medium hover:text-neutral-dark">
@@ -108,14 +127,13 @@
           <p v-if="errors.general" class="text-red-500 text-sm mt-2 text-center">{{ errors.general }}</p>
           <p v-if="successMessage" class="text-green-600 font-semibold text-center mt-2">{{ successMessage }}</p>
 
-          <button type="submit" class="w-full bg-secondary text-white font-bold py-3 mt-6 rounded-lg hover:bg-secondary-dark transition">
+          <button type="submit" class="w-full bg-secondary text-white font-bold py-3 mt-6 rounded-lg hover:bg-secondary-dark transition transform hover:-translate-y-0.5">
             Registrarme
           </button>
         </form>
       </div>
     </div>
 
-    <!-- MODAL REGISTRO PROVEEDOR -->
     <div v-if="showRegisterProvider" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl relative overflow-y-auto max-h-[90vh]">
         <button @click="showRegisterProvider = false" class="absolute top-3 right-3 text-neutral-medium hover:text-neutral-dark">
@@ -169,7 +187,7 @@
           <p v-if="errors.general" class="text-red-500 text-sm mt-2 text-center">{{ errors.general }}</p>
           <p v-if="successMessage" class="text-green-600 font-semibold text-center mt-2">{{ successMessage }}</p>
 
-          <button type="submit" class="w-full bg-primary-mint text-white font-bold py-3 mt-6 rounded-lg hover:bg-state-success transition">
+          <button type="submit" class="w-full bg-primary-mint text-white font-bold py-3 mt-6 rounded-lg hover:bg-state-success transition transform hover:-translate-y-0.5">
             Registrarme
           </button>
         </form>

@@ -73,6 +73,7 @@
         </ul>
       </div>
     </section>
+    <Chatbot />
   </Layout>
 </template>
 

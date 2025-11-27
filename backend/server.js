@@ -22,6 +22,11 @@ import providerServicesRoutes from "./src/routes/providerServicesRoutes.js";
 import petRoutes from "./src/routes/petRoutes.js";
 import clientServiceRoutes from "./src/routes/clientServiceRoutes.js"
 import appointmentsRoutes from "./src/routes/appointmentRoutes.js";
+import providerRoutes from "./src/routes/providerRoutes.js";
+import chatRoutes from "./src/routes/chat.js";
+import chatAdminRoutes from "./src/routes/chatAdmin.js";
+
+
 
 const app = express();
 
@@ -56,6 +61,10 @@ app.use("/api/provider-services", providerServicesRoutes);
 app.use("/api/client/services", clientServiceRoutes);
 app.use("/api/pets", petRoutes);
 app.use("/api/appointments", appointmentsRoutes);
+app.use("/api/providers", providerRoutes);
+
+app.use("/api/chat", chatRoutes);
+app.use("/api/chatbot/admin", chatAdminRoutes);
 // Root
 app.get("/", (req, res) => {
   res.send("API Pet Services funcionando 🐾");

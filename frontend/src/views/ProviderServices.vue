@@ -146,15 +146,17 @@
       </transition>
     </div>
   </ProviderLayout>
+  <Chatbot />
 </template>
 
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
 
 export default {
   name: "ProviderServices",
-  components: { ProviderLayout },
+  components: { ProviderLayout,Chatbot },
   data() {
     return {
       services: [],

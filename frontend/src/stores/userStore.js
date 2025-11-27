@@ -78,6 +78,20 @@ export const useUserStore = defineStore("user", {
         throw new Error(err.response?.data?.message || "Error al actualizar el perfil");
       }
     },
+    async fetchUserPets() {
+  if (!this.token) return [];
+  try {
+    const { data } = await api.get("/pets", {
+      headers: { Authorization: `Bearer ${this.token}` },
+    });
+    this.userPets = data;
+    return data;
+  } catch (err) {
+    console.error("❌ Error al obtener mascotas del usuario:", err);
+    return [];
+  }
+},
+
 
     // 🔹 Cerrar sesión
     logout() {

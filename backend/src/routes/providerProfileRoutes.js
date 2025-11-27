@@ -1,20 +1,21 @@
 import express from "express";
-import {
+import { 
   getProviderProfile,
   createProviderProfile,
-  updateProviderProfile,
+  updateProviderProfile
 } from "../controllers/providerProfileController.js";
-import { protect } from "../middlewares/authMiddleware.js";
+
+import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// Obtener perfil de proveedor
-router.get("/:id", protect, getProviderProfile);
+// Obtener perfil del proveedor (incluye datos del User)
+router.get("/:id", protect, authorizeRoles("provider"), getProviderProfile);
 
-// Crear perfil de proveedor
-router.post("/", protect, createProviderProfile);
+// Crear perfil (solo una vez)
+router.post("/", protect, authorizeRoles("provider"), createProviderProfile);
 
-// Actualizar perfil de proveedor
-router.put("/:id", protect, updateProviderProfile);
+// Actualizar perfil + datos del usuario
+router.put("/:id", protect, authorizeRoles("provider"), updateProviderProfile);
 
 export default router;

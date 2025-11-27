@@ -31,18 +31,20 @@
         <canvas id="appointmentsChart"></canvas>
       </div>
     </div>
+    <Chatbot />
   </AdminLayout>
 </template>
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import Chart from "chart.js/auto";
 import api from "@/api/api";
 import { useUserStore } from "@/stores/userStore";
 
 export default {
   name: "AdminDashboard",
-  components: { AdminLayout },
+  components: { AdminLayout ,Chatbot},
   data() {
     return {
       stats: {

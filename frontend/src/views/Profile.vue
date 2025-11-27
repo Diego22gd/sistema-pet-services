@@ -119,17 +119,19 @@
         </button>
       </div>
     </div>
+    <Chatbot />
   </Layout>
 </template>
 
 <script>
 import Layout from '@/components/Layout.vue'
+import Chatbot from "@/components/Chatbot.vue";
 import api from '@/api/api'
 import { useUserStore } from '@/stores/userStore'
 
 export default {
   name: 'Profile',
-  components: { Layout },
+  components: { Layout ,Chatbot},
   data() {
     return {
       user: {},

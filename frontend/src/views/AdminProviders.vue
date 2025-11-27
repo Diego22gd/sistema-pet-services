@@ -3,7 +3,6 @@
     <div class="px-6 max-w-7xl mx-auto w-full pt-4">
       <h1 class="text-2xl font-bold mb-6 text-neutral-dark">Providers Management</h1>
 
-      <!-- Barra de búsqueda y botón agregar -->
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <input
           v-model="searchQuery"
@@ -19,7 +18,6 @@
         </button>
       </div>
 
-      <!-- Tabla de proveedores -->
       <div class="bg-neutral-light shadow rounded-2xl overflow-hidden">
         <table class="w-full text-left border-collapse">
           <thead class="bg-primary-mint text-white">
@@ -27,11 +25,12 @@
               <th class="px-4 py-2">Name</th>
               <th class="px-4 py-2">Email</th>
               <th class="px-4 py-2">Phone</th>
-              <th class="px-4 py-2">Service</th>
+              <th class="px-4 py-2">Service Type</th>
               <th class="px-4 py-2">Subscription</th>
               <th class="px-4 py-2">Actions</th>
             </tr>
           </thead>
+
           <tbody>
             <tr
               v-for="provider in filteredProviders"
@@ -42,30 +41,46 @@
               <td class="px-4 py-2">{{ provider.name }}</td>
               <td class="px-4 py-2">{{ provider.email }}</td>
               <td class="px-4 py-2">{{ provider.phone }}</td>
-              <td class="px-4 py-2">{{ provider.service }}</td>
+
+              <td class="px-4 py-2">{{ provider.serviceType }}</td>
+
               <td class="px-4 py-2">
                 <div class="flex flex-col gap-1">
-                  <span :class="isExpired(provider.expirationDate) ? 'text-red-600 font-semibold' : ''">
-                    {{ provider.subscriptionType || 'N/A' }} (Expires: {{ provider.expirationDate || 'N/A' }})
+                  <span :class="isExpired(provider.subscription?.expirationDate) ? 'text-red-600 font-semibold' : ''">
+                    {{ provider.subscription?.type || 'N/A' }}
+                    (Expires:
+                    {{ provider.subscription?.expirationDate
+                      ? provider.subscription.expirationDate.split('T')[0]
+                      : 'N/A' }})
                   </span>
+
                   <div class="flex gap-2 mt-1">
                     <button
                       v-if="!provider.paused"
                       @click="pauseSubscription(provider)"
                       class="px-2 py-1 text-xs bg-yellow-400 rounded hover:bg-yellow-500"
-                    >Pause</button>
+                    >
+                      Pause
+                    </button>
+
                     <button
                       v-if="provider.paused"
                       @click="resumeSubscription(provider)"
                       class="px-2 py-1 text-xs bg-green-400 rounded hover:bg-green-500"
-                    >Resume</button>
+                    >
+                      Resume
+                    </button>
+
                     <button
                       @click="renewSubscription(provider)"
                       class="px-2 py-1 text-xs bg-blue-400 rounded hover:bg-blue-500"
-                    >Renew</button>
+                    >
+                      Renew
+                    </button>
                   </div>
                 </div>
               </td>
+
               <td class="px-4 py-2 flex gap-2">
                 <button
                   @click="editProvider(provider)"
@@ -73,6 +88,7 @@
                 >
                   Edit
                 </button>
+
                 <button
                   @click="deleteProvider(provider._id)"
                   class="px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600"
@@ -81,6 +97,7 @@
                 </button>
               </td>
             </tr>
+
             <tr v-if="filteredProviders.length === 0">
               <td colspan="6" class="px-4 py-4 text-center text-neutral-medium">
                 No providers found.
@@ -90,7 +107,7 @@
         </table>
       </div>
 
-      <!-- Modal -->
+      <!-- modal -->
       <div
         v-if="showModal"
         class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
@@ -99,31 +116,49 @@
           <h2 class="text-xl font-semibold mb-4">
             {{ editingProvider ? 'Edit Provider' : 'Add Provider' }}
           </h2>
+
           <form @submit.prevent="saveProvider" class="space-y-3">
+
             <input v-model="form.name" type="text" placeholder="Name" class="w-full border rounded-lg px-3 py-2" required />
-            <input v-model="form.email" type="email" placeholder="Email" class="w-full border rounded-lg px-3 py-2" required />
-            <input v-model="form.phone" type="text" placeholder="Phone" class="w-full border rounded-lg px-3 py-2" />
-            <input v-model="form.service" type="text" placeholder="Service" class="w-full border rounded-lg px-3 py-2" />
+
+            <input v-model="form.email" type="email" placeholder="Email"
+              class="w-full border rounded-lg px-3 py-2" required />
+
+            <input v-model="form.phone" type="text" placeholder="Phone"
+              class="w-full border rounded-lg px-3 py-2" />
+
+            <input v-model="form.serviceType" type="text" placeholder="Service Type"
+              class="w-full border rounded-lg px-3 py-2" required />
+
             <div class="flex justify-end gap-2 mt-4">
-              <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+              <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-300 rounded-lg">
+                Cancel
+              </button>
+
               <button type="submit" class="px-4 py-2 bg-primary-mint text-white rounded-lg">
                 {{ editingProvider ? 'Save Changes' : 'Add' }}
               </button>
             </div>
+
           </form>
         </div>
       </div>
+
     </div>
+    <Chatbot />
   </AdminLayout>
 </template>
 
+
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
 
 export default {
   name: "AdminProviders",
-  components: { AdminLayout },
+  components: { AdminLayout ,Chatbot},
+
   data() {
     return {
       searchQuery: "",
@@ -134,14 +169,11 @@ export default {
         name: "",
         email: "",
         phone: "",
-        service: "",
-        subscriptionType: "Monthly",
-        startDate: "",
-        expirationDate: "",
-        paused: false,
+        serviceType: "",
       },
     };
   },
+
   computed: {
     filteredProviders() {
       if (!this.searchQuery) return this.providers;
@@ -150,6 +182,7 @@ export default {
       );
     },
   },
+
   methods: {
     async fetchProviders() {
       try {
@@ -159,32 +192,39 @@ export default {
         console.error("Error fetching providers:", err);
       }
     },
+
     isExpired(date) {
       if (!date) return false;
       return new Date(date) < new Date();
     },
-    pauseSubscription(provider) {
-      provider.paused = true;
-      this.updateProvider(provider);
-    },
-    resumeSubscription(provider) {
-      provider.paused = false;
-      this.updateProvider(provider);
-    },
-    renewSubscription(provider) {
-      if (!provider.expirationDate) return;
-      const exp = new Date(provider.expirationDate);
-      exp.setMonth(exp.getMonth() + 1);
-      provider.expirationDate = exp.toISOString().split("T")[0];
-      this.updateProvider(provider);
-    },
-    async updateProvider(provider) {
+
+    async pauseSubscription(provider) {
       try {
-        await api.put(`/admin/providers/${provider._id}`, provider);
+        const { data } = await api.put(`/admin/providers/${provider._id}/pause`);
+        Object.assign(provider, data);
       } catch (err) {
-        console.error("Error updating provider:", err);
+        console.error("Error pausing subscription:", err);
       }
     },
+
+    async resumeSubscription(provider) {
+      try {
+        const { data } = await api.put(`/admin/providers/${provider._id}/resume`);
+        Object.assign(provider, data);
+      } catch (err) {
+        console.error("Error resuming subscription:", err);
+      }
+    },
+
+    async renewSubscription(provider) {
+      try {
+        const { data } = await api.put(`/admin/providers/${provider._id}/renew`);
+        Object.assign(provider, data);
+      } catch (err) {
+        console.error("Error renewing subscription:", err);
+      }
+    },
+
     openModal() {
       this.showModal = true;
       this.editingProvider = null;
@@ -192,21 +232,20 @@ export default {
         name: "",
         email: "",
         phone: "",
-        service: "",
-        subscriptionType: "Monthly",
-        startDate: "",
-        expirationDate: "",
-        paused: false,
+        serviceType: "",
       };
     },
+
     closeModal() {
       this.showModal = false;
     },
+
     editProvider(provider) {
       this.editingProvider = provider;
       this.form = { ...provider };
       this.showModal = true;
     },
+
     async saveProvider() {
       try {
         if (this.editingProvider) {
@@ -217,13 +256,16 @@ export default {
           const { data } = await api.post("/admin/providers", this.form);
           this.providers.push(data);
         }
+
         this.closeModal();
       } catch (err) {
         console.error("Error saving provider:", err);
       }
     },
+
     async deleteProvider(id) {
       if (!confirm("Are you sure you want to delete this provider?")) return;
+
       try {
         await api.delete(`/admin/providers/${id}`);
         this.providers = this.providers.filter((p) => p._id !== id);
@@ -232,6 +274,7 @@ export default {
       }
     },
   },
+
   mounted() {
     this.fetchProviders();
   },

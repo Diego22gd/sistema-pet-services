@@ -129,16 +129,18 @@
         </div>
       </transition>
     </div>
+    <Chatbot />
   </AdminLayout>
 </template>
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
 
 export default {
   name: "AdminServices",
-  components: { AdminLayout },
+  components: { AdminLayout , Chatbot },
   data() {
     return {
       searchQuery: "",

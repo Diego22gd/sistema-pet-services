@@ -53,18 +53,20 @@
         </section>
       </main>
     </div>
+    <Chatbot />
   </AdminLayout>
 </template>
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import { ref, watch, onMounted } from "vue";
 import Chart from "chart.js/auto";
 import axios from "axios";
 
 export default {
   name: "AdminReports",
-  components: { AdminLayout },
+  components: { AdminLayout , Chatbot },
   setup() {
     const activeTab = ref("overview");
     const stats = ref({ clients: 0, providers: 0, appointments: 0, revenue: 0 });

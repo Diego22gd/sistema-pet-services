@@ -1,5 +1,13 @@
 import mongoose from "mongoose";
 
+// --- Subdocumento de suscripción (igual que en Provider) ---
+const subscriptionSchema = new mongoose.Schema({
+  type: { type: String, default: "Monthly" },
+  startDate: { type: Date, default: Date.now },
+  expirationDate: { type: Date },
+  paused: { type: Boolean, default: false },
+});
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -39,6 +47,8 @@ const userSchema = new mongoose.Schema(
       required: [true, "La contraseña es obligatoria"],
       minlength: 6,
     },
+
+    // PROVEEDOR
     businessName: {
       type: String,
       trim: true,
@@ -47,10 +57,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+
+    // ROLE
     role: {
       type: String,
       enum: ["client", "provider", "admin"],
       default: "client",
+    },
+
+    // 🚀 **SUBSCRIPTION**
+    subscription: {
+      type: subscriptionSchema,
+      default: {},
     },
   },
   {
