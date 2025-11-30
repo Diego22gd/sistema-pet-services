@@ -1,152 +1,250 @@
 <template>
   <ProviderLayout>
-    <div class="px-6 max-w-6xl mx-auto w-full pt-4">
-      <h1 class="text-2xl font-bold mb-6 text-neutral-dark">Gestión de Servicios</h1>
+    <div class="px-6 max-w-7xl mx-auto w-full pt-6">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-neutral-dark mb-2">Gestión de Servicios</h1>
+        <p class="text-neutral-medium">Administra y gestiona todos tus servicios</p>
+      </div>
 
-      <!-- Lista de servicios -->
-      <div v-if="loading" class="text-center text-gray-500">Cargando servicios...</div>
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Barra de herramientas -->
+      <div class="mb-8 bg-white rounded-xl shadow-sm border border-neutral-light p-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div class="relative w-full lg:w-96">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span class="text-neutral-medium">🔍</span>
+            </div>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Buscar servicios por nombre o descripción..."
+              class="block w-full pl-10 pr-4 py-3 border border-neutral-medium rounded-lg focus:ring-2 focus:ring-primary-mint focus:border-primary-mint transition-colors duration-200 bg-white"
+            />
+          </div>
+          <button
+            @click="openAddModal"
+            class="flex items-center gap-2 px-6 py-3 bg-primary-mint text-white rounded-lg hover:bg-state-success focus:ring-2 focus:ring-primary-mint focus:ring-offset-2 transition-all duration-200 font-medium"
+          >
+            <span>+</span>
+            <span>Agregar Servicio</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tarjetas de estadísticas -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-neutral-light">
+          <div class="text-2xl font-bold text-primary-mint">{{ services.length }}</div>
+          <div class="text-sm text-neutral-medium">Total Servicios</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-neutral-light">
+          <div class="text-2xl font-bold text-state-success">{{ approvedCount }}</div>
+          <div class="text-sm text-neutral-medium">Aprobados</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-neutral-light">
+          <div class="text-2xl font-bold text-yellow-500">{{ pausedCount }}</div>
+          <div class="text-sm text-neutral-medium">Pausados</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-neutral-light">
+          <div class="text-2xl font-bold text-state-error">{{ rejectedCount }}</div>
+          <div class="text-sm text-neutral-medium">Rechazados</div>
+        </div>
+      </div>
+
+      <!-- Grid de servicios -->
+      <div v-if="loading" class="text-center py-12">
+        <div class="w-16 h-16 bg-neutral-light rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-2xl">⏳</span>
+        </div>
+        <h3 class="text-lg font-semibold text-neutral-dark mb-2">Cargando servicios</h3>
+        <p class="text-neutral-medium">Espera un momento por favor</p>
+      </div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
         <div
-          v-for="service in services"
+          v-for="service in filteredServices"
           :key="service._id"
-          :class="[
-            'shadow rounded-2xl p-6 border transition-all duration-300',
-            service.status === 'aprobado'
-              ? 'bg-green-50 border-green-400'
-              : service.status === 'pausado'
-              ? 'bg-yellow-50 border-yellow-400'
-              : service.status === 'desaprobado'
-              ? 'bg-red-50 border-red-400'
-              : 'bg-neutral-light border-gray-200'
-          ]"
+          class="bg-white rounded-xl shadow-sm border border-neutral-light hover:shadow-md transition-all duration-300 overflow-hidden"
         >
-          <h2 class="text-xl font-semibold text-neutral-dark">{{ service.name }}</h2>
-          <p class="text-neutral-medium mb-2">{{ service.description }}</p>
-          <p class="text-sm text-neutral-dark font-semibold mb-2">
-            Precio: ${{ service.price }}
-          </p>
-          <p class="text-sm font-semibold">
-            Estado:
-            <span
-              :class="{
-                'text-green-600': service.status === 'aprobado',
-                'text-red-600': service.status === 'desaprobado',
-                'text-yellow-600': service.status === 'pausado',
-                'text-gray-600': service.status === 'pendiente'
-              }"
-            >
-              {{ service.status }}
-            </span>
-          </p>
+          <!-- Header de la tarjeta con estado -->
+          <div 
+            class="h-2"
+            :class="{
+              'bg-state-success': service.status === 'aprobado',
+              'bg-yellow-500': service.status === 'pausado',
+              'bg-state-error': service.status === 'desaprobado',
+              'bg-neutral-medium': service.status === 'pendiente'
+            }"
+          ></div>
+          
+          <div class="p-6">
+            <!-- Header con nombre y estado -->
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="text-lg font-semibold text-neutral-dark line-clamp-2">{{ service.name }}</h3>
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize"
+                :class="{
+                  'bg-green-100 text-green-800': service.status === 'aprobado',
+                  'bg-yellow-100 text-yellow-800': service.status === 'pausado',
+                  'bg-red-100 text-red-800': service.status === 'desaprobado',
+                  'bg-neutral-light text-neutral-dark': service.status === 'pendiente'
+                }"
+              >
+                {{ service.status }}
+              </span>
+            </div>
 
-          <!-- Acciones -->
-          <div class="flex flex-wrap justify-between mt-4 gap-2">
-            <button
-              class="px-4 py-2 bg-primary-mint text-white rounded-lg hover:bg-green-600 transition"
-              @click="openEditModal(service)"
-            >
-              Editar
-            </button>
-            <button
-              class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-              @click="deleteService(service._id)"
-            >
-              Eliminar
-            </button>
-            <button
-              v-if="service.status === 'aprobado'"
-              class="px-4 py-2 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500 transition"
-              @click="pauseService(service._id)"
-            >
-              Pausar
-            </button>
-            <button
-              v-if="service.status === 'pausado'"
-              class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
-              @click="resumeService(service._id)"
-            >
-              Reanudar
-            </button>
+            <!-- Descripción -->
+            <p class="text-neutral-medium text-sm mb-4 line-clamp-3">{{ service.description }}</p>
+
+            <!-- Información del servicio -->
+            <div class="space-y-2 mb-6">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-neutral-medium">Precio:</span>
+                <span class="text-lg font-semibold text-neutral-dark">${{ service.price }}</span>
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="flex flex-wrap gap-2">
+              <button
+                @click="openEditModal(service)"
+                class="flex-1 min-w-[80px] inline-flex justify-center items-center px-3 py-2 border border-neutral-medium text-sm font-medium rounded-lg text-neutral-dark bg-white hover:bg-neutral-bg focus:ring-2 focus:ring-primary-mint focus:ring-offset-1 transition-colors duration-200"
+              >
+                <span>✏️</span>
+                <span class="ml-1">Editar</span>
+              </button>
+              
+              <button
+                @click="deleteService(service._id)"
+                class="flex-1 min-w-[80px] inline-flex justify-center items-center px-3 py-2 border border-state-error text-sm font-medium rounded-lg text-state-error bg-white hover:bg-red-50 focus:ring-2 focus:ring-state-error focus:ring-offset-1 transition-colors duration-200"
+              >
+                <span>🗑️</span>
+                <span class="ml-1">Eliminar</span>
+              </button>
+
+              <!-- Botones de estado -->
+              <button
+                v-if="service.status === 'aprobado'"
+                @click="pauseService(service._id)"
+                class="w-full inline-flex justify-center items-center px-3 py-2 bg-yellow-500 text-sm font-medium rounded-lg text-white hover:bg-yellow-600 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 transition-colors duration-200 mt-2"
+              >
+                ⏸️ Pausar
+              </button>
+
+              <button
+                v-if="service.status === 'pausado'"
+                @click="resumeService(service._id)"
+                class="w-full inline-flex justify-center items-center px-3 py-2 bg-neutral-medium text-sm font-medium rounded-lg text-white hover:bg-neutral-dark focus:ring-2 focus:ring-neutral-medium focus:ring-offset-1 transition-colors duration-200 mt-2"
+              >
+                ▶️ Reanudar
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Botón agregar -->
-      <div class="mt-8 text-center">
+      <!-- Estado vacío -->
+      <div v-if="!loading && filteredServices.length === 0" class="text-center py-12">
+        <div class="w-16 h-16 bg-neutral-light rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-2xl">📦</span>
+        </div>
+        <h3 class="text-lg font-semibold text-neutral-dark mb-2">No se encontraron servicios</h3>
+        <p class="text-neutral-medium mb-6">Comienza agregando tu primer servicio</p>
         <button
-          class="px-6 py-3 bg-secondary text-white rounded-xl hover:bg-secondary-dark transition"
           @click="openAddModal"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-primary-mint text-white rounded-lg hover:bg-state-success focus:ring-2 focus:ring-primary-mint focus:ring-offset-2 transition-all duration-200 font-medium"
         >
-          + Agregar Servicio
+          <span>+</span>
+          <span>Agregar Primer Servicio</span>
         </button>
       </div>
 
-      <!-- Modal agregar/editar -->
-      <transition name="fade">
-        <div v-if="showModal" class="fixed inset-0 flex items-center justify-center z-50">
+      <!-- Modal -->
+      <transition name="modal">
+        <div v-if="showModal" class="fixed inset-0 flex items-center justify-center z-50 p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeModal"></div>
-          <div
-            class="bg-white rounded-2xl shadow-lg w-full max-w-md p-6 relative z-10 overflow-y-auto max-h-[90vh]"
-          >
-            <h2 class="text-xl font-bold mb-4">
-              {{ isEdit ? "Editar Servicio" : "Agregar Servicio" }}
-            </h2>
-            <form @submit.prevent="saveService" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium mb-1">Nombre del Servicio</label>
-                <input
-                  v-model="modalData.name"
-                  type="text"
-                  required
-                  class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-mint"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium mb-1">Descripción</label>
-                <textarea
-                  v-model="modalData.description"
-                  required
-                  class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-mint"
-                ></textarea>
-              </div>
-              <div>
-                <label class="block text-sm font-medium mb-1">Precio</label>
-                <input
-                  v-model.number="modalData.price"
-                  type="number"
-                  min="0"
-                  required
-                  class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-mint"
-                />
-              </div>
-              <div class="flex justify-end gap-3 mt-4">
-                <button
-                  type="button"
+          <div class="bg-white rounded-2xl shadow-xl w-full max-w-md relative z-10 max-h-[90vh] overflow-hidden">
+            <!-- Header del modal -->
+            <div class="px-6 py-4 border-b border-neutral-light">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-neutral-dark">
+                  {{ isEdit ? 'Editar Servicio' : 'Crear Nuevo Servicio' }}
+                </h2>
+                <button 
                   @click="closeModal"
-                  class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  class="text-neutral-medium hover:text-neutral-dark transition-colors duration-200 p-1 rounded-lg hover:bg-neutral-bg text-2xl"
                 >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  class="px-4 py-2 bg-primary-mint text-white rounded-lg hover:bg-green-600"
-                >
-                  {{ isEdit ? "Actualizar" : "Agregar" }}
+                  ✕
                 </button>
               </div>
-            </form>
-            <button
-              @click="closeModal"
-              class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl"
-            >
-              &times;
-            </button>
+            </div>
+
+            <!-- Formulario -->
+            <div class="p-6 overflow-y-auto">
+              <form @submit.prevent="saveService" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-neutral-dark mb-2">Nombre del Servicio</label>
+                  <input 
+                    v-model="modalData.name" 
+                    type="text" 
+                    required 
+                    class="w-full px-4 py-3 border border-neutral-medium rounded-lg focus:ring-2 focus:ring-primary-mint focus:border-primary-mint transition-colors duration-200 bg-white"
+                    placeholder="Ingresa el nombre del servicio"
+                  />
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-neutral-dark mb-2">Descripción</label>
+                  <textarea 
+                    v-model="modalData.description" 
+                    required 
+                    rows="4"
+                    class="w-full px-4 py-3 border border-neutral-medium rounded-lg focus:ring-2 focus:ring-primary-mint focus:border-primary-mint transition-colors duration-200 resize-none bg-white"
+                    placeholder="Describe tu servicio en detalle"
+                  ></textarea>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-neutral-dark mb-2">Precio</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-medium">$</span>
+                    <input 
+                      v-model.number="modalData.price" 
+                      type="number" 
+                      min="0" 
+                      step="0.01"
+                      required 
+                      class="w-full pl-8 pr-4 py-3 border border-neutral-medium rounded-lg focus:ring-2 focus:ring-primary-mint focus:border-primary-mint transition-colors duration-200 bg-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <!-- Footer del modal -->
+                <div class="flex justify-end gap-3 pt-4">
+                  <button 
+                    type="button" 
+                    @click="closeModal"
+                    class="px-6 py-2.5 text-neutral-dark bg-white border border-neutral-medium rounded-lg hover:bg-neutral-bg focus:ring-2 focus:ring-neutral-medium focus:ring-offset-2 transition-all duration-200 font-medium"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit"
+                    class="px-6 py-2.5 bg-primary-mint text-white rounded-lg hover:bg-state-success focus:ring-2 focus:ring-primary-mint focus:ring-offset-2 transition-all duration-200 font-medium"
+                  >
+                    {{ isEdit ? 'Actualizar' : 'Crear Servicio' }}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </transition>
     </div>
+    <Chatbot />
   </ProviderLayout>
-  <Chatbot />
 </template>
 
 <script>
@@ -156,16 +254,36 @@ import api from "@/api/api";
 
 export default {
   name: "ProviderServices",
-  components: { ProviderLayout,Chatbot },
+  components: { ProviderLayout, Chatbot },
   data() {
     return {
       services: [],
+      searchQuery: "",
       showModal: false,
       isEdit: false,
       editId: null,
       loading: true,
       modalData: { name: "", description: "", price: null },
     };
+  },
+  computed: {
+    filteredServices() {
+      if (!this.searchQuery) return this.services;
+      const query = this.searchQuery.toLowerCase();
+      return this.services.filter(service => 
+        service.name.toLowerCase().includes(query) ||
+        service.description.toLowerCase().includes(query)
+      );
+    },
+    approvedCount() {
+      return this.services.filter(s => s.status === 'aprobado').length;
+    },
+    pausedCount() {
+      return this.services.filter(s => s.status === 'pausado').length;
+    },
+    rejectedCount() {
+      return this.services.filter(s => s.status === 'desaprobado').length;
+    }
   },
   async created() {
     await this.fetchServices();
@@ -177,6 +295,7 @@ export default {
         this.services = res.data;
       } catch (err) {
         console.error("Error cargando servicios:", err);
+        alert("Error al cargar los servicios");
       } finally {
         this.loading = false;
       }
@@ -204,38 +323,124 @@ export default {
         }
         await this.fetchServices();
         this.closeModal();
+        alert(`Servicio ${this.isEdit ? 'actualizado' : 'creado'} correctamente`);
       } catch (err) {
         console.error("Error guardando servicio:", err);
+        alert("Error al guardar el servicio");
       }
     },
     async deleteService(id) {
+      if (!confirm("¿Estás seguro de que quieres eliminar este servicio?")) return;
       try {
         await api.delete(`/provider-services/${id}`);
         await this.fetchServices();
+        alert("Servicio eliminado correctamente");
       } catch (err) {
         console.error("Error eliminando servicio:", err);
+        alert("Error al eliminar el servicio");
       }
     },
     async pauseService(id) {
-      await api.put(`/provider-services/${id}/pause`);
-      await this.fetchServices();
+      try {
+        await api.put(`/provider-services/${id}/pause`);
+        await this.fetchServices();
+        alert("Servicio pausado correctamente");
+      } catch (err) {
+        console.error("Error pausando servicio:", err);
+        alert("Error al pausar el servicio");
+      }
     },
     async resumeService(id) {
-      await api.put(`/provider-services/${id}/resume`);
-      await this.fetchServices();
+      try {
+        await api.put(`/provider-services/${id}/resume`);
+        await this.fetchServices();
+        alert("Servicio reanudado correctamente");
+      } catch (err) {
+        console.error("Error reanudando servicio:", err);
+        alert("Error al reanudar el servicio");
+      }
     },
   },
 };
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s ease;
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.fade-enter-from,
-.fade-leave-to {
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bg-neutral-bg {
+  background-color: #f8fafc;
+}
+
+.border-neutral-light {
+  border-color: #e2e8f0;
+}
+
+.border-neutral-medium {
+  border-color: #cbd5e1;
+}
+
+.text-neutral-dark {
+  color: #1e293b;
+}
+
+.text-neutral-medium {
+  color: #64748b;
+}
+
+.bg-primary-mint {
+  background-color: #0d9488;
+}
+
+.hover\:bg-state-success:hover {
+  background-color: #059669;
+}
+
+.bg-state-error {
+  background-color: #dc2626;
+}
+
+.hover\:bg-red-700:hover {
+  background-color: #b91c1c;
+}
+
+.focus\:ring-primary-mint:focus {
+  --tw-ring-color: #0d9488;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .bg-white,
+.modal-leave-active .bg-white {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from .bg-white {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.modal-leave-to .bg-white {
+  transform: scale(0.95);
   opacity: 0;
 }
 </style>
-

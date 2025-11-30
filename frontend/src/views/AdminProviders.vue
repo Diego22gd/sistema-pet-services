@@ -1,154 +1,296 @@
 <template>
   <AdminLayout>
-    <div class="px-6 max-w-7xl mx-auto w-full pt-4">
-      <h1 class="text-2xl font-bold mb-6 text-neutral-dark">Providers Management</h1>
-
-      <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search providers..."
-          class="w-full md:w-1/3 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-mint outline-none"
-        />
-        <button
-          @click="openModal"
-          class="bg-primary-mint text-white px-4 py-2 rounded-lg shadow hover:bg-primary-mint/90 transition"
-        >
-          + Add Provider
-        </button>
+    <div class="px-6 max-w-7xl mx-auto w-full pt-8">
+      <!-- Header de la página -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-neutral-dark mb-2">Gestión de Proveedores</h1>
+        <p class="text-neutral-medium text-lg">Administra y gestiona todos los proveedores del sistema</p>
       </div>
 
-      <div class="bg-neutral-light shadow rounded-2xl overflow-hidden">
-        <table class="w-full text-left border-collapse">
-          <thead class="bg-primary-mint text-white">
-            <tr>
-              <th class="px-4 py-2">Name</th>
-              <th class="px-4 py-2">Email</th>
-              <th class="px-4 py-2">Phone</th>
-              <th class="px-4 py-2">Service Type</th>
-              <th class="px-4 py-2">Subscription</th>
-              <th class="px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr
-              v-for="provider in filteredProviders"
-              :key="provider._id"
-              :class="provider.paused ? 'bg-yellow-100' : ''"
-              class="border-b hover:bg-neutral-light/50 transition"
-            >
-              <td class="px-4 py-2">{{ provider.name }}</td>
-              <td class="px-4 py-2">{{ provider.email }}</td>
-              <td class="px-4 py-2">{{ provider.phone }}</td>
-
-              <td class="px-4 py-2">{{ provider.serviceType }}</td>
-
-              <td class="px-4 py-2">
-                <div class="flex flex-col gap-1">
-                  <span :class="isExpired(provider.subscription?.expirationDate) ? 'text-red-600 font-semibold' : ''">
-                    {{ provider.subscription?.type || 'N/A' }}
-                    (Expires:
-                    {{ provider.subscription?.expirationDate
-                      ? provider.subscription.expirationDate.split('T')[0]
-                      : 'N/A' }})
-                  </span>
-
-                  <div class="flex gap-2 mt-1">
-                    <button
-                      v-if="!provider.paused"
-                      @click="pauseSubscription(provider)"
-                      class="px-2 py-1 text-xs bg-yellow-400 rounded hover:bg-yellow-500"
-                    >
-                      Pause
-                    </button>
-
-                    <button
-                      v-if="provider.paused"
-                      @click="resumeSubscription(provider)"
-                      class="px-2 py-1 text-xs bg-green-400 rounded hover:bg-green-500"
-                    >
-                      Resume
-                    </button>
-
-                    <button
-                      @click="renewSubscription(provider)"
-                      class="px-2 py-1 text-xs bg-blue-400 rounded hover:bg-blue-500"
-                    >
-                      Renew
-                    </button>
-                  </div>
-                </div>
-              </td>
-
-              <td class="px-4 py-2 flex gap-2">
-                <button
-                  @click="editProvider(provider)"
-                  class="px-3 py-1 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                >
-                  Edit
-                </button>
-
-                <button
-                  @click="deleteProvider(provider._id)"
-                  class="px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-
-            <tr v-if="filteredProviders.length === 0">
-              <td colspan="6" class="px-4 py-4 text-center text-neutral-medium">
-                No providers found.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- modal -->
-      <div
-        v-if="showModal"
-        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      >
-        <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-lg">
-          <h2 class="text-xl font-semibold mb-4">
-            {{ editingProvider ? 'Edit Provider' : 'Add Provider' }}
-          </h2>
-
-          <form @submit.prevent="saveProvider" class="space-y-3">
-
-            <input v-model="form.name" type="text" placeholder="Name" class="w-full border rounded-lg px-3 py-2" required />
-
-            <input v-model="form.email" type="email" placeholder="Email"
-              class="w-full border rounded-lg px-3 py-2" required />
-
-            <input v-model="form.phone" type="text" placeholder="Phone"
-              class="w-full border rounded-lg px-3 py-2" />
-
-            <input v-model="form.serviceType" type="text" placeholder="Service Type"
-              class="w-full border rounded-lg px-3 py-2" required />
-
-            <div class="flex justify-end gap-2 mt-4">
-              <button type="button" @click="closeModal" class="px-4 py-2 bg-gray-300 rounded-lg">
-                Cancel
-              </button>
-
-              <button type="submit" class="px-4 py-2 bg-primary-mint text-white rounded-lg">
-                {{ editingProvider ? 'Save Changes' : 'Add' }}
-              </button>
-            </div>
-
-          </form>
+      <!-- Barra de búsqueda y acciones -->
+      <div class="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-neutral-light">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div class="relative flex-1 w-full md:max-w-md">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-medium">🔍</span>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Buscar proveedores por nombre, email o tipo de servicio..."
+              class="w-full pl-10 pr-4 py-3 border border-neutral-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-mint focus:border-transparent transition-all duration-300 bg-neutral-bg"
+            />
+          </div>
+          <button
+            @click="openModal"
+            class="bg-primary-mint text-white px-6 py-3 rounded-xl font-semibold hover:bg-state-success transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl flex items-center space-x-2 whitespace-nowrap"
+          >
+            <span>+</span>
+            <span>Agregar Proveedor</span>
+          </button>
         </div>
       </div>
 
+      <!-- Tarjetas de estadísticas -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-neutral-light">
+          <div class="text-2xl font-bold text-primary-mint">{{ providers.length }}</div>
+          <div class="text-sm text-neutral-medium">Total Proveedores</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-neutral-light">
+          <div class="text-2xl font-bold text-state-success">{{ activeProviders }}</div>
+          <div class="text-sm text-neutral-medium">Activos</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-neutral-light">
+          <div class="text-2xl font-bold text-state-warning">{{ pausedProviders }}</div>
+          <div class="text-sm text-neutral-medium">Pausados</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-neutral-light">
+          <div class="text-2xl font-bold text-secondary">{{ expiredSubscriptions }}</div>
+          <div class="text-sm text-neutral-medium">Suscripciones Vencidas</div>
+        </div>
+      </div>
+
+      <!-- Tabla de proveedores mejorada -->
+      <div class="bg-white rounded-2xl shadow-lg border border-neutral-light overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gradient-to-r from-primary-mint to-teal-500 text-white">
+              <tr>
+                <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Proveedor</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Contacto</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Servicio</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Suscripción</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Estado</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-light">
+              <tr
+                v-for="provider in filteredProviders"
+                :key="provider._id"
+                :class="provider.paused ? 'bg-yellow-50' : 'hover:bg-neutral-bg'"
+                class="transition-colors duration-200 group"
+              >
+                <!-- Información del proveedor -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="w-10 h-10 bg-primary-mint/10 rounded-xl flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                      <span class="text-primary-mint font-semibold text-sm">
+                        {{ getInitials(provider.name) }}
+                      </span>
+                    </div>
+                    <div>
+                      <div class="font-semibold text-neutral-dark">{{ provider.name }}</div>
+                      <div class="text-sm text-neutral-medium">ID: {{ provider._id.slice(-6) }}</div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Contacto -->
+                <td class="px-6 py-4">
+                  <div class="text-sm font-medium text-neutral-dark">{{ provider.email }}</div>
+                  <div class="text-sm text-neutral-medium">{{ provider.phone || 'Sin teléfono' }}</div>
+                </td>
+
+                <!-- Servicio -->
+                <td class="px-6 py-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                    {{ provider.serviceType }}
+                  </span>
+                </td>
+
+                <!-- Suscripción -->
+                <td class="px-6 py-4">
+                  <div class="space-y-2">
+                    <div class="text-sm">
+                      <span :class="isExpired(provider.subscription?.expirationDate) ? 'text-red-600 font-semibold' : 'text-neutral-dark'">
+                        {{ provider.subscription?.type || 'Sin suscripción' }}
+                      </span>
+                      <div class="text-xs text-neutral-medium">
+                        Vence: {{ formatDate(provider.subscription?.expirationDate) || 'N/A' }}
+                      </div>
+                    </div>
+                    
+                    <div class="flex gap-1 flex-wrap">
+                      <button
+                        v-if="!provider.paused"
+                        @click="pauseSubscription(provider)"
+                        class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-all duration-200 font-semibold"
+                      >
+                        Pausar
+                      </button>
+
+                      <button
+                        v-if="provider.paused"
+                        @click="resumeSubscription(provider)"
+                        class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all duration-200 font-semibold"
+                      >
+                        Reanudar
+                      </button>
+
+                      <button
+                        @click="renewSubscription(provider)"
+                        class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all duration-200 font-semibold"
+                      >
+                        Renovar
+                      </button>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Estado -->
+                <td class="px-6 py-4">
+                  <span v-if="provider.paused" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                    <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                    Pausado
+                  </span>
+                  <span v-else-if="isExpired(provider.subscription?.expirationDate)" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                    <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                    Vencido
+                  </span>
+                  <span v-else class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    Activo
+                  </span>
+                </td>
+
+                <!-- Acciones -->
+                <td class="px-6 py-4">
+                  <div class="flex items-center space-x-2">
+                    <button
+                      @click="editProvider(provider)"
+                      class="bg-secondary text-white px-4 py-2 rounded-lg font-semibold hover:bg-secondary-dark transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1 text-sm"
+                    >
+                      <span>✏️</span>
+                      <span>Editar</span>
+                    </button>
+                    <button
+                      @click="deleteProvider(provider._id)"
+                      class="bg-state-error text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg flex items-center space-x-1 text-sm"
+                    >
+                      <span>🗑️</span>
+                      <span>Eliminar</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div v-if="filteredProviders.length === 0" class="text-center py-12">
+          <div class="w-16 h-16 bg-neutral-light rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl">🏢</span>
+          </div>
+          <h3 class="text-lg font-semibold text-neutral-dark mb-2">No se encontraron proveedores</h3>
+          <p class="text-neutral-medium">Intenta con otros términos de búsqueda</p>
+        </div>
+      </div>
     </div>
+
+    <!-- Modal agregar/editar mejorado -->
+    <div
+      v-if="showModal"
+      class="fixed inset-0 flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-neutral-light">
+        <!-- Header del modal -->
+        <div class="bg-gradient-to-r from-primary-mint to-teal-500 p-6 text-white rounded-t-2xl">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-xl font-bold mb-1">
+                {{ editingProvider ? "Editar Proveedor" : "Agregar Proveedor" }}
+              </h2>
+              <p class="text-sm opacity-90">
+                {{ editingProvider ? "Actualiza la información del proveedor" : "Registra un nuevo proveedor en el sistema" }}
+              </p>
+            </div>
+            <button @click="closeModal" 
+                    class="text-white hover:text-neutral-light transition-colors p-1 text-lg">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <!-- Contenido del modal -->
+        <div class="p-6">
+          <form @submit.prevent="saveProvider">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="md:col-span-2">
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Nombre del Proveedor</label>
+                <input 
+                  v-model="form.name" 
+                  type="text" 
+                  required 
+                  placeholder="Ingresa el nombre completo"
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                />
+              </div>
+              
+              <div class="md:col-span-2">
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Correo Electrónico</label>
+                <input 
+                  v-model="form.email" 
+                  type="email" 
+                  required 
+                  placeholder="correo@ejemplo.com"
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                />
+              </div>
+              
+              <div>
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Teléfono</label>
+                <input 
+                  v-model="form.phone" 
+                  type="text" 
+                  placeholder="+58 412 1234567"
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                />
+              </div>
+              
+              <div>
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Tipo de Servicio</label>
+                <select 
+                  v-model="form.serviceType" 
+                  required
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                >
+                  <option value="">Selecciona un servicio</option>
+                  <option value="Veterinaria">Veterinaria</option>
+                  <option value="Peluquería">Peluquería</option>
+                  <option value="Guardería">Guardería</option>
+                  <option value="Entrenamiento">Entrenamiento</option>
+                  <option value="Spa">Spa para mascotas</option>
+                  <option value="Transporte">Transporte</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex gap-3 mt-8">
+              <button 
+                type="button" 
+                @click="closeModal"
+                class="flex-1 bg-neutral-light text-neutral-dark py-3 rounded-lg font-semibold hover:bg-neutral-medium transition-all duration-300"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit" 
+                class="flex-1 bg-primary-mint text-white py-3 rounded-lg font-semibold hover:bg-state-success transition-all duration-300"
+              >
+                {{ editingProvider ? 'Actualizar' : 'Crear Proveedor' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <Chatbot />
   </AdminLayout>
 </template>
-
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
@@ -157,7 +299,7 @@ import api from "@/api/api";
 
 export default {
   name: "AdminProviders",
-  components: { AdminLayout ,Chatbot},
+  components: { AdminLayout, Chatbot },
 
   data() {
     return {
@@ -177,13 +319,32 @@ export default {
   computed: {
     filteredProviders() {
       if (!this.searchQuery) return this.providers;
+      const query = this.searchQuery.toLowerCase();
       return this.providers.filter((p) =>
-        p.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+        `${p.name} ${p.email} ${p.serviceType}`.toLowerCase().includes(query)
       );
     },
+    activeProviders() {
+      return this.providers.filter(p => !p.paused && !this.isExpired(p.subscription?.expirationDate)).length;
+    },
+    pausedProviders() {
+      return this.providers.filter(p => p.paused).length;
+    },
+    expiredSubscriptions() {
+      return this.providers.filter(p => this.isExpired(p.subscription?.expirationDate)).length;
+    }
   },
 
   methods: {
+    getInitials(name) {
+      return name?.charAt(0)?.toUpperCase() || 'P';
+    },
+
+    formatDate(date) {
+      if (!date) return 'N/A';
+      return new Date(date).toLocaleDateString("es-VE");
+    },
+
     async fetchProviders() {
       try {
         const { data } = await api.get("/admin/providers");
@@ -204,6 +365,7 @@ export default {
         Object.assign(provider, data);
       } catch (err) {
         console.error("Error pausing subscription:", err);
+        alert("Error al pausar la suscripción");
       }
     },
 
@@ -213,6 +375,7 @@ export default {
         Object.assign(provider, data);
       } catch (err) {
         console.error("Error resuming subscription:", err);
+        alert("Error al reanudar la suscripción");
       }
     },
 
@@ -222,6 +385,7 @@ export default {
         Object.assign(provider, data);
       } catch (err) {
         console.error("Error renewing subscription:", err);
+        alert("Error al renovar la suscripción");
       }
     },
 
@@ -260,17 +424,19 @@ export default {
         this.closeModal();
       } catch (err) {
         console.error("Error saving provider:", err);
+        alert("Error al guardar el proveedor");
       }
     },
 
     async deleteProvider(id) {
-      if (!confirm("Are you sure you want to delete this provider?")) return;
+      if (!confirm("¿Estás seguro de que quieres eliminar este proveedor?")) return;
 
       try {
         await api.delete(`/admin/providers/${id}`);
         this.providers = this.providers.filter((p) => p._id !== id);
       } catch (err) {
         console.error("Error deleting provider:", err);
+        alert("Error al eliminar el proveedor");
       }
     },
   },

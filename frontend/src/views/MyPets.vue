@@ -1,81 +1,205 @@
 <template>
   <Layout>
-    <div class="p-6 max-w-4xl mx-auto bg-neutral-bg min-h-[80vh]">
-      <h1 class="text-2xl font-bold mb-6 text-neutral-dark">Mis Mascotas</h1>
-
-      <div class="mb-6 flex justify-end">
-        <button 
-          @click="showAddModal = true"
-          class="px-4 py-2 bg-primary-mint text-white rounded-lg hover:bg-state-success transition"
-        >
-          + Agregar Mascota
-        </button>
+    <div class="px-6 max-w-6xl mx-auto w-full pt-32">
+      <!-- Header de la página -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-neutral-dark mb-2">Mis Mascotas</h1>
+        <p class="text-neutral-medium text-lg">Gestiona y cuida a tus compañeros peludos</p>
       </div>
 
-      <!-- Listado -->
-      <div v-if="pets.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <!-- Barra de acciones -->
+      <div class="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-neutral-light">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div class="text-neutral-medium text-sm">
+            {{ pets.length }} mascota{{ pets.length !== 1 ? 's' : '' }} registrada{{ pets.length !== 1 ? 's' : '' }}
+          </div>
+          
+          <button 
+            @click="showAddModal = true"
+            class="bg-primary-mint text-white px-6 py-3 rounded-xl font-semibold hover:bg-state-success transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
+          >
+            Agregar Mascota
+          </button>
+        </div>
+      </div>
+
+      <!-- Listado de mascotas -->
+      <div v-if="pets.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
         <div 
           v-for="pet in pets" 
           :key="pet._id" 
-          class="bg-white shadow-lg rounded-2xl p-4 flex flex-col items-center hover:shadow-2xl transition"
+          class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-neutral-light overflow-hidden group"
         >
-          <img :src="pet.image || 'https://placekitten.com/100/100'" alt="Mascota" class="w-32 h-32 object-cover rounded-full mb-2 border border-neutral-medium"/>
-          <h2 class="font-semibold text-lg text-neutral-dark">{{ pet.name }}</h2>
-          <p class="text-neutral-medium text-sm">Tipo: {{ pet.type }}</p>
-          <p class="text-neutral-medium text-sm">Edad: {{ pet.age }} años</p>
+          <!-- Imagen de la mascota -->
+          <div class="relative">
+            <img 
+              :src="pet.image || getDefaultPetImage(pet.type)" 
+              :alt="pet.name"
+              class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            <div class="absolute top-3 right-3">
+              <span class="bg-primary-mint text-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
+                {{ pet.type }}
+              </span>
+            </div>
+          </div>
 
-          <div class="flex gap-2 mt-3">
-            <button 
-              class="px-3 py-1 bg-secondary text-white rounded-lg hover:bg-secondary-dark transition"
-              @click="editPet(pet)"
-            >
-              Editar
-            </button>
-            <button 
-              class="px-3 py-1 bg-state-error text-white rounded-lg hover:opacity-90 transition"
-              @click="deletePet(pet._id)"
-            >
-              Eliminar
-            </button>
+          <!-- Información de la mascota -->
+          <div class="p-5">
+            <h2 class="font-bold text-xl text-neutral-dark mb-2 group-hover:text-primary-mint transition-colors">
+              {{ pet.name }}
+            </h2>
+            
+            <div class="space-y-2 mb-4">
+              <div class="text-sm text-neutral-medium">
+                {{ pet.age }} año{{ pet.age !== 1 ? 's' : '' }}
+              </div>
+              
+              <div class="text-sm text-neutral-medium">
+                ID: {{ pet._id.slice(-6) }}
+              </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex gap-2">
+              <button 
+                class="flex-1 bg-secondary text-white py-2 rounded-lg font-semibold hover:bg-secondary-dark transition-all duration-300 text-sm"
+                @click="editPet(pet)"
+              >
+                Editar
+              </button>
+              
+              <button 
+                class="flex-1 bg-state-error text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition-all duration-300 text-sm"
+                @click="deletePet(pet._id)"
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-else class="text-center text-neutral-medium">No tienes mascotas registradas.</div>
+      <!-- Estado vacío -->
+      <div v-else class="text-center py-16">
+        <div class="w-24 h-24 bg-neutral-light rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-4xl">🐾</span>
+        </div>
+        <h3 class="text-xl font-semibold text-neutral-dark mb-2">No tienes mascotas registradas</h3>
+        <p class="text-neutral-medium mb-6">Comienza agregando tu primera mascota</p>
+        <button 
+          @click="showAddModal = true"
+          class="bg-primary-mint text-white px-8 py-3 rounded-xl font-semibold hover:bg-state-success transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl mx-auto"
+        >
+          Agregar Primera Mascota
+        </button>
+      </div>
+    </div>
 
-      <!-- Modal -->
-      <div v-if="showAddModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div class="bg-neutral-light rounded-2xl p-6 w-96 relative">
-          <h2 class="text-xl font-bold mb-4 text-neutral-dark">{{ editMode ? 'Editar Mascota' : 'Agregar Mascota' }}</h2>
+    <!-- Modal de Mascota -->
+    <div 
+      v-if="showAddModal"
+      class="fixed inset-0 flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-neutral-light">
+        <!-- Header del modal -->
+        <div class="bg-primary-mint p-5 text-white rounded-t-2xl">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-xl font-bold mb-1">{{ editMode ? 'Editar Mascota' : 'Agregar Mascota' }}</h2>
+              <p class="text-sm opacity-90">{{ editMode ? 'Actualiza la información de tu mascota' : 'Registra una nueva mascota en tu cuenta' }}</p>
+            </div>
+            <button @click="closeModal" 
+                    class="text-white hover:text-neutral-light transition-colors p-1 text-lg">
+              ✕
+            </button>
+          </div>
+        </div>
 
-          <label class="block mb-1 text-neutral-dark font-medium">Nombre:</label>
-          <input type="text" v-model="form.name" class="w-full p-2 border border-neutral-medium rounded mb-2"/>
+        <!-- Contenido del modal -->
+        <div class="p-5">
+          <div class="space-y-4">
+            <div>
+              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
+                Nombre de la mascota:
+              </label>
+              <input 
+                type="text" 
+                v-model="form.name" 
+                placeholder="Ej: Max, Luna..."
+                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+              />
+            </div>
 
-          <label class="block mb-1 text-neutral-dark font-medium">Tipo:</label>
-          <select v-model="form.type" class="w-full p-2 border border-neutral-medium rounded mb-2">
-            <option disabled value="">Selecciona</option>
-            <option>Perro</option>
-            <option>Gato</option>
-            <option>Otro</option>
-          </select>
+            <div>
+              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
+                Tipo de mascota:
+              </label>
+              <select 
+                v-model="form.type" 
+                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+              >
+                <option disabled value="">Selecciona el tipo</option>
+                <option>Perro</option>
+                <option>Gato</option>
+                <option>Conejo</option>
+                <option>Ave</option>
+                <option>Otro</option>
+              </select>
+            </div>
 
-          <label class="block mb-1 text-neutral-dark font-medium">Edad:</label>
-          <input type="number" v-model="form.age" class="w-full p-2 border border-neutral-medium rounded mb-2"/>
+            <div>
+              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
+                Edad (años):
+              </label>
+              <input 
+                type="number" 
+                v-model="form.age" 
+                min="0" 
+                max="30"
+                placeholder="0"
+                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+              />
+            </div>
 
-          <label class="block mb-1 text-neutral-dark font-medium">Foto URL:</label>
-          <input type="text" v-model="form.image" class="w-full p-2 border border-neutral-medium rounded mb-4"/>
-
-          <div class="flex justify-end gap-2">
-            <button class="px-4 py-2 rounded bg-neutral-medium text-white" @click="closeModal">Cancelar</button>
-            <button class="px-4 py-2 rounded bg-primary-mint text-white hover:bg-state-success transition" @click="savePet">{{ editMode ? 'Guardar' : 'Agregar' }}</button>
+            <div>
+              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
+                URL de la foto:
+              </label>
+              <input 
+                type="text" 
+                v-model="form.image" 
+                placeholder="https://ejemplo.com/foto.jpg"
+                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+              />
+              <p class="text-xs text-neutral-medium mt-1">Deja vacío para usar una imagen predeterminada</p>
+            </div>
           </div>
 
-          <button class="absolute top-2 right-2 text-neutral-medium hover:text-neutral-dark" @click="closeModal">✕</button>
+          <!-- Botones de acción -->
+          <div class="flex gap-3 mt-6">
+            <button 
+              class="flex-1 bg-neutral-light text-neutral-dark py-3 rounded-lg font-semibold hover:bg-neutral-medium transition-all duration-300"
+              @click="closeModal"
+            >
+              Cancelar
+            </button>
+            
+            <button 
+              class="flex-1 bg-primary-mint text-white py-3 rounded-lg font-semibold hover:bg-state-success transition-all duration-300"
+              @click="savePet"
+              :disabled="!isFormValid"
+            >
+              {{ editMode ? 'Guardar' : 'Agregar' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- CHATBOT FLOTANTE -->
+    <Chatbot />
   </Layout>
-  <Chatbot />
 </template>
 
 <script>
@@ -96,6 +220,12 @@ export default {
     }
   },
 
+  computed: {
+    isFormValid() {
+      return this.form.name && this.form.type && this.form.age !== "";
+    }
+  },
+
   async created() {
     const userStore = useUserStore()
     const token = userStore.token
@@ -103,7 +233,6 @@ export default {
     if (!token) return this.$router.push("/login")
 
     try {
-      // ✔ RUTA CORRECTA: usa el token, NO usa /user/:id
       const { data } = await api.get("/pets", {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -114,6 +243,16 @@ export default {
   },
 
   methods: {
+    getDefaultPetImage(type) {
+      const images = {
+        'Perro': 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop',
+        'Gato': 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=400&fit=crop',
+        'Conejo': 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=400&fit=crop',
+        'Ave': 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400&h=400&fit=crop'
+      };
+      return images[type] || 'https://images.unsplash.com/photo-1453227588063-bb302b62f50b?w=400&h=400&fit=crop';
+    },
+
     closeModal() {
       this.showAddModal = false
       this.editMode = false
@@ -150,7 +289,7 @@ export default {
     },
 
     async deletePet(id) {
-      if (!confirm("¿Eliminar esta mascota?")) return
+      if (!confirm("¿Estás seguro de que quieres eliminar esta mascota?")) return
 
       const userStore = useUserStore()
       const token = userStore.token
@@ -162,8 +301,18 @@ export default {
         this.pets = this.pets.filter(p => p._id !== id)
       } catch (error) {
         console.error("Error al eliminar mascota:", error)
+        alert("Error al eliminar la mascota")
       }
     }
   }
 }
 </script>
+
+<style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>
