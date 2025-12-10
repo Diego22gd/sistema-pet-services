@@ -100,7 +100,6 @@
               @click="openReservationModal(service)"
             >
               <span>Reservar</span>
-              
             </button>
           </div>
         </div>
@@ -116,51 +115,63 @@
       </div>
     </div>
 
-    <!-- Modal de Reserva Simplificado -->
-    <div 
+    <!-- Modal de Reserva con Estilo Mejorado -->
+    <div
       v-if="showReservationModal"
       class="fixed inset-0 flex items-center justify-center z-50 p-4"
     >
-      <div class="bg-white rounded-xl shadow-lg w-full max-w-md border border-neutral-light">
-        <!-- Header del modal -->
-        <div class="bg-primary-mint p-4 text-white rounded-t-xl">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-neutral-light">
+        <!-- Header del modal con gradiente -->
+        <div class="bg-gradient-to-r from-primary-mint to-teal-500 p-6 text-white rounded-t-2xl">
           <div class="flex justify-between items-start">
             <div>
-              <h2 class="text-lg font-bold mb-1">{{ selectedService.name }}</h2>
-              <p class="text-sm opacity-90">{{ selectedService.description }}</p>
+              <h2 class="text-xl font-bold mb-1">Reservar Servicio</h2>
+              <p class="text-sm opacity-90">Completa los datos para agendar tu cita</p>
             </div>
-            <button @click="closeReservationModal" 
-                    class="text-white hover:text-neutral-light transition-colors p-1">
-              
+            <button 
+              @click="closeReservationModal" 
+              class="text-white hover:text-neutral-light transition-colors p-1 text-lg"
+            >
+              ✕
             </button>
           </div>
         </div>
 
         <!-- Contenido del modal -->
-        <div class="p-4">
-          <div class="space-y-4">
+        <div class="p-6">
+          <form @submit.prevent="confirmReservation">
             <!-- Información del servicio -->
-            <div class="bg-neutral-bg rounded-lg p-3">
-              <h3 class="font-semibold text-neutral-dark mb-2 text-sm">Detalles del servicio</h3>
-              <div class="space-y-1 text-xs">
-                <div class="flex justify-between">
-                  <span class="text-neutral-medium">Precio:</span>
-                  <span class="font-bold text-primary-mint">${{ selectedService.price }}</span>
+            <div class="bg-neutral-bg rounded-xl p-4 mb-6 border border-neutral-light">
+              <h3 class="font-semibold text-neutral-dark mb-3 text-sm">Servicio seleccionado</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span class="text-neutral-medium">Servicio:</span>
+                  <p class="font-semibold text-neutral-dark">{{ selectedService.name }}</p>
                 </div>
-                <div class="flex justify-between">
+                <div>
                   <span class="text-neutral-medium">Proveedor:</span>
-                  <span class="font-semibold">{{ selectedService.providerName }}</span>
+                  <p class="font-semibold text-neutral-dark">{{ selectedService.providerName }}</p>
+                </div>
+                <div>
+                  <span class="text-neutral-medium">Precio:</span>
+                  <p class="font-bold text-lg text-primary-mint">${{ selectedService.price }}</p>
+                </div>
+                <div>
+                  <span class="text-neutral-medium">Descripción:</span>
+                  <p class="text-neutral-dark line-clamp-2">{{ selectedService.description }}</p>
                 </div>
               </div>
             </div>
 
             <!-- Formulario de reserva -->
-            <div class="space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label class="block mb-2 font-medium text-neutral-dark text-sm">
-                  Selecciona tu mascota:
-                </label>
-                <select v-model="selectedPetId" class="w-full p-2 border border-neutral-medium rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-mint bg-white text-sm">
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Mascota</label>
+                <select 
+                  v-model="selectedPetId" 
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all text-sm"
+                  required
+                >
                   <option disabled value="">Selecciona una mascota</option>
                   <option v-for="pet in userPets" :key="pet._id" :value="pet._id">
                     {{ pet.name }} ({{ pet.type }})
@@ -169,43 +180,65 @@
               </div>
 
               <div>
-                <label class="block mb-2 font-medium text-neutral-dark text-sm">
-                  Fecha de reserva:
-                </label>
-                <input type="date" v-model="reservationDate" class="w-full p-2 border border-neutral-medium rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-mint bg-white text-sm" />
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Fecha</label>
+                <input 
+                  type="date" 
+                  v-model="reservationDate" 
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all text-sm"
+                  required
+                />
               </div>
 
               <div>
-                <label class="block mb-2 font-medium text-neutral-dark text-sm">
-                  Hora de reserva:
-                </label>
-                <select v-model="reservationTime" class="w-full p-2 border border-neutral-medium rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-mint bg-white text-sm">
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Hora</label>
+                <select 
+                  v-model="reservationTime" 
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all text-sm"
+                  required
+                >
                   <option disabled value="">Selecciona un horario</option>
                   <option v-for="hour in availableHours" :key="hour" :value="hour">{{ hour }}</option>
                 </select>
               </div>
-            </div>
-          </div>
 
-          <!-- Botones de acción -->
-          <div class="flex gap-2 mt-4">
-            <button 
-              class="flex-1 bg-neutral-light text-neutral-dark py-2 rounded-lg font-semibold hover:bg-neutral-medium transition-all duration-300 flex items-center justify-center space-x-1 text-sm"
-              @click="closeReservationModal"
-            >
-              
-              <span>Volver</span>
-            </button>
-            
-            <button 
-              class="flex-1 bg-primary-mint text-white py-2 rounded-lg font-semibold hover:bg-state-success transition-all duration-300 flex items-center justify-center space-x-1 text-sm"
-              @click="confirmReservation"
-              :disabled="!isFormValid"
-            >
-              
-              <span>Confirmar - ${{ selectedService.price }}</span>
-            </button>
-          </div>
+              <div>
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Duración estimada</label>
+                <div class="w-full p-3 border border-neutral-medium rounded-lg bg-neutral-bg text-sm text-neutral-medium">
+                  1 hora aprox.
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumen de la reserva -->
+            <div class="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <h4 class="font-semibold text-blue-800 mb-2 text-sm">Resumen de tu reserva</h4>
+              <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="text-blue-600">Total a pagar:</div>
+                <div class="font-bold text-blue-800 text-right">${{ selectedService.price }}</div>
+                <div class="text-blue-600">Forma de pago:</div>
+                <div class="text-blue-800 text-right">En el establecimiento</div>
+              </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex gap-3 mt-8">
+              <button 
+                type="button" 
+                @click="closeReservationModal"
+                class="flex-1 bg-neutral-light text-neutral-dark py-3 rounded-lg font-semibold hover:bg-neutral-medium transition-all duration-300"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit" 
+                class="flex-1 bg-primary-mint text-white py-3 rounded-lg font-semibold hover:bg-state-success transition-all duration-300"
+                :disabled="!isFormValid"
+                :class="{'opacity-50 cursor-not-allowed': !isFormValid}"
+              >
+                Confirmar Reserva - ${{ selectedService.price }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -218,7 +251,6 @@
 <script>
 import Layout from "@/components/Layout.vue";
 import Chatbot from "@/components/Chatbot.vue";
-
 import { useUserStore } from "@/stores/userStore";
 import api from "@/api/api";
 
@@ -375,10 +407,39 @@ export default {
   overflow: hidden;
 }
 
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.bg-neutral-bg {
+  background-color: #f8fafc;
+}
+
+.border-neutral-light {
+  border-color: #e2e8f0;
+}
+
+.border-neutral-medium {
+  border-color: #cbd5e1;
+}
+
+.text-neutral-dark {
+  color: #1e293b;
+}
+
+.text-neutral-medium {
+  color: #64748b;
+}
+
+.bg-primary-mint {
+  background-color: #0d9488;
+}
+
+.hover\:bg-state-success:hover {
+  background-color: #059669;
+}
+
+.bg-state-error {
+  background-color: #dc2626;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed;
 }
 </style>

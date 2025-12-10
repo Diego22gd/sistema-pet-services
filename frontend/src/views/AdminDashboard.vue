@@ -188,7 +188,7 @@
       </div>
 
       <!-- Métricas Adicionales -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
         <div class="bg-white rounded-2xl shadow-lg p-6 border border-neutral-light">
           <h3 class="font-bold text-lg text-neutral-dark mb-4">Tasa de Conversión</h3>
           <div class="text-3xl font-bold text-primary-mint mb-2">68%</div>

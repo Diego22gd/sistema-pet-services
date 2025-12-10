@@ -11,6 +11,8 @@
     "build:css": "npx tailwindcss -i ./src/assets/input.css -o ./src/assets/output.css --minify"
   },
   "dependencies": {
+    "bootstrap": "^4.6.2",
+    "bootstrap-vue": "^2.23.1",
     "chart.js": "^4.5.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.0",

@@ -96,14 +96,14 @@
       </div>
     </div>
 
-    <!-- Modal de Mascota -->
-    <div 
+    <!-- Modal de Mascota - Estilo Mejorado -->
+    <div
       v-if="showAddModal"
       class="fixed inset-0 flex items-center justify-center z-50 p-4"
     >
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-neutral-light">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-neutral-light">
         <!-- Header del modal -->
-        <div class="bg-primary-mint p-5 text-white rounded-t-2xl">
+        <div class="bg-gradient-to-r from-primary-mint to-teal-500 p-6 text-white rounded-t-2xl">
           <div class="flex justify-between items-start">
             <div>
               <h2 class="text-xl font-bold mb-1">{{ editMode ? 'Editar Mascota' : 'Agregar Mascota' }}</h2>
@@ -117,82 +117,100 @@
         </div>
 
         <!-- Contenido del modal -->
-        <div class="p-5">
-          <div class="space-y-4">
-            <div>
-              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
-                Nombre de la mascota:
-              </label>
-              <input 
-                type="text" 
-                v-model="form.name" 
-                placeholder="Ej: Max, Luna..."
-                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
-              />
+        <div class="p-6">
+          <form @submit.prevent="savePet">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Nombre de la mascota</label>
+                <input 
+                  type="text" 
+                  v-model="form.name" 
+                  placeholder="Ej: Max, Luna..."
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Tipo de mascota</label>
+                <select 
+                  v-model="form.type" 
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                  required
+                >
+                  <option disabled value="">Selecciona el tipo</option>
+                  <option>Perro</option>
+                  <option>Gato</option>
+                  <option>Conejo</option>
+                  <option>Ave</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Edad (años)</label>
+                <input 
+                  type="number" 
+                  v-model="form.age" 
+                  min="0" 
+                  max="30"
+                  placeholder="0"
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">URL de la foto</label>
+                <input 
+                  type="text" 
+                  v-model="form.image" 
+                  placeholder="https://ejemplo.com/foto.jpg"
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                />
+              </div>
             </div>
 
-            <div>
-              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
-                Tipo de mascota:
-              </label>
-              <select 
-                v-model="form.type" 
-                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+            <!-- Vista previa de imagen -->
+            <div v-if="form.image || form.type" class="mt-6 bg-neutral-bg rounded-xl p-4 border border-neutral-light">
+              <h3 class="font-semibold text-neutral-dark mb-3 text-sm">Vista Previa</h3>
+              <div class="flex items-center gap-4">
+                <img 
+                  :src="form.image || getDefaultPetImage(form.type)" 
+                  :alt="form.name || 'Mascota'"
+                  class="w-16 h-16 rounded-lg object-cover border border-neutral-medium"
+                />
+                <div class="text-sm">
+                  <p class="font-semibold text-neutral-dark">{{ form.name || 'Nombre de mascota' }}</p>
+                  <p class="text-neutral-medium">{{ form.type || 'Tipo de mascota' }}</p>
+                  <p class="text-neutral-medium" v-if="form.age">{{ form.age }} año{{ form.age != 1 ? 's' : '' }}</p>
+                </div>
+              </div>
+              <p class="text-xs text-neutral-medium mt-2" v-if="!form.image">
+                Se usará una imagen predeterminada para {{ form.type || 'la mascota' }}
+              </p>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex gap-3 mt-8">
+              <button 
+                type="button"
+                class="flex-1 bg-neutral-light text-neutral-dark py-3 rounded-lg font-semibold hover:bg-neutral-medium transition-all duration-300"
+                @click="closeModal"
               >
-                <option disabled value="">Selecciona el tipo</option>
-                <option>Perro</option>
-                <option>Gato</option>
-                <option>Conejo</option>
-                <option>Ave</option>
-                <option>Otro</option>
-              </select>
+                Cancelar
+              </button>
+              
+              <button 
+                type="submit"
+                class="flex-1 bg-primary-mint text-white py-3 rounded-lg font-semibold hover:bg-state-success transition-all duration-300"
+                :disabled="!isFormValid"
+                :class="{'opacity-50 cursor-not-allowed': !isFormValid}"
+              >
+                {{ editMode ? 'Guardar Cambios' : 'Agregar Mascota' }}
+              </button>
             </div>
-
-            <div>
-              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
-                Edad (años):
-              </label>
-              <input 
-                type="number" 
-                v-model="form.age" 
-                min="0" 
-                max="30"
-                placeholder="0"
-                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
-              />
-            </div>
-
-            <div>
-              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
-                URL de la foto:
-              </label>
-              <input 
-                type="text" 
-                v-model="form.image" 
-                placeholder="https://ejemplo.com/foto.jpg"
-                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
-              />
-              <p class="text-xs text-neutral-medium mt-1">Deja vacío para usar una imagen predeterminada</p>
-            </div>
-          </div>
-
-          <!-- Botones de acción -->
-          <div class="flex gap-3 mt-6">
-            <button 
-              class="flex-1 bg-neutral-light text-neutral-dark py-3 rounded-lg font-semibold hover:bg-neutral-medium transition-all duration-300"
-              @click="closeModal"
-            >
-              Cancelar
-            </button>
-            
-            <button 
-              class="flex-1 bg-primary-mint text-white py-3 rounded-lg font-semibold hover:bg-state-success transition-all duration-300"
-              @click="savePet"
-              :disabled="!isFormValid"
-            >
-              {{ editMode ? 'Guardar' : 'Agregar' }}
-            </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -210,7 +228,7 @@ import { useUserStore } from "@/stores/userStore"
 
 export default {
   name: "MyPets",
-  components: { Layout , Chatbot },
+  components: { Layout, Chatbot },
   data() {
     return {
       pets: [],
@@ -309,10 +327,51 @@ export default {
 </script>
 
 <style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.bg-neutral-bg {
+  background-color: #f8fafc;
+}
+
+.border-neutral-light {
+  border-color: #e2e8f0;
+}
+
+.border-neutral-medium {
+  border-color: #cbd5e1;
+}
+
+.text-neutral-dark {
+  color: #1e293b;
+}
+
+.text-neutral-medium {
+  color: #64748b;
+}
+
+.bg-primary-mint {
+  background-color: #0d9488;
+}
+
+.hover\:bg-state-success:hover {
+  background-color: #059669;
+}
+
+.bg-state-error {
+  background-color: #dc2626;
+}
+
+.hover\:bg-red-600:hover {
+  background-color: #b91c1c;
+}
+
+.bg-secondary {
+  background-color: #8b5cf6;
+}
+
+.hover\:bg-secondary-dark:hover {
+  background-color: #7c3aed;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed;
 }
 </style>

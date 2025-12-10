@@ -68,7 +68,7 @@
           <!-- Header de la cita -->
           <div class="bg-white p-4 text-white">
             <div class="flex justify-between items-start">
-              <h3 class="font-bold text-lg truncate">
+              <h3 class="font-bold text-lg truncate text-neutral-dark">
                 {{ appt.service?.name || "Servicio" }}
               </h3>
               <span :class="['px-2 py-1 rounded-full text-xs font-semibold', statusBadgeClass(appt.status)]">
@@ -78,38 +78,38 @@
           </div>
 
           <!-- Información de la cita -->
-          <div class="p-5 " >
-            <div class="space-y-3 mb-4 ">
+          <div class="p-5">
+            <div class="space-y-3 mb-4">
               <!-- Mascota -->
               <div class="flex items-center text-sm">
-                <span class="font-semibold ml-4 text-neutral-dark mr-2">Mascota:</span>
+                <span class="font-semibold text-neutral-dark mr-2">Mascota:</span>
                 <span class="text-neutral-medium">{{ appt.pet?.name || "No disponible" }}</span>
                 <span class="text-neutral-medium ml-1">({{ appt.pet?.type || "-" }})</span>
               </div>
 
               <!-- Fecha y hora -->
               <div class="flex items-center text-sm">
-                <span class="font-semibold ml-4 text-neutral-dark mr-2">Fecha:</span>
+                <span class="font-semibold text-neutral-dark mr-2">Fecha:</span>
                 <span class="text-neutral-medium">{{ formatDate(appt.date) }} a las {{ appt.time }}</span>
               </div>
 
               <!-- Proveedor -->
-              <div v-if="appt.service?.providerName"  class="flex items-center text-sm">
-                <span class="font-semibold ml-4 text-neutral-dark mr-2">Proveedor:</span>
+              <div v-if="appt.service?.providerName" class="flex items-center text-sm">
+                <span class="font-semibold text-neutral-dark mr-2">Proveedor:</span>
                 <span class="text-neutral-medium">{{ appt.service.providerName }}</span>
               </div>
 
               <!-- Precio -->
               <div v-if="appt.service?.price" class="flex items-center text-sm">
-                <span class="font-semibold ml-4 text-neutral-dark mr-2">Precio:</span>
+                <span class="font-semibold text-neutral-dark mr-2">Precio:</span>
                 <span class="text-primary-mint font-bold">${{ appt.service.price }}</span>
               </div>
             </div>
 
             <!-- Botones de acción -->
-            <div class="flex flex-col gap-2 mb-3 ">
+            <div class="flex flex-col gap-2 mb-3">
               <button
-                class="w-1 bg-secondary text-white py-2 rounded-lg font-semibold hover:bg-secondary-dark transition-all duration-300 text-sm"
+                class="w-full bg-secondary text-white py-2 rounded-lg font-semibold hover:bg-secondary-dark transition-all duration-300 text-sm"
                 @click="viewDetails(appt)"
               >
                 Ver Detalles
@@ -136,14 +136,14 @@
       </div>
     </div>
 
-    <!-- Modal Reprogramar -->
+    <!-- Modal Reprogramar - Estilo Mejorado -->
     <div
       v-if="showModal"
       class="fixed inset-0 flex items-center justify-center z-50 p-4"
     >
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-neutral-light">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-neutral-light">
         <!-- Header del modal -->
-        <div class="bg-primary-mint p-5 text-white rounded-t-2xl">
+        <div class="bg-gradient-to-r from-primary-mint to-teal-500 p-6 text-white rounded-t-2xl">
           <div class="flex justify-between items-start">
             <div>
               <h2 class="text-xl font-bold mb-1">Reprogramar Cita</h2>
@@ -157,60 +157,81 @@
         </div>
 
         <!-- Contenido del modal -->
-        <div class="p-5">
-          <div class="space-y-4">
-            <div>
-              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
-                Nueva Fecha:
-              </label>
-              <input
-                type="date"
-                v-model="newDate"
-                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
-              />
+        <div class="p-6">
+          <form @submit.prevent="confirmReschedule">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Nueva Fecha</label>
+                <input
+                  type="date"
+                  v-model="newDate"
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label class="block mb-3 font-semibold text-neutral-dark text-sm">Nueva Hora</label>
+                <input
+                  type="time"
+                  v-model="newTime"
+                  class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label class="block mb-2 font-semibold text-neutral-dark text-sm">
-                Nueva Hora:
-              </label>
-              <input
-                type="time"
-                v-model="newTime"
-                class="w-full p-3 border border-neutral-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-mint bg-white transition-all"
-              />
+            <!-- Información actual -->
+            <div class="mt-6 bg-neutral-bg rounded-xl p-4 border border-neutral-light">
+              <h3 class="font-semibold text-neutral-dark mb-3 text-sm">Información Actual</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span class="text-neutral-medium">Fecha actual:</span>
+                  <p class="font-semibold text-neutral-dark">{{ formatDate(selectedAppointment?.date) }}</p>
+                </div>
+                <div>
+                  <span class="text-neutral-medium">Hora actual:</span>
+                  <p class="font-semibold text-neutral-dark">{{ selectedAppointment?.time }}</p>
+                </div>
+                <div class="md:col-span-2">
+                  <span class="text-neutral-medium">Servicio:</span>
+                  <p class="font-semibold text-neutral-dark">{{ selectedAppointment?.service?.name }}</p>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- Botones de acción -->
-          <div class="flex gap-3 mt-6">
-            <button 
-              class="flex-1 bg-neutral-light text-neutral-dark py-3 rounded-lg font-semibold hover:bg-neutral-medium transition-all duration-300"
-              @click="closeModal"
-            >
-              Cancelar
-            </button>
-            
-            <button 
-              class="flex-1 bg-primary-mint text-white py-3 rounded-lg font-semibold hover:bg-state-success transition-all duration-300"
-              @click="confirmReschedule"
-              :disabled="!newDate || !newTime"
-            >
-              Confirmar
-            </button>
-          </div>
+            <!-- Botones de acción -->
+            <div class="flex gap-3 mt-8">
+              <button 
+                type="button"
+                class="flex-1 bg-neutral-light text-neutral-dark py-3 rounded-lg font-semibold hover:bg-neutral-medium transition-all duration-300"
+                @click="closeModal"
+              >
+                Cancelar
+              </button>
+              
+              <button 
+                type="submit"
+                class="flex-1 bg-primary-mint text-white py-3 rounded-lg font-semibold hover:bg-state-success transition-all duration-300"
+                :disabled="!newDate || !newTime"
+                :class="{'opacity-50 cursor-not-allowed': !newDate || !newTime}"
+              >
+                Confirmar Cambios
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
 
-    <!-- Modal Detalles -->
+    <!-- Modal Detalles - Estilo Mejorado -->
     <div
       v-if="showDetailsModal"
       class="fixed inset-0 flex items-center justify-center z-50 p-4"
     >
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-neutral-light">
         <!-- Header del modal -->
-        <div class="bg-primary-mint p-5 text-white rounded-t-2xl">
+        <div class="bg-gradient-to-r from-primary-mint to-teal-500 p-6 text-white rounded-t-2xl">
           <div class="flex justify-between items-start">
             <div>
               <h2 class="text-xl font-bold mb-1">Detalles de la Cita</h2>
@@ -224,77 +245,94 @@
         </div>
 
         <!-- Contenido del modal -->
-        <div class="p-5">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Información principal -->
-            <div class="space-y-4">
-              <div class="bg-neutral-bg rounded-lg p-4">
-                <h3 class="font-semibold text-neutral-dark mb-3 text-sm">Información del Servicio</h3>
-                <div class="space-y-2 text-sm">
-                  <div class="flex justify-between">
-                    <span class="text-neutral-medium">Servicio:</span>
-                    <span class="font-semibold">{{ selectedAppointment?.service?.name }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-medium">Precio:</span>
-                    <span class="font-bold text-primary-mint">${{ selectedAppointment?.service?.price || '0' }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-medium">Proveedor:</span>
-                    <span class="font-semibold">{{ selectedAppointment?.service?.providerName || 'No especificado' }}</span>
-                  </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Información del servicio -->
+            <div class="bg-neutral-bg rounded-xl p-4 border border-neutral-light">
+              <h3 class="font-semibold text-neutral-dark mb-4 text-sm flex items-center gap-2">
+                <span>📋</span>
+                Información del Servicio
+              </h3>
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-medium">Servicio:</span>
+                  <span class="font-semibold text-neutral-dark">{{ selectedAppointment?.service?.name }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-medium">Precio:</span>
+                  <span class="font-bold text-primary-mint">${{ selectedAppointment?.service?.price || '0' }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-medium">Proveedor:</span>
+                  <span class="font-semibold text-neutral-dark">{{ selectedAppointment?.service?.providerName || 'No especificado' }}</span>
+                </div>
+                <div class="flex justify-between items-start">
+                  <span class="text-neutral-medium">Descripción:</span>
+                  <span class="text-neutral-dark text-right text-xs max-w-[200px]">
+                    {{ selectedAppointment?.service?.description || selectedAppointment?.details || "Sin descripción adicional" }}
+                  </span>
                 </div>
               </div>
             </div>
 
             <!-- Información de la cita -->
-            <div class="space-y-4">
-              <div class="bg-neutral-bg rounded-lg p-4">
-                <h3 class="font-semibold text-neutral-dark mb-3 text-sm">Detalles de la Cita</h3>
-                <div class="space-y-2 text-sm">
-                  <div class="flex justify-between">
-                    <span class="text-neutral-medium">Mascota:</span>
-                    <span class="font-semibold">{{ selectedAppointment?.pet?.name }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-medium">Tipo:</span>
-                    <span>{{ selectedAppointment?.pet?.type || '-' }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-medium">Fecha:</span>
-                    <span class="font-semibold">{{ formatDate(selectedAppointment?.date) }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-medium">Hora:</span>
-                    <span class="font-semibold">{{ selectedAppointment?.time }}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-medium">Estado:</span>
-                    <span :class="statusBadgeClass(selectedAppointment?.status)" class="px-2 py-1 rounded-full text-xs font-semibold">
-                      {{ translateStatus(selectedAppointment?.status) }}
-                    </span>
-                  </div>
+            <div class="bg-neutral-bg rounded-xl p-4 border border-neutral-light">
+              <h3 class="font-semibold text-neutral-dark mb-4 text-sm flex items-center gap-2">
+                <span>📅</span>
+                Detalles de la Cita
+              </h3>
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-medium">Mascota:</span>
+                  <span class="font-semibold text-neutral-dark">{{ selectedAppointment?.pet?.name }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-medium">Tipo:</span>
+                  <span class="text-neutral-dark">{{ selectedAppointment?.pet?.type || '-' }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-medium">Fecha:</span>
+                  <span class="font-semibold text-neutral-dark">{{ formatDate(selectedAppointment?.date) }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-medium">Hora:</span>
+                  <span class="font-semibold text-neutral-dark">{{ selectedAppointment?.time }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-medium">Estado:</span>
+                  <span :class="statusBadgeClass(selectedAppointment?.status)" class="px-2 py-1 rounded-full text-xs font-semibold">
+                    {{ translateStatus(selectedAppointment?.status) }}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Descripción adicional -->
-          <div class="mt-4 bg-neutral-bg rounded-lg p-4">
-            <h3 class="font-semibold text-neutral-dark mb-2 text-sm">Descripción del Servicio</h3>
-            <p class="text-sm text-neutral-medium">
-              {{ selectedAppointment?.service?.description || selectedAppointment?.details || "Sin descripción adicional" }}
-            </p>
-          </div>
-
-          <!-- Botón de cierre -->
-          <div class="flex justify-end mt-6">
-            <button 
-              class="bg-primary-mint text-white px-6 py-3 rounded-lg font-semibold hover:bg-state-success transition-all duration-300"
-              @click="closeDetailsModal"
-            >
-              Cerrar
-            </button>
+          <!-- Acciones adicionales -->
+          <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <h4 class="font-semibold text-blue-800 mb-2 text-sm">Acciones Disponibles</h4>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-if="selectedAppointment?.status === 'pending' || selectedAppointment?.status === 'confirmed'"
+                class="px-4 py-2 bg-primary-mint text-white rounded-lg hover:bg-state-success transition-all duration-300 text-sm font-medium"
+                @click="onReschedule(selectedAppointment)"
+              >
+                Reprogramar
+              </button>
+              <button
+                v-if="selectedAppointment?.status === 'pending' || selectedAppointment?.status === 'confirmed'"
+                class="px-4 py-2 bg-state-error text-white rounded-lg hover:bg-red-600 transition-all duration-300 text-sm font-medium"
+                @click="onCancel(selectedAppointment)"
+              >
+                Cancelar Cita
+              </button>
+              <button
+                class="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-purple-600 transition-all duration-300 text-sm font-medium"
+                @click="closeDetailsModal"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -396,6 +434,7 @@ const onCancel = async (appt) => {
   try {
     await appointmentService.cancel(appt._id);
     await fetchAppointments();
+    if (showDetailsModal.value) closeDetailsModal();
   } catch (err) {
     console.error(err);
     alert("Error al cancelar la cita");
@@ -408,6 +447,7 @@ const onReschedule = (appt) => {
   newDate.value = appt.date;
   newTime.value = appt.time;
   showModal.value = true;
+  if (showDetailsModal.value) closeDetailsModal();
 };
 
 const confirmReschedule = async () => {
@@ -453,3 +493,53 @@ onMounted(async () => {
   await fetchAppointments();
 });
 </script>
+
+<style scoped>
+.bg-neutral-bg {
+  background-color: #f8fafc;
+}
+
+.border-neutral-light {
+  border-color: #e2e8f0;
+}
+
+.border-neutral-medium {
+  border-color: #cbd5e1;
+}
+
+.text-neutral-dark {
+  color: #1e293b;
+}
+
+.text-neutral-medium {
+  color: #64748b;
+}
+
+.bg-primary-mint {
+  background-color: #0d9488;
+}
+
+.hover\:bg-state-success:hover {
+  background-color: #059669;
+}
+
+.bg-state-error {
+  background-color: #dc2626;
+}
+
+.hover\:bg-red-600:hover {
+  background-color: #b91c1c;
+}
+
+.bg-secondary {
+  background-color: #8b5cf6;
+}
+
+.hover\:bg-purple-600:hover {
+  background-color: #7c3aed;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+</style>
