@@ -1,14 +1,6 @@
 <template>
   <!-- ChatBot Container -->
   <div class="chatbot-container">
-    <!-- Mensaje de ayuda flotante -->
-    <transition name="help-message">
-      <div v-if="!isOpen" class="help-bubble">
-        <div class="help-text">¿Necesitas ayuda?</div>
-        <div class="help-arrow"></div>
-      </div>
-    </transition>
-
     <!-- Botón flotante -->
     <button
       @click="toggleChat"
@@ -161,8 +153,7 @@ export default {
       isLoading: false,
       hasNewMessage: false,
       showScrollArrows: false,
-      userRole: "client",
-      showHelpBubble: true
+      userRole: "client"
     };
   },
   computed: {
@@ -237,12 +228,6 @@ export default {
       this.isOpen = !this.isOpen;
       if (this.isOpen && this.messages.length === 0) {
         this.addWelcomeMessage();
-        this.showHelpBubble = false;
-      } else if (!this.isOpen) {
-        // Mostrar el mensaje de ayuda después de cerrar el chat
-        setTimeout(() => {
-          this.showHelpBubble = true;
-        }, 2000);
       }
       this.hasNewMessage = false;
       this.$nextTick(() => {
@@ -451,11 +436,6 @@ Como **administrador**, puedo ayudarte con:
 
     // También verificar cuando cambia el tamaño de la ventana
     window.addEventListener('resize', this.checkScrollButtons);
-
-    // Ocultar el mensaje de ayuda después de 8 segundos
-    setTimeout(() => {
-      this.showHelpBubble = false;
-    }, 8000);
   },
 
   beforeUnmount() {
@@ -470,79 +450,6 @@ Como **administrador**, puedo ayudarte con:
   bottom: 20px;
   left: 20px;
   z-index: 1000;
-}
-
-/* Mensaje de ayuda flotante */
-.help-bubble {
-  position: absolute;
-  bottom: 70px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  color: #3b82f6;
-  padding: 10px 16px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 2px solid #3b82f6;
-  white-space: nowrap;
-  animation: float 3s ease-in-out infinite;
-  z-index: 1001;
-}
-
-.help-bubble::before {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: white;
-}
-
-.help-bubble::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 10px solid transparent;
-  border-top-color: #3b82f6;
-  margin-top: -2px;
-  z-index: -1;
-}
-
-.help-text {
-  position: relative;
-  z-index: 2;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateX(-50%) translateY(0);
-  }
-  50% {
-    transform: translateX(-50%) translateY(-5px);
-  }
-}
-
-.help-message-enter-active {
-  transition: all 0.3s ease;
-}
-
-.help-message-leave-active {
-  transition: all 0.5s ease;
-}
-
-.help-message-enter-from {
-  opacity: 0;
-  transform: translateX(-50%) translateY(10px);
-}
-
-.help-message-leave-to {
-  opacity: 0;
-  transform: translateX(-50%) translateY(-10px);
 }
 
 /* Botón flotante */
