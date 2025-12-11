@@ -11,6 +11,9 @@
     "build:css": "npx tailwindcss -i ./src/assets/input.css -o ./src/assets/output.css --minify"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.8",
+    "bootstrap-vue-next": "^0.40.9",
     "chart.js": "^4.5.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.0",
@@ -19,9 +22,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "@vitejs/plugin-vue": "^5.1.0",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.13",
     "vite": "^5.3.0"
   }
 }
