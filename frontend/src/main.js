@@ -1,12 +1,12 @@
-// Importa BootstrapVueNext y los estilos CSS
-import { createBootstrap } from 'bootstrap-vue-next';
-import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
-import '@fortawesome/fontawesome-free/css/all.css';
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import App from "./App.vue";
+import router from "./router";
 
-// Crea y monta la aplicación Vue
+import './assets/output.css'
+
+
 const app = createApp(App);
-app.use(createBootstrap()); // Usa el nuevo método de creación
 app.use(createPinia());
 app.use(router);
-app.mount('#app');
+app.mount("#app");
