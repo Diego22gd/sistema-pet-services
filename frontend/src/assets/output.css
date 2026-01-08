@@ -3,6 +3,9 @@
    ======================================= */
 
 /* 1. Cargar capas base de Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 *, ::before, ::after {
   --tw-border-spacing-x: 0;

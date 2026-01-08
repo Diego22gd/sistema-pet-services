@@ -70,6 +70,53 @@ const userSchema = new mongoose.Schema(
       type: subscriptionSchema,
       default: {},
     },
+
+    // ===================== CAMPOS PARA COMERCIOS =====================
+    favoriteBusinesses: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Business'
+    }],
+    
+    recentlyViewedBusinesses: [{
+      business: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Business'
+      },
+      viewedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+
+    // Mascotas del usuario
+    pets: [{
+      name: { type: String, required: true },
+      type: { 
+        type: String, 
+        enum: ["dog", "cat", "bird", "fish", "reptile", "small_mammal", "other"] 
+      },
+      breed: { type: String },
+      age: { type: Number },
+      weight: { type: Number },
+      medicalNotes: { type: String },
+      createdAt: { type: Date, default: Date.now }
+    }],
+
+    // Campos adicionales
+    avatar: {
+      type: String,
+      default: ""
+    },
+    
+    isActive: {
+      type: Boolean,
+      default: true
+    },
+    
+    lastLogin: {
+      type: Date,
+      default: Date.now
+    }
   },
   {
     timestamps: true,

@@ -1,72 +1,96 @@
 <template>
-  <div class="bg-neutral-bg min-h-screen flex flex-col">
-    <!-- Header simplificado para landing -->
-   
-    <header class="fixed top-0 left-0 right-0 w-full z-50 bg-gradient-to-r bg-primary-mint to-teal-500 text-white shadow-xl">
+  <div class="bg-white min-h-screen flex flex-col">
+    <!-- Header verde sólido con navegación lateral -->
+    <header class="fixed top-0 left-0 right-0 w-full z-50 bg-emerald-600 shadow-lg">
       <div class="container mx-auto px-6">
         <div class="flex justify-between items-center py-4">
-          <!-- Logo con diseño mejorado -->
+          <!-- Logo moderno -->
           <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shadow-lg border border-white/20">
-              <span class="text-2xl">🐾</span>
+            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+              <span class="text-2xl text-emerald-600">🐾</span>
             </div>
-            <div class="text-2xl font-bold bg-gradient-to-r from-white to-gray-100 bg-clip-text text-transparent">
+            <div class="text-2xl font-bold text-white">
               PetServices
             </div>
           </div>
 
-          <!-- Botón Home mejorado -->
-          <nav>
+          <!-- Navegación LATERAL siempre visible -->
+          <nav class="flex items-center space-x-4">
+            <!-- Comercios - Hace scroll a la sección -->
+            <a 
+              href="#comercios-destacados"
+              @click.prevent="scrollToSection('comercios-destacados')"
+              class="text-white hover:text-emerald-100 transition-all duration-300 font-medium px-3 py-2 rounded-lg hover:bg-emerald-700 cursor-pointer"
+            >
+              Comercios
+            </a>
+            
+            <!-- Servicios - Hace scroll a la nueva sección -->
+            <a 
+              href="#servicios-completos"
+              @click.prevent="scrollToSection('servicios-completos')"
+              class="text-white hover:text-emerald-100 transition-all duration-300 font-medium px-3 py-2 rounded-lg hover:bg-emerald-700 cursor-pointer"
+            >
+              Servicios
+            </a>
+            
+            <!-- Login -->
             <router-link 
-          to="/login" 
-          class="bg-white text-primary-mint px-4 py-2 rounded-lg font-semibold hover:bg-neutral-light transition hover:shadow-md"
-        >
-          Iniciar Sesión
-        </router-link>
+              to="/login" 
+              class="bg-emerald-600 text-emerald-600 px-6 py-2.5 rounded-lg font-semibold hover:shadow-lg hover:shadow-white/25 hover:scale-105 transition-all duration-300 group"
+            >
+              <span class="group-hover:translate-x-1 transition-transform duration-300">Iniciar Sesión</span>
+            </router-link>
           </nav>
         </div>
       </div>
-
-      <!-- Línea decorativa inferior -->
-      <div class="h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
     </header>
 
-    <!-- Contenido de la Landing Page -->
+    <!-- Contenido principal con tema claro -->
     <main class="flex-1">
-      <!-- Hero Section -->
-      <section class="pt-32 pb-16 md:pb-24 px-6 md:px-20 bg-gradient-to-br from-primary-mint to-emerald-600 text-white rounded-b-[40px] md:rounded-b-[60px] relative overflow-hidden">
-        <!-- Elementos decorativos de fondo -->
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10">
-          <div class="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-white"></div>
-          <div class="absolute top-1/3 -left-20 w-40 h-40 rounded-full bg-white"></div>
-          <div class="absolute bottom-20 right-1/4 w-32 h-32 rounded-full bg-white"></div>
+      <!-- Hero Section Moderna -->
+      <section class="pt-32 pb-16 md:pb-24 px-6 md:px-20 bg-white relative overflow-hidden">
+        <!-- Elementos decorativos -->
+        <div class="absolute inset-0 overflow-hidden">
+          <div class="absolute top-1/4 left-1/4 w-1 h-1 bg-emerald-400 rounded-full animate-pulse"></div>
+          <div class="absolute top-1/3 right-1/3 w-1 h-1 bg-teal-400 rounded-full animate-pulse" style="animation-delay: 0.5s"></div>
+          <div class="absolute bottom-1/4 left-1/3 w-1 h-1 bg-emerald-500 rounded-full animate-pulse" style="animation-delay: 1s"></div>
         </div>
+
+        <!-- Degradados decorativos -->
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-emerald-100 to-transparent rounded-full blur-3xl opacity-30"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-teal-100 to-transparent rounded-full blur-3xl opacity-30"></div>
         
         <div class="container mx-auto max-w-6xl relative z-10">
           <div class="flex flex-col md:flex-row items-center justify-between gap-12">
             <div class="md:w-1/2 fade-up">
-              <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                Cuidamos de tus <span class="text-secondary-light">mascotas</span> como tú 🐾
+              <div class="inline-flex items-center space-x-2 bg-white px-4 py-2 rounded-full mb-6 border border-emerald-200 shadow-sm">
+                <span class="text-emerald-600">🌟</span>
+                <span class="text-sm text-gray-700">#1 en cuidado de mascotas</span>
+              </div>
+              <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-gray-900">
+                Cuidamos de tus Mascotas como familia 🐾
               </h1>
-              <p class="text-lg md:text-xl mb-8 text-white/90 max-w-lg">
-                Encuentra los mejores servicios veterinarios, estéticos y de cuidado para tu compañero peludo. Todo en un solo lugar.
+              <p class="text-lg md:text-xl mb-8 text-gray-700 max-w-lg">
+                Servicios veterinarios premium disponibles 24/7. Encuentra los mejores cuidadores para tu compañero en nuestra comunidad de servicios.
               </p>
               <div class="flex flex-col sm:flex-row gap-4">
-                <router-link to="/services" class="btn-primary text-lg px-8 py-4 text-center font-semibold">
-                  Explorar Servicios
+                <router-link to="/services" class="btn-primary text-lg px-8 py-4 text-center font-semibold group">
+                  <span class="group-hover:translate-x-2 transition-transform duration-300">Explorar Servicios</span>
+                  <span class="ml-2 group-hover:rotate-90 transition-transform duration-300">→</span>
                 </router-link>
-                <router-link to="/register" class="btn-secondary text-lg px-8 py-4 text-center font-semibold">
-                  Crear Cuenta
+                <router-link to="/register" class="btn-secondary text-lg px-8 py-4 text-center font-semibold group">
+                  <span class="group-hover:scale-110 transition-transform duration-300">Crear Cuenta</span>
                 </router-link>
               </div>
               <div class="mt-10 flex items-center">
                 <div class="flex -space-x-3 mr-4">
-                  <div class="w-10 h-10 rounded-full bg-yellow-400 border-2 border-white flex items-center justify-center text-xs font-bold">MG</div>
-                  <div class="w-10 h-10 rounded-full bg-blue-400 border-2 border-white flex items-center justify-center text-xs font-bold">CR</div>
-                  <div class="w-10 h-10 rounded-full bg-purple-400 border-2 border-white flex items-center justify-center text-xs font-bold">AM</div>
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white shadow-lg">MG</div>
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white shadow-lg">CR</div>
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-400 border-2 border-white flex items-center justify-center text-xs font-bold text-white shadow-lg">AM</div>
                 </div>
-                <p class="text-white/80 text-sm">
-                  <span class="font-bold">+2,500</span> clientes satisfechos
+                <p class="text-gray-700 text-sm">
+                  <span class="font-bold text-emerald-600">+2,500</span> clientes felices
                 </p>
               </div>
             </div>
@@ -74,21 +98,19 @@
               <div class="relative">
                 <div class="w-full max-w-md h-80 overflow-hidden rounded-3xl shadow-2xl">
                   <img
-                    src="https://images.pexels.com/photos/1805164/pexels-photo-1805164.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=400&w=500"
+                    src="/pet1.png"
                     alt="Mascotas felices"
                     class="w-full h-full object-cover animate-fadeIn"
                   />
                 </div>
-                <div class="absolute -bottom-6 -right-6 bg-white text-neutral-dark p-4 rounded-2xl shadow-lg max-w-xs">
+                <div class="absolute -bottom-6 -right-6 bg-white p-4 rounded-2xl shadow-lg border border-emerald-100 max-w-xs">
                   <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-primary-mint flex items-center justify-center mr-3">
-                      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                      </svg>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center mr-3">
+                      <span class="text-white text-xl">❤️</span>
                     </div>
                     <div>
-                      <p class="font-bold text-sm">Cuidado certificado</p>
-                      <p class="text-xs text-neutral-medium">Profesionales verificados</p>
+                      <p class="font-bold text-sm text-gray-800">Cuidado certificado</p>
+                      <p class="text-xs text-gray-600">Profesionales verificados</p>
                     </div>
                   </div>
                 </div>
@@ -98,414 +120,1196 @@
         </div>
       </section>
 
-      <!-- Marcas asociadas -->
-      <section class="py-16 bg-neutral-light">
-        <div class="container mx-auto max-w-6xl px-6">
-          <p class="text-center text-neutral-medium mb-10 text-lg">Confían en nosotros</p>
-          <div class="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-70">
-            <div class="text-xl font-bold text-neutral-dark bg-white px-6 py-3 rounded-lg shadow-sm">VetPlus</div>
-            <div class="text-xl font-bold text-neutral-dark bg-white px-6 py-3 rounded-lg shadow-sm">PetCare</div>
-            <div class="text-xl font-bold text-neutral-dark bg-white px-6 py-3 rounded-lg shadow-sm">AnimalLove</div>
-            <div class="text-xl font-bold text-neutral-dark bg-white px-6 py-3 rounded-lg shadow-sm">PawFriends</div>
-            <div class="text-xl font-bold text-neutral-dark bg-white px-6 py-3 rounded-lg shadow-sm">HappyPets</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Servicios destacados -->
-      <section class="py-20 md:py-28 px-6">
-        <div class="container mx-auto max-w-6xl">
-          <div class="text-center mb-16 fade-up">
-            <h2 class="text-3xl md:text-4xl font-bold text-neutral-dark mb-6">Servicios para cada necesidad</h2>
-            <p class="text-lg text-neutral-medium max-w-2xl mx-auto">Desde cuidados básicos hasta servicios especializados, tenemos todo lo que tu mascota necesita.</p>
-          </div>
+      <!-- Comercios Destacados - TEMA CLARO -->
+      <section id="comercios-destacados" class="py-16 md:py-24 px-6 bg-white scroll-mt-20">
+        <div class="container mx-auto max-w-7xl">
           
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <!-- Servicio Veterinaria -->
-            <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 fade-up group border border-gray-100">
-              <div class="w-14 h-14 rounded-xl bg-primary-mint/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                <svg class="w-7 h-7 text-primary-mint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-neutral-dark mb-3">Veterinaria</h3>
-              <p class="text-neutral-medium mb-4">Consultas, vacunación, emergencias y cuidados especializados para la salud de tu mascota.</p>
-              <a href="#" class="text-primary-mint font-medium flex items-center group-hover:translate-x-1 transition-transform duration-300">
-                Ver más
-                <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                </svg>
-              </a>
+          <!-- Header moderno -->
+          <div class="text-center mb-12">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200">
+              <span class="text-2xl text-emerald-600">⭐</span>
             </div>
-            
-            <!-- Servicio Peluquería -->
-            <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 fade-up group border border-gray-100">
-              <div class="w-14 h-14 rounded-xl bg-primary-light/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                <svg class="w-7 h-7 text-primary-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-neutral-dark mb-3">Peluquería</h3>
-              <p class="text-neutral-medium mb-4">Baño, corte de pelo, cepillado y tratamientos estéticos para que tu mascota luzca increíble.</p>
-              <a href="#" class="text-primary-mint font-medium flex items-center group-hover:translate-x-1 transition-transform duration-300">
-                Ver más
-                <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                </svg>
-              </a>
-            </div>
-            
-            <!-- Servicio Guardería -->
-            <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 fade-up group border border-gray-100">
-              <div class="w-14 h-14 rounded-xl bg-primary-mint-light/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                <svg class="w-7 h-7 text-primary-mint-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-neutral-dark mb-3">Guardería</h3>
-              <p class="text-neutral-medium mb-4">Espacios seguros y divertidos donde tu mascota estará cuidada mientras tú no estás.</p>
-              <a href="#" class="text-primary-mint font-medium flex items-center group-hover:translate-x-1 transition-transform duration-300">
-                Ver más
-                <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                </svg>
-              </a>
-            </div>
-            
-            <!-- Servicio Entrenamiento -->
-            <div class="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 fade-up group border border-gray-100">
-              <div class="w-14 h-14 rounded-xl bg-secondary-light flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-neutral-dark mb-3">Entrenamiento</h3>
-              <p class="text-neutral-medium mb-4">Programas de obediencia, socialización y corrección de comportamientos con expertos.</p>
-              <a href="#" class="text-primary-mint font-medium flex items-center group-hover:translate-x-1 transition-transform duration-300">
-                Ver más
-                <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                </svg>
-              </a>
-            </div>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Comercios Destacados
+            </h2>
+            <p class="text-lg text-gray-700 max-w-2xl mx-auto">
+              Descubre los mejores servicios para tu compañero peludo
+            </p>
           </div>
-        </div>
-      </section>
 
-      <!-- CTA para negocios -->
-      <section class="mt-12 mb-12 py-20 md:py-28 px-6 bg-gradient-to-r from-primary-mint to-teal-500 text-white rounded-t-[40px] md:rounded-t-[60px] relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10">
-          <div class="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-white"></div>
-          <div class="absolute top-1/4 -right-20 w-60 h-60 rounded-full bg-white"></div>
-        </div>
-        <div class="container mx-auto max-w-6xl relative z-10">
-          <div class="flex flex-col md:flex-row items-center gap-16">
-            <!-- Contenido de texto a la izquierda -->
-            <div class="w-full md:w-1/2 fade-up">
-              <h2 class="text-3xl md:text-4xl font-bold mb-6">¿Tienes un negocio de mascotas?</h2>
-              <p class="text-lg md:text-xl mb-4 text-white/90 leading-relaxed">
-                Únete a nuestra plataforma y llega a miles de dueños de mascotas que buscan servicios como el tuyo.
-              </p>
+          <!-- Grid de Cards modernas con imágenes del mismo tamaño -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- Card 1 - Veterinaria -->
+            <div class="card-modern group h-full flex flex-col">
+              <!-- Imagen con tamaño fijo -->
+              <figure class="relative h-48 w-full overflow-hidden rounded-t-2xl bg-gradient-to-br from-emerald-50 to-teal-50">
+                <img 
+                  src="/veterinaria.png" 
+                  alt="AnimalCare Veterinaria" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <!-- Badges -->
+                <div class="absolute top-4 right-4">
+                  <div class="badge-primary">
+                    ⭐ 4.8
+                  </div>
+                </div>
+                <div class="absolute top-4 left-4">
+                  <div class="badge-outline">
+                    🏥 VETERINARIA
+                  </div>
+                </div>
+              </figure>
               
-              <!-- Lista de beneficios -->
-              <div class="space-y-6 mb-6">
-                <div class="flex items-start">
-                  
-                  <div>
-                    <h4 class="font-semibold text-lg mb-2">Aumenta tu visibilidad</h4>
-                    <p class="text-white/80">Llega a más clientes en tu zona</p>
+              <div class="card-modern-body p-6 flex-1 flex flex-col">
+                <!-- Header con avatar -->
+                <div class="flex items-start gap-4 mb-4">
+                  <div class="avatar-modern">
+                    <div class="bg-emerald-100 text-emerald-600 w-12 h-12 rounded-xl border border-emerald-200">
+                      <span class="text-2xl">🐕</span>
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="card-title text-lg font-bold text-gray-900">
+                      AnimalCare
+                    </h3>
+                    <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                      <span class="text-emerald-500">📍</span> Centro Comercial Los Pinos
+                    </div>
                   </div>
                 </div>
-                
-                <div class="flex items-start">
-                  
-                  <div>
-                    <h4 class="font-semibold text-lg mb-2">Gestiona reservas fácilmente</h4>
-                    <p class="text-white/80">Sistema de citas automatizado</p>
-                  </div>
+
+                <!-- Descripción -->
+                <p class="text-gray-700 text-sm mb-4 line-clamp-2 flex-grow">
+                  Clínica veterinaria especializada en cuidado preventivo, cirugías y emergencias 24/7.
+                </p>
+
+                <!-- Tags -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <span class="badge-tag">
+                    Consultas
+                  </span>
+                  <span class="badge-tag">
+                    Vacunación
+                  </span>
+                  <span class="badge-tag">
+                    Emergencias
+                  </span>
                 </div>
-                
-                <div class="flex items-start">
-                  
+
+                <!-- Footer con precio y botón -->
+                <div class="card-actions justify-between items-center mt-2">
                   <div>
-                    <h4 class="font-semibold text-Lg mb-2">Recibe pagos seguros</h4>
-                    <p class="text-white/80">Múltiples métodos de pago</p>
+                    <p class="text-lg font-bold text-emerald-600">Desde $25</p>
+                    <p class="text-xs text-gray-500">por consulta</p>
                   </div>
+                  <button 
+                    @click="openModal('animalcare')"
+                    class="btn-modern-sm group"
+                  >
+                    <span>Explorar</span>
+                    <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                  </button>
                 </div>
               </div>
+            </div>
+
+            <!-- Card 2 - Peluquería -->
+            <div class="card-modern group h-full flex flex-col">
+              <figure class="relative h-48 w-full overflow-hidden rounded-t-2xl bg-gradient-to-br from-teal-50 to-cyan-50">
+                <img 
+                  src="/patasybelleza.png" 
+                  alt="Paws & Beauty" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div class="absolute top-4 right-4">
+                  <div class="badge-primary">
+                    ⭐ 4.9
+                  </div>
+                </div>
+                <div class="absolute top-4 left-4">
+                  <div class="badge-outline">
+                    ✂️ PELUQUERÍA
+                  </div>
+                </div>
+              </figure>
               
-              <!-- Botón de acción -->
-              <div class="flex flex-col sm:flex-row gap-4">
-                <button class="btn-secondary text-lg px-8 py-4 font-semibold w-full sm:w-auto text-center">
-                  Registrar mi negocio
-                </button>
-                <button class="border-2 border-white text-white hover:bg-white hover:text-primary-mint transition-all duration-300 text-lg px-8 py-4 font-semibold rounded-xl w-full sm:w-auto text-center">
-                  Más información
-                </button>
-              </div>
-            </div>
-            
-            <!-- Imagen a la derecha -->
-            <div class="w-full md:w-1/2 flex justify-center fade-up">
-              <div class="relative max-w-md">
-                <div class="bg-white/10 backdrop-blur-sm rounded-3xl p-2 border border-white/20">
-                  <div class="w-full h-80 overflow-hidden rounded-2xl shadow-2xl">
-                    <img
-                      src="https://images.pexels.com/photos/416160/pexels-photo-416160.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=400&w=500"
-                      alt="Registro comercio"
-                      class="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                
-                <!-- Badge de estadística -->
-                
-                
-                <!-- Badge de confianza -->
-                <div class="absolute -bottom-4 -right-4 bg-secondary-light text-neutral-dark p-3 rounded-xl shadow-lg">
-                  <div class="flex items-center">
-                    <div class="w-8 h-8 rounded-full bg-primary-mint flex items-center justify-center mr-2">
-                      <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                      </svg>
+              <div class="card-modern-body p-6 flex-1 flex flex-col">
+                <div class="flex items-start gap-4 mb-4">
+                  <div class="avatar-modern">
+                    <div class="bg-teal-100 text-teal-600 w-12 h-12 rounded-xl border border-teal-200">
+                      <span class="text-2xl">✂️</span>
                     </div>
-                    <div>
-                      <p class="font-bold text-sm">+500</p>
-                      <p class="text-xs text-neutral-medium">Negocios activos</p>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="card-title text-lg font-bold text-gray-900">
+                      Paws & Beauty
+                    </h3>
+                    <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                      <span class="text-teal-500">📍</span> Calle Principal #123
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <!-- Testimonios -->
-      <section class="py-32 md:py-40 px-6 bg-neutral-light ">
-        <div class="container mx-auto max-w-6xl">
-          <div class="text-center mb-16 fade-up ">
-            <h2 class="text-3xl md:text-4xl font-bold text-neutral-dark mb-6 py-8 ">Lo que dicen nuestros clientes</h2>
-            <p class="text-lg text-neutral-medium max-w-2xl mx-auto">Experiencias reales de dueños de mascotas que confían en nuestros servicios.</p>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 " >
-            <!-- Testimonio 1 -->
-            <div class="bg-white rounded-2xl p-6 shadow-lg fade-up flex flex-col mb-16">
-              <div class="flex items-center mb-4">
-                <div class="w-12 h-12 rounded-full bg-primary-mint/20 flex items-center justify-center mr-4">
-                  <span class="text-primary-mint font-bold">M</span>
-                </div>
-                <div>
-                  <h4 class="font-bold text-neutral-dark">María González</h4>
-                  <div class="flex text-amber-400">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <p class="text-neutral-medium italic flex-grow">"Encontré el veterinario perfecto para mi gato Simba. La plataforma es muy fácil de usar y pude comparar precios y reseñas antes de decidirme."</p>
-            </div>
-            
-            <!-- Testimonio 2 -->
-            <div class="bg-white rounded-2xl p-6 shadow-lg fade-up flex flex-col mb-16">
-              <div class="flex items-center mb-4">
-                <div class="w-12 h-12 rounded-full bg-primary-light/20 flex items-center justify-center mr-4">
-                  <span class="text-primary-light font-bold">C</span>
-                </div>
-                <div>
-                  <h4 class="font-bold text-neutral-dark">Carlos Rodríguez</h4>
-                  <div class="flex text-amber-400">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <p class="text-neutral-medium italic flex-grow">"La guardería que encontré para mi perro Max es increíble. Tienen espacios amplios y personal calificado. ¡Max siempre vuelve feliz y cansado de jugar!"</p>
-            </div>
-            
-            <!-- Testimonio 3 -->
-            <div class="bg-white rounded-2xl p-6 shadow-lg fade-up flex flex-col mb-16">
-              <div class="flex items-center mb-4">
-                <div class="w-12 h-12 rounded-full bg-primary-mint-light/20 flex items-center justify-center mr-4">
-                  <span class="text-primary-mint-light font-bold">A</span>
-                </div>
-                <div>
-                  <h4 class="font-bold text-neutral-dark">Ana Martínez</h4>
-                  <div class="flex text-amber-400">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <p class="text-neutral-medium italic flex-grow">"Como peluquera canina, PetServices me ha permitido aumentar mi clientela en un 40%. La plataforma es intuitiva y me ayuda a gestionar mis citas eficientemente."</p>
-            </div>
-          </div>
-        </div>
-      </section>
+                <p class="text-gray-700 text-sm mb-4 line-clamp-2 flex-grow">
+                  Spa y peluquería canina premium con tratamientos de lujo y productos orgánicos.
+                </p>
 
-      <!-- FAQ -->
-      <section class="py-20 md:py-28 px-6 mt-16">
-        <div class="container mx-auto max-w-4xl">
-          <div class="text-center mb-16 fade-up">
-            <h2 class="text-3xl md:text-4xl font-bold text-neutral-dark mb-6 mt-6">Preguntas frecuentes</h2>
-            <p class="text-lg text-neutral-medium">Resolvemos tus dudas sobre nuestros servicios</p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <span class="badge-tag">
+                    Baño
+                  </span>
+                  <span class="badge-tag">
+                    Corte
+                  </span>
+                  <span class="badge-tag">
+                    SPA
+                  </span>
+                </div>
+
+                <div class="card-actions justify-between items-center mt-2">
+                  <div>
+                    <p class="text-lg font-bold text-teal-600">Desde $30</p>
+                    <p class="text-xs text-gray-500">servicio básico</p>
+                  </div>
+                  <button 
+                    @click="openModal('pawsbeauty')"
+                    class="btn-modern-sm group"
+                  >
+                    <span>Explorar</span>
+                    <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3 - Guardería -->
+            <div class="card-modern group h-full flex flex-col">
+              <figure class="relative h-48 w-full overflow-hidden rounded-t-2xl bg-gradient-to-br from-purple-50 to-pink-50">
+                <img 
+                  src="/amidogs.png" 
+                  alt="Happy Tails" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div class="absolute top-4 right-4">
+                  <div class="badge-primary">
+                    ⭐ 4.7
+                  </div>
+                </div>
+                <div class="absolute top-4 left-4">
+                  <div class="badge-outline">
+                    🏠 GUARDERÍA
+                  </div>
+                </div>
+              </figure>
+              
+              <div class="card-modern-body p-6 flex-1 flex flex-col">
+                <div class="flex items-start gap-4 mb-4">
+                  <div class="avatar-modern">
+                    <div class="bg-purple-100 text-purple-600 w-12 h-12 rounded-xl border border-purple-200">
+                      <span class="text-2xl">🏠</span>
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="card-title text-lg font-bold text-gray-900">
+                      Happy Tails
+                    </h3>
+                    <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                      <span class="text-purple-500">📍</span> Zona Residencial Norte
+                    </div>
+                  </div>
+                </div>
+
+                <p class="text-gray-700 text-sm mb-4 line-clamp-2 flex-grow">
+                  Guardería con áreas de juego, monitoreo 24/7 y personal certificado.
+                </p>
+
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <span class="badge-tag">
+                    Día completo
+                  </span>
+                  <span class="badge-tag">
+                    Medio día
+                  </span>
+                  <span class="badge-tag">
+                    Paseos
+                  </span>
+                </div>
+
+                <div class="card-actions justify-between items-center mt-2">
+                  <div>
+                    <p class="text-lg font-bold text-purple-600">Desde $20</p>
+                    <p class="text-xs text-gray-500">por día</p>
+                  </div>
+                  <button 
+                    @click="openModal('happytails')"
+                    class="btn-modern-sm group"
+                  >
+                    <span>Explorar</span>
+                    <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 4 - Traumatología -->
+            <div class="card-modern group h-full flex flex-col">
+              <figure class="relative h-48 w-full overflow-hidden rounded-t-2xl bg-gradient-to-br from-blue-50 to-cyan-50">
+                <img 
+                  src="/traumavet.png" 
+                  alt="Traumavet" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div class="absolute top-4 right-4">
+                  <div class="badge-primary">
+                    ⭐ 4.9
+                  </div>
+                </div>
+                <div class="absolute top-4 left-4">
+                  <div class="badge-outline">
+                    🏥 TRAUMATOLOGÍA
+                  </div>
+                </div>
+              </figure>
+              
+              <div class="card-modern-body p-6 flex-1 flex flex-col">
+                <div class="flex items-start gap-4 mb-4">
+                  <div class="avatar-modern">
+                    <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-xl border border-blue-200">
+                      <span class="text-2xl">🏥</span>
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="card-title text-lg font-bold text-gray-900">
+                      Traumavet
+                    </h3>
+                    <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                      <span class="text-blue-500">📍</span> Av. Principal #456
+                    </div>
+                  </div>
+                </div>
+
+                <p class="text-gray-700 text-sm mb-4 line-clamp-2 flex-grow">
+                  Especialistas en traumatología y ortopedia veterinaria.
+                </p>
+
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <span class="badge-tag">
+                    Traumatología
+                  </span>
+                  <span class="badge-tag">
+                    Cirugías
+                  </span>
+                  <span class="badge-tag">
+                    Rayos X
+                  </span>
+                </div>
+
+                <div class="card-actions justify-between items-center mt-2">
+                  <div>
+                    <p class="text-lg font-bold text-blue-600">Desde $40</p>
+                    <p class="text-xs text-gray-500">consulta especializada</p>
+                  </div>
+                  <button 
+                    @click="openModal('traumavet')"
+                    class="btn-modern-sm group"
+                  >
+                    <span>Explorar</span>
+                    <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div class="space-y-6">
-            <div class="bg-white rounded-2xl p-6 shadow-lg fade-up mb-6">
-              <h3 class="text-xl font-bold text-neutral-dark mb-3">¿Cómo puedo reservar un servicio?</h3>
-              <p class="text-neutral-medium">Simplemente busca el servicio que necesitas, selecciona el proveedor que prefieras, elige fecha y hora, y confirma tu reserva. Recibirás una confirmación inmediata.</p>
-            </div>
-            
-            <div class="bg-white rounded-2xl p-6 shadow-lg fade-up mb-6">
-              <h3 class="text-xl font-bold text-neutral-dark mb-3">¿Qué métodos de pago aceptan?</h3>
-              <p class="text-neutral-medium">Aceptamos tarjetas de crédito y débito, transferencias bancarias y PayPal. Todos los pagos se procesan de forma segura a través de nuestra plataforma.</p>
-            </div>
-            
-            <div class="bg-white rounded-2xl p-6 shadow-lg fade-up mb-6">
-              <h3 class="text-xl font-bold text-neutral-dark mb-3">¿Puedo cancelar o modificar una reserva?</h3>
-              <p class="text-neutral-medium">Sí, puedes cancelar o modificar tu reserva hasta 24 horas antes del servicio sin coste adicional. Después de ese plazo, pueden aplicarse cargos según la política del proveedor.</p>
-            </div>
-            
-            <div class="bg-white rounded-2xl p-6 shadow-lg fade-up mb-6">
-              <h3 class="text-xl font-bold text-neutral-dark mb-3">¿Cómo verifican a los proveedores?</h3>
-              <p class="text-neutral-medium">Todos nuestros proveedores pasan por un riguroso proceso de verificación que incluye comprobación de licencias, seguros y referencias. Además, recopilamos y mostramos las valoraciones de otros usuarios.</p>
-            </div>
-          </div>
-          
-          <div class="text-center mt-12 fade-up">
-            <p class="text-neutral-medium mb-6">¿Tienes otra pregunta?</p>
-            <button class="btn-primary text-lg px-8 py-4 font-semibold">
-              Contactar con soporte
+
+          <!-- Botón Ver Todos -->
+          <div class="text-center mt-12">
+            <button class="btn-modern-outline-lg group">
+              <span>Ver todos los comercios</span>
+              <span class="ml-2 group-hover:translate-x-2 transition-transform duration-300">→</span>
             </button>
           </div>
         </div>
       </section>
 
-      <!-- CTA Final -->
-      <section class="py-20 md:py-28 px-6 bg-gradient-to-br from-primary-mint to-teal-500 text-white rounded-[40px] md:rounded-[60px] mx-6 mb-12 text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10">
-          <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-white"></div>
-        </div>
-        
-        <div class="container mx-auto max-w-4xl relative z-10">
-          <h2 class="text-3xl md:text-4xl font-bold mb-6 fade-up">¿Listo para cuidar de tu mascota?</h2>
-          <p class="text-xl mb-8 text-white/90 max-w-2xl mx-auto fade-up">Únete a miles de dueños de mascotas que ya confían en PetServices para el cuidado de sus compañeros.</p>
-          <div class="flex flex-col sm:flex-row justify-center gap-4 fade-up">
-            <router-link to="/services" class="btn-primary text-lg px-8 py-4 text-center font-semibold">
-              Explorar Servicios
-            </router-link>
-            <router-link to="/register" class="btn-secondary text-lg px-8 py-4 text-center font-semibold">
-              Crear Cuenta
+      <!-- NUEVA SECCIÓN: Servicios con imágenes completas -->
+      <section id="servicios-completos" class="py-16 md:py-24 px-6 bg-white scroll-mt-20">
+        <div class="container mx-auto max-w-7xl">
+          
+          <!-- Header moderno -->
+          <div class="text-center mb-12">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200">
+              <span class="text-2xl text-emerald-600">✨</span>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Nuestros Servicios
+            </h2>
+            <p class="text-lg text-gray-700 max-w-2xl mx-auto">
+              Todo lo que tu mascota necesita en un solo lugar
+            </p>
+          </div>
+
+          <!-- Grid de servicios con imágenes completas -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <!-- Servicio 1 - Veterinaria -->
+            <div class="service-card-full group">
+              <div class="service-card-image">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+                <img 
+                  src="/veterinaria.png" 
+                  alt="Servicio Veterinario" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="badge-service mb-2">🏥</div>
+                      <h3 class="text-2xl font-bold text-white mb-2">Veterinaria</h3>
+                      <p class="text-emerald-100">Cuidado médico completo para tu mascota</p>
+                    </div>
+                    <div class="service-price-badge">
+                      <span class="text-xs text-emerald-100">Desde</span>
+                      <p class="text-xl font-bold text-white">$25</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Servicio 2 - Peluquería -->
+            <div class="service-card-full group">
+              <div class="service-card-image">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+                <img 
+                  src="/patasybelleza.png" 
+                  alt="Servicio de Peluquería" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="badge-service mb-2">✂️</div>
+                      <h3 class="text-2xl font-bold text-white mb-2">Peluquería</h3>
+                      <p class="text-emerald-100">Estilo y cuidado para el pelaje de tu mascota</p>
+                    </div>
+                    <div class="service-price-badge">
+                      <span class="text-xs text-emerald-100">Desde</span>
+                      <p class="text-xl font-bold text-white">$30</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Servicio 3 - Guardería -->
+            <div class="service-card-full group">
+              <div class="service-card-image">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+                <img 
+                  src="/amidogs.png" 
+                  alt="Servicio de Guardería" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="badge-service mb-2">🏠</div>
+                      <h3 class="text-2xl font-bold text-white mb-2">Guardería</h3>
+                      <p class="text-emerald-100">Cuidado diurno con diversión garantizada</p>
+                    </div>
+                    <div class="service-price-badge">
+                      <span class="text-xs text-emerald-100">Desde</span>
+                      <p class="text-xl font-bold text-white">$20</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Servicio 4 - Entrenamiento -->
+            <div class="service-card-full group">
+              <div class="service-card-image">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+                <img 
+                  src="https://images.unsplash.com/photo-1548192746-dd526f154ed9?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
+                  alt="Servicio de Entrenamiento" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="badge-service mb-2">🎓</div>
+                      <h3 class="text-2xl font-bold text-white mb-2">Entrenamiento</h3>
+                      <p class="text-emerald-100">Educación y comportamiento canino</p>
+                    </div>
+                    <div class="service-price-badge">
+                      <span class="text-xs text-emerald-100">Desde</span>
+                      <p class="text-xl font-bold text-white">$35</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Servicio 5 - Paseos -->
+            <div class="service-card-full group">
+              <div class="service-card-image">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+                <img 
+                  src="https://images.unsplash.com/photo-1503256207526-0d5d80fa2f47?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
+                  alt="Servicio de Paseos" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="badge-service mb-2">🚶</div>
+                      <h3 class="text-2xl font-bold text-white mb-2">Paseos</h3>
+                      <p class="text-emerald-100">Ejercicio diario para tu mascota</p>
+                    </div>
+                    <div class="service-price-badge">
+                      <span class="text-xs text-emerald-100">Desde</span>
+                      <p class="text-xl font-bold text-white">$15</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Servicio 6 - Traumatología -->
+            <div class="service-card-full group">
+              <div class="service-card-image">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+                <img 
+                  src="/traumavet.png" 
+                  alt="Servicio de Traumatología" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="badge-service mb-2">🏥</div>
+                      <h3 class="text-2xl font-bold text-white mb-2">Traumatología</h3>
+                      <p class="text-emerald-100">Especialistas en ortopedia veterinaria</p>
+                    </div>
+                    <div class="service-price-badge">
+                      <span class="text-xs text-emerald-100">Desde</span>
+                      <p class="text-xl font-bold text-white">$40</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón Ver Todos los Servicios -->
+          <div class="text-center mt-12">
+            <router-link to="/services" class="btn-modern-outline-lg group inline-flex items-center">
+              <span>Explorar todos los servicios</span>
+              <span class="ml-2 group-hover:translate-x-2 transition-transform duration-300">→</span>
             </router-link>
           </div>
         </div>
       </section>
+
+      <!-- Testimonios Modernos -->
+      <section class="py-16 md:py-24 px-6 bg-white relative overflow-hidden">
+        <div class="container mx-auto max-w-6xl relative z-10">
+          <div class="text-center mb-16 fade-up">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200">
+              <span class="text-2xl text-emerald-600">💬</span>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Testimonios de Clientes</h2>
+            <p class="text-lg text-gray-700 max-w-2xl mx-auto">Historias reales de dueños que confían en nuestro cuidado</p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Testimonio 1 -->
+            <div class="testimonial-card-modern fade-up">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center mr-4 shadow-lg">
+                  <span class="text-white font-bold text-lg">MG</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-gray-900 text-lg">María González</h4>
+                  <div class="flex text-amber-400 mt-1">
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                  </div>
+                </div>
+              </div>
+              <p class="text-gray-700 italic">"Encontré el veterinario perfecto para mi gato Simba. La plataforma es muy fácil de usar y pude comparar precios y reseñas antes de decidirme. ¡Altamente recomendado!"</p>
+              <div class="mt-6 pt-6 border-t border-gray-100">
+                <p class="text-sm text-gray-600">Hace 2 semanas · Veterinaria</p>
+              </div>
+            </div>
+            
+            <!-- Testimonio 2 -->
+            <div class="testimonial-card-modern fade-up">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center mr-4 shadow-lg">
+                  <span class="text-white font-bold text-lg">CR</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-gray-900 text-lg">Carlos Rodríguez</h4>
+                  <div class="flex text-amber-400 mt-1">
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                  </div>
+                </div>
+              </div>
+              <p class="text-gray-700 italic">"La guardería que encontré para mi perro Max es increíble. Tienen espacios amplios y personal calificado. ¡Max siempre vuelve feliz y cansado de jugar!"</p>
+              <div class="mt-6 pt-6 border-t border-gray-100">
+                <p class="text-sm text-gray-600">Hace 1 mes · Guardería</p>
+              </div>
+            </div>
+            
+            <!-- Testimonio 3 -->
+            <div class="testimonial-card-modern fade-up">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-orange-400 flex items-center justify-center mr-4 shadow-lg">
+                  <span class="text-white font-bold text-lg">AM</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-gray-900 text-lg">Ana Martínez</h4>
+                  <div class="flex text-amber-400 mt-1">
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                    <span class="text-lg">⭐</span>
+                  </div>
+                </div>
+              </div>
+              <p class="text-gray-700 italic">"Como peluquera canina, PetServices me ha permitido aumentar mi clientela en un 40%. La plataforma es intuitiva y me ayuda a gestionar mis citas eficientemente."</p>
+              <div class="mt-6 pt-6 border-t border-gray-100">
+                <p class="text-sm text-gray-600">Hace 3 meses · Proveedora</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ Moderno -->
+      <section class="py-16 md:py-24 px-6 bg-white">
+        <div class="container mx-auto max-w-4xl">
+          <div class="text-center mb-16 fade-up">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200">
+              <span class="text-2xl text-emerald-600">❓</span>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Preguntas Frecuentes</h2>
+            <p class="text-lg text-gray-700">Resolvemos tus dudas sobre nuestros servicios</p>
+          </div>
+          
+          <div class="space-y-6">
+            <div class="faq-card-modern fade-up">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                  <span class="text-lg">Q</span>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-gray-900 mb-3">¿Cómo puedo reservar un servicio?</h3>
+                  <p class="text-gray-700">Simplemente busca el servicio que necesitas, selecciona el proveedor que prefieras, elige fecha y hora, y confirma tu reserva. Recibirás una confirmación inmediata en tu panel de control.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="faq-card-modern fade-up">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 flex-shrink-0">
+                  <span class="text-lg">Q</span>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-gray-900 mb-3">¿Qué métodos de pago aceptan?</h3>
+                  <p class="text-gray-700">Aceptamos tarjetas de crédito y débito (Visa, MasterCard, American Express), transferencias bancarias y PayPal. Todos los pagos se procesan de forma segura a través de nuestra plataforma encriptada.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="faq-card-modern fade-up">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0">
+                  <span class="text-lg">Q</span>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-gray-900 mb-3">¿Puedo cancelar o modificar una reserva?</h3>
+                  <p class="text-gray-700">Sí, puedes cancelar o modificar tu reserva hasta 24 horas antes del servicio sin coste adicional. Después de ese plazo, pueden aplicarse cargos según la política del proveedor.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="faq-card-modern fade-up">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                  <span class="text-lg">Q</span>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-gray-900 mb-3">¿Cómo verifican a los proveedores?</h3>
+                  <p class="text-gray-700">Todos nuestros proveedores pasan por un riguroso proceso de verificación que incluye comprobación de licencias, seguros, referencias y entrevistas personales.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="text-center mt-12 fade-up">
+            <p class="text-gray-700 mb-6">¿Tienes otra pregunta?</p>
+            <button class="btn-primary text-lg px-8 py-4 font-semibold group">
+              <span>Contactar con soporte</span>
+              <span class="ml-2 group-hover:rotate-45 transition-transform duration-300">📧</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Se eliminó la sección CTA "¿Listo para cuidar de tu mascota?" -->
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-neutral-dark text-white py-12 mt-auto">
+    <!-- MODALES PARA CADA COMERCIO -->
+    <!-- Modal AnimalCare -->
+    <dialog id="modal_animalcare" class="modal-modern" @click.self="closeModal">
+      <div class="modal-modern-box" @click.stop>
+        <div class="modal-modern-header flex justify-between items-start">
+          <div class="flex items-start gap-4">
+            <div class="avatar-modern-lg">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                <span class="text-3xl">🐕</span>
+              </div>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900">AnimalCare</h2>
+              <div class="flex items-center gap-2 mt-2">
+                <div class="badge-outline">🏥 VETERINARIA</div>
+                <div class="badge-rating">⭐ 4.8</div>
+              </div>
+            </div>
+          </div>
+          <button @click="closeModal" class="btn-modal-close">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-modern-content mt-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Columna izquierda: Información -->
+            <div>
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>📍</span> Ubicación
+                </h3>
+                <p class="text-gray-700">Centro Comercial Los Pinos, Calle Principal 123</p>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>⏰</span> Horarios
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="time-card-modern">
+                    <p class="font-bold text-gray-900">Lunes - Viernes</p>
+                    <p class="text-emerald-600">9:00 AM - 8:00 PM</p>
+                  </div>
+                  <div class="time-card-modern">
+                    <p class="font-bold text-gray-900">Sábados</p>
+                    <p class="text-emerald-600">10:00 AM - 6:00 PM</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>📞</span> Contacto
+                </h3>
+                <div class="space-y-2">
+                  <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 123-4567</span></p>
+                  <p class="text-gray-700">📧 Email: <span class="font-bold">info@animalcare.com</span></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna derecha: Servicios y precios -->
+            <div>
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>🩺</span> Servicios y Precios
+                </h3>
+                <div class="space-y-4">
+                  <div v-for="(service, index) in businesses[0].pricing" :key="index" 
+                       class="border border-gray-200 rounded-xl p-4 hover:border-emerald-300 transition-colors">
+                    <div class="flex justify-between items-center mb-2">
+                      <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
+                      <span class="text-xl font-bold text-emerald-600">{{ service.price }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600">{{ service.description }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>🔧</span> Especialidades
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                  <span v-for="(service, index) in businesses[0].services" :key="index" 
+                        class="badge-tag">
+                    {{ service }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <h3 class="modal-section-title">
+              <span>📝</span> Descripción Completa
+            </h3>
+            <p class="text-gray-700 leading-relaxed">
+              {{ businesses[0].fullDescription }}
+            </p>
+          </div>
+        </div>
+
+        <div class="modal-modern-actions">
+          <button @click="closeModal" class="btn-modal-ghost">
+            Cerrar
+          </button>
+          <router-link 
+            to="/login" 
+            class="btn-modal-primary group"
+            @click="closeModal"
+          >
+            <span>Registrarse / Iniciar sesión para reservar</span>
+            <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+          </router-link>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Modal Paws & Beauty -->
+    <dialog id="modal_pawsbeauty" class="modal-modern" @click.self="closeModal">
+      <div class="modal-modern-box" @click.stop>
+        <div class="modal-modern-header flex justify-between items-start">
+          <div class="flex items-start gap-4">
+            <div class="avatar-modern-lg">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-400 flex items-center justify-center">
+                <span class="text-3xl">✂️</span>
+              </div>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900">Paws & Beauty</h2>
+              <div class="flex items-center gap-2 mt-2">
+                <div class="badge-outline">✂️ PELUQUERÍA</div>
+                <div class="badge-rating">⭐ 4.9</div>
+              </div>
+            </div>
+          </div>
+          <button @click="closeModal" class="btn-modal-close">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-modern-content mt-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>📍</span> Ubicación
+                </h3>
+                <p class="text-gray-700">Calle Principal #123, Centro</p>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>⏰</span> Horarios
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="time-card-modern">
+                    <p class="font-bold text-gray-900">Martes - Domingo</p>
+                    <p class="text-teal-600">10:00 AM - 7:00 PM</p>
+                  </div>
+                  <div class="time-card-modern">
+                    <p class="font-bold text-gray-900">Lunes</p>
+                    <p class="text-gray-500">Cerrado</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>📞</span> Contacto
+                </h3>
+                <div class="space-y-2">
+                  <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 987-6543</span></p>
+                  <p class="text-gray-700">📧 Email: <span class="font-bold">contact@pawsbeauty.com</span></p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>💈</span> Servicios y Precios
+                </h3>
+                <div class="space-y-4">
+                  <div v-for="(service, index) in businesses[1].pricing" :key="index" 
+                       class="border border-gray-200 rounded-xl p-4 hover:border-teal-300 transition-colors">
+                    <div class="flex justify-between items-center mb-2">
+                      <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
+                      <span class="text-xl font-bold text-teal-600">{{ service.price }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600">{{ service.description }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>✨</span> Especialidades
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                  <span v-for="(service, index) in businesses[1].services" :key="index" 
+                        class="badge-tag">
+                    {{ service }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <h3 class="modal-section-title">
+              <span>📝</span> Descripción Completa
+            </h3>
+            <p class="text-gray-700 leading-relaxed">
+              {{ businesses[1].fullDescription }}
+            </p>
+          </div>
+        </div>
+
+        <div class="modal-modern-actions">
+          <button @click="closeModal" class="btn-modal-ghost">
+            Cerrar
+          </button>
+          <router-link 
+            to="/login" 
+            class="btn-modal-primary group"
+            @click="closeModal"
+          >
+            <span>Registrarse / Iniciar sesión para reservar</span>
+            <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+          </router-link>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Modal Happy Tails -->
+    <dialog id="modal_happytails" class="modal-modern" @click.self="closeModal">
+      <div class="modal-modern-box" @click.stop>
+        <div class="modal-modern-header flex justify-between items-start">
+          <div class="flex items-start gap-4">
+            <div class="avatar-modern-lg">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center">
+                <span class="text-3xl">🏠</span>
+              </div>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900">Happy Tails</h2>
+              <div class="flex items-center gap-2 mt-2">
+                <div class="badge-outline">🏠 GUARDERÍA</div>
+                <div class="badge-rating">⭐ 4.7</div>
+              </div>
+            </div>
+          </div>
+          <button @click="closeModal" class="btn-modal-close">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-modern-content mt-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>📍</span> Ubicación
+                </h3>
+                <p class="text-gray-700">Zona Residencial Norte, Av. Las Flores 456</p>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>⏰</span> Horarios
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="time-card-modern">
+                    <p class="font-bold text-gray-900">Lunes - Domingo</p>
+                    <p class="text-purple-600">7:00 AM - 9:00 PM</p>
+                  </div>
+                  <div class="time-card-modern">
+                    <p class="font-bold text-gray-900">Emergencias</p>
+                    <p class="text-purple-600">24/7</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>📞</span> Contacto
+                </h3>
+                <div class="space-y-2">
+                  <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 456-7890</span></p>
+                  <p class="text-gray-700">📧 Email: <span class="font-bold">reservas@happytails.com</span></p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>🏠</span> Servicios y Precios
+                </h3>
+                <div class="space-y-4">
+                  <div v-for="(service, index) in businesses[2].pricing" :key="index" 
+                       class="border border-gray-200 rounded-xl p-4 hover:border-purple-300 transition-colors">
+                    <div class="flex justify-between items-center mb-2">
+                      <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
+                      <span class="text-xl font-bold text-purple-600">{{ service.price }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600">{{ service.description }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>🎯</span> Especialidades
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                  <span v-for="(service, index) in businesses[2].services" :key="index" 
+                        class="badge-tag">
+                    {{ service }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <h3 class="modal-section-title">
+              <span>📝</span> Descripción Completa
+            </h3>
+            <p class="text-gray-700 leading-relaxed">
+              {{ businesses[2].fullDescription }}
+            </p>
+          </div>
+        </div>
+
+        <div class="modal-modern-actions">
+          <button @click="closeModal" class="btn-modal-ghost">
+            Cerrar
+          </button>
+          <router-link 
+            to="/login" 
+            class="btn-modal-primary group"
+            @click="closeModal"
+          >
+            <span>Registrarse / Iniciar sesión para reservar</span>
+            <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+          </router-link>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Modal Traumavet -->
+    <dialog id="modal_traumavet" class="modal-modern" @click.self="closeModal">
+      <div class="modal-modern-box" @click.stop>
+        <div class="modal-modern-header flex justify-between items-start">
+          <div class="flex items-start gap-4">
+            <div class="avatar-modern-lg">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+                <span class="text-3xl">🏥</span>
+              </div>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900">Traumavet</h2>
+              <div class="flex items-center gap-2 mt-2">
+                <div class="badge-outline">🏥 TRAUMATOLOGÍA</div>
+                <div class="badge-rating">⭐ 4.9</div>
+              </div>
+            </div>
+          </div>
+          <button @click="closeModal" class="btn-modal-close">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-modern-content mt-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>📍</span> Ubicación
+                </h3>
+                <p class="text-gray-700">Av. Principal #456, Edificio Médico 3</p>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>⏰</span> Horarios
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="time-card-modern">
+                    <p class="font-bold text-gray-900">Lunes - Sábado</p>
+                    <p class="text-blue-600">8:00 AM - 6:00 PM</p>
+                  </div>
+                  <div class="time-card-modern">
+                    <p class="font-bold text-gray-900">Emergencias</p>
+                    <p class="text-blue-600">24/7</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>📞</span> Contacto
+                </h3>
+                <div class="space-y-2">
+                  <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 234-5678</span></p>
+                  <p class="text-gray-700">📧 Email: <span class="font-bold">urgencias@traumavet.com</span></p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>🦴</span> Servicios y Precios
+                </h3>
+                <div class="space-y-4">
+                  <div v-for="(service, index) in businesses[3].pricing" :key="index" 
+                       class="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
+                    <div class="flex justify-between items-center mb-2">
+                      <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
+                      <span class="text-xl font-bold text-blue-600">{{ service.price }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600">{{ service.description }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-section">
+                <h3 class="modal-section-title">
+                  <span>🎯</span> Especialidades
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                  <span v-for="(service, index) in businesses[3].services" :key="index" 
+                        class="badge-tag">
+                    {{ service }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <h3 class="modal-section-title">
+              <span>📝</span> Descripción Completa
+            </h3>
+            <p class="text-gray-700 leading-relaxed">
+              {{ businesses[3].fullDescription }}
+            </p>
+          </div>
+        </div>
+
+        <div class="modal-modern-actions">
+          <button @click="closeModal" class="btn-modal-ghost">
+            Cerrar
+          </button>
+          <router-link 
+            to="/login" 
+            class="btn-modal-primary group"
+            @click="closeModal"
+          >
+            <span>Registrarse / Iniciar sesión para reservar</span>
+            <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+          </router-link>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Footer Moderno Verde -->
+    <footer class="bg-emerald-600 text-white py-12 mt-auto">
       <div class="container mx-auto max-w-6xl px-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <div class="text-2xl font-bold text-primary-mint mb-4">🐾 PetServices</div>
-            <p class="text-neutral-light mb-4">Cuidando de tus mascotas desde 2023 con servicios de calidad y profesionales verificados.</p>
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                <span class="text-xl text-emerald-600">🐾</span>
+              </div>
+              <div class="text-2xl font-bold text-white">
+                PetServices
+              </div>
+            </div>
+            <p class="text-emerald-100 mb-6">Cuidando de tus mascotas desde 2023 con servicios de calidad y profesionales verificados.</p>
             <div class="flex space-x-4">
-              <a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
-                </svg>
+              <a href="#" class="social-icon-modern hover:bg-emerald-700">
+                <span class="text-white">🌐</span>
               </a>
-              <a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"></path>
-                </svg>
+              <a href="#" class="social-icon-modern hover:bg-emerald-700">
+                <span class="text-white">📱</span>
               </a>
-              <a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                  <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
-                </svg>
+              <a href="#" class="social-icon-modern hover:bg-emerald-700">
+                <span class="text-white">📷</span>
+              </a>
+              <a href="#" class="social-icon-modern hover:bg-emerald-700">
+                <span class="text-white">📹</span>
               </a>
             </div>
           </div>
           
           <div>
-            <h3 class="font-bold text-lg mb-4">Servicios</h3>
-            <ul class="space-y-2">
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Veterinaria</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Peluquería</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Guardería</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Entrenamiento</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Paseadores</a></li>
+            <h3 class="font-bold text-lg text-white mb-4">Servicios</h3>
+            <ul class="space-y-3">
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Veterinaria</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Peluquería</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Guardería</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Entrenamiento</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Paseadores</a></li>
             </ul>
           </div>
           
           <div>
-            <h3 class="font-bold text-lg mb-4">Empresa</h3>
-            <ul class="space-y-2">
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Sobre nosotros</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Trabaja con nosotros</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Para negocios</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Blog</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Prensa</a></li>
+            <h3 class="font-bold text-lg text-white mb-4">Empresa</h3>
+            <ul class="space-y-3">
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Sobre nosotros</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Trabaja con nosotros</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Para negocios</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Blog</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Prensa</a></li>
             </ul>
           </div>
           
           <div>
-            <h3 class="font-bold text-lg mb-4">Soporte</h3>
-            <ul class="space-y-2">
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Centro de ayuda</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Contacto</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Política de privacidad</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Términos de servicio</a></li>
-              <li><a href="#" class="text-neutral-light hover:text-white transition-colors duration-300">Cookies</a></li>
+            <h3 class="font-bold text-lg text-white mb-4">Soporte</h3>
+            <ul class="space-y-3">
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Centro de ayuda</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Contacto</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Política de privacidad</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Términos de servicio</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Cookies</a></li>
             </ul>
           </div>
         </div>
         
-        <div class="border-t border-neutral-medium mt-8 pt-8 text-center text-neutral-light">
-          <p>© 2025 PetServices. Todos los derechos reservados.</p>
+        <div class="border-t border-emerald-500 mt-8 pt-8 text-center text-emerald-100">
+          <p class="mb-2">© 2025 PetServices. Todos los derechos reservados.</p>
+          <p class="text-sm">Creado con ❤️ para mascotas felices</p>
         </div>
       </div>
     </footer>
@@ -515,8 +1319,125 @@
 <script>
 export default {
   name: "LandingLayout",
+
+  data() {
+    return {
+      businesses: [
+        {
+          id: 'animalcare',
+          title: "AnimalCare",
+          rating: "4.8",
+          tag: "🏥 VETERINARIA",
+          icon: "🐕",
+          location: "Centro Comercial Los Pinos, Calle Principal 123",
+          hours: "Lunes a Viernes: 9:00 AM - 8:00 PM, Sábados: 10:00 AM - 6:00 PM",
+          fullDescription: "Clínica veterinaria especializada en cuidado preventivo, cirugías y emergencias 24/7. Contamos con equipo de última generación y profesionales certificados con más de 10 años de experiencia. Ofrecemos servicios de hospitalización, laboratorio interno y farmacia veterinaria.",
+          services: ["Consultas", "Vacunación", "Emergencias", "Cirugías", "Hospitalización", "Laboratorio"],
+          pricing: [
+            { service: "Consulta General", price: "$25", description: "Evaluación completa de mascota" },
+            { service: "Vacunación", price: "$15-40", description: "Dependiendo del tipo de vacuna" },
+            { service: "Emergencia 24/7", price: "$50", description: "Incluye evaluación inicial" },
+            { service: "Cirugía Mayor", price: "$200-500", description: "Varía según complejidad" }
+          ],
+          phone: "+1 (555) 123-4567",
+          email: "info@animalcare.com"
+        },
+        {
+          id: 'pawsbeauty',
+          title: "Paws & Beauty",
+          rating: "4.9",
+          tag: "✂️ PELUQUERÍA",
+          icon: "✂️",
+          location: "Calle Principal #123, Centro",
+          hours: "Martes a Domingo: 10:00 AM - 7:00 PM",
+          fullDescription: "Spa y peluquería canina premium con tratamientos de lujo y productos orgánicos. Nos especializamos en razas específicas y ofrecemos servicios personalizados según las necesidades de cada mascota. Usamos productos hipoalergénicos y técnicas de grooming profesionales.",
+          services: ["Baño", "Corte", "SPA", "Cuidado Dental", "Pedicura", "Deslanado"],
+          pricing: [
+            { service: "Baño Básico", price: "$30", description: "Incluye shampoo y secado" },
+            { service: "Corte Completo", price: "$45-65", description: "Según tamaño de mascota" },
+            { service: "SPA Premium", price: "$75", description: "Baño de lujo + masaje" },
+            { service: "Cuidado Dental", price: "$25", description: "Limpieza dental básica" }
+          ],
+          phone: "+1 (555) 987-6543",
+          email: "contact@pawsbeauty.com"
+        },
+        {
+          id: 'happytails',
+          title: "Happy Tails",
+          rating: "4.7",
+          tag: "🏠 GUARDERÍA",
+          icon: "🏠",
+          location: "Zona Residencial Norte, Av. Las Flores 456",
+          hours: "Lunes a Domingo: 7:00 AM - 9:00 PM",
+          fullDescription: "Guardería con áreas de juego, monitoreo 24/7 y personal certificado. Contamos con espacios separados por tamaño y temperamento de mascotas, cámaras de seguridad en todas las áreas y protocolos de emergencia. Ofrecemos reportes diarios de actividades.",
+          services: ["Día completo", "Medio día", "Paseos", "Entrenamiento", "Cuidado Especial", "Transporte"],
+          pricing: [
+            { service: "Día Completo", price: "$20", description: "8 horas de cuidado" },
+            { service: "Medio Día", price: "$12", description: "4 horas de cuidado" },
+            { service: "Paseo Diario", price: "$10", description: "30 minutos de paseo" },
+            { service: "Paquete Semanal", price: "$85", description: "5 días completos" }
+          ],
+          phone: "+1 (555) 456-7890",
+          email: "reservas@happytails.com"
+        },
+        {
+          id: 'traumavet',
+          title: "Traumavet",
+          rating: "4.9",
+          tag: "🏥 TRAUMATOLOGÍA",
+          icon: "🏥",
+          location: "Av. Principal #456, Edificio Médico 3",
+          hours: "Lunes a Sábado: 8:00 AM - 6:00 PM, Emergencias 24/7",
+          fullDescription: "Especialistas en traumatología y ortopedia veterinaria. Centro de referencia para cirugías complejas y rehabilitación. Contamos con sala de Rayos X digital, quirófano equipado y área de recuperación supervisada. Equipo multidisciplinario de especialistas.",
+          services: ["Traumatología", "Cirugías", "Rayos X", "Rehabilitación", "Ortopedia", "Control Post-operatorio"],
+          pricing: [
+            { service: "Consulta Especializada", price: "$40", description: "Evaluación con especialista" },
+            { service: "Rayos X", price: "$60-120", description: "Según número de vistas" },
+            { service: "Cirugía Traumatológica", price: "$300-800", description: "Varía según complejidad" },
+            { service: "Sesión Rehabilitación", price: "$35", description: "Terapia física 45 min" }
+          ],
+          phone: "+1 (555) 234-5678",
+          email: "urgencias@traumavet.com"
+        }
+      ]
+    };
+  },
+
+  methods: {
+    openModal(modalId) {
+      const modal = document.getElementById(`modal_${modalId}`)
+      if (modal) {
+        modal.showModal()
+      }
+    },
+
+    closeModal(event) {
+      // Si se hace click en el backdrop (dialog) o en el botón de cerrar
+      const dialog = event?.target?.closest('dialog')
+      if (dialog) {
+        dialog.close()
+      }
+    },
+
+    // Método para hacer scroll a cualquier sección
+    scrollToSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        const offsetTop = section.offsetTop;
+        const headerHeight = 80; // Altura del header
+        const scrollPosition = offsetTop - headerHeight;
+        
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'smooth'
+        });
+      }
+    }
+  },
+
   mounted() {
     const cards = this.$el.querySelectorAll(".fade-up");
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -528,18 +1449,37 @@ export default {
       },
       { threshold: 0.15 }
     );
+
     cards.forEach((card) => observer.observe(card));
   },
 };
 </script>
 
 <style scoped>
-/* Animaciones Hero y cards */
+/* Añadir padding al elemento html para que el scroll no se superponga con el header */
+html {
+  scroll-padding-top: 80px;
+}
+
+/* Estilos para las secciones con scroll */
+#comercios-destacados,
+#servicios-completos {
+  scroll-margin-top: 80px; /* Espacio para el header fijo */
+}
+
+/* ===== ANIMACIONES ===== */
 @keyframes fadeIn {
   0% { opacity: 0; transform: translateY(20px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .animate-fadeIn { animation: fadeIn 1s ease-out forwards; }
+.animate-pulse { animation: pulse 2s ease-in-out infinite; }
 
 .fade-up {
   opacity: 0;
@@ -548,48 +1488,574 @@ export default {
 }
 .fade-up.show { opacity: 1; transform: translateY(0); }
 
-/* Paleta de colores */
-.bg-primary-mint { background-color: #3EB489; }
-.bg-primary-mint-light { background-color: #7FD1B9; }
-.bg-primary-light { background-color: #A3E1F0; }
-.bg-secondary-light { background-color: #F9F3E3; }
-.text-neutral-dark { color: #333333; }
-.text-neutral-medium { color: #666666; }
-.text-neutral-light { color: #999999; }
-.bg-neutral-light { background-color: #F5F5F5; }
-.bg-neutral-bg { background-color: #FFFFFF; }
-.bg-neutral-dark { background-color: #222222; }
+/* ===== HEADER Y FOOTER FIJOS ===== */
+header {
+  background-color: #059669 !important; /* emerald-600 */
+}
+
+footer {
+  background-color: #059669 !important; /* emerald-600 */
+}
+
+/* Asegurar que los textos sean visibles */
+nav a {
+  color: white !important;
+}
+
+footer .text-emerald-100 {
+  color: #d1fae5 !important; /* emerald-100 */
+}
+
+/* ===== NUEVA SECCIÓN: SERVICIOS CON IMÁGENES COMPLETAS ===== */
+
+.service-card-full {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  position: relative;
+}
+
+.service-card-full:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 2px #10b981,
+    0 0 30px rgba(16, 185, 129, 0.2);
+}
+
+.service-card-image {
+  position: relative;
+  height: 300px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.service-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s ease;
+}
+
+.badge-service {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 1.5rem;
+}
+
+.service-price-badge {
+  background: rgba(16, 185, 129, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 12px;
+  text-align: center;
+  min-width: 80px;
+}
+
+/* ===== COMPONENTES MODERNOS ===== */
+
+/* Cards */
+.card-modern {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-modern:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 0 0 1px #10b981,
+    0 0 20px rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+}
+
+.card-modern-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Badges */
+.badge-primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: bold;
+  font-size: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+
+.badge-outline {
+  background: white;
+  color: #10b981;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: bold;
+  font-size: 0.875rem;
+  border: 1px solid #10b981;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.badge-tag {
+  background: #f0fdfa;
+  color: #0d9488;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  border: 1px solid #99f6e4;
+}
 
 /* Botones */
-.btn-primary { 
-  background-color: #3EB489; 
-  color: #fff; 
-  padding: 1rem 2rem; 
-  border-radius: .75rem; 
-  box-shadow: 0 6px 18px rgba(62,180,137,0.12); 
-  display: inline-block;
+.btn-primary {
+  background: linear-gradient(135deg, #10b981, #0d9488);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 12px;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
   transition: all 0.3s ease;
-}
-.btn-primary:hover { 
-  background-color: #66caa1; 
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(62,180,137,0.2);
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
 }
 
-.btn-secondary { 
-  background-color: #A3E1F0; 
-  color: #17323b; 
-  padding: 1rem 2rem; 
-  border-radius: .75rem; 
-  box-shadow: 0 6px 18px rgba(163,225,240,0.12); 
-  display: inline-block;
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 15px 35px rgba(16, 185, 129, 0.4),
+    0 0 0 2px rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #0d9488, #10b981);
+}
+
+.btn-primary-white {
+  background: white;
+  color: #10b981;
+  padding: 1rem 2rem;
+  border-radius: 12px;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary-white:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 15px 35px rgba(255, 255, 255, 0.3),
+    0 0 0 2px rgba(255, 255, 255, 0.2);
+  background: #f0fdfa;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #10b981;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #10b981;
   transition: all 0.3s ease;
 }
-.btn-secondary:hover { 
-  background-color: #7fd1b9; 
+
+.btn-secondary:hover {
+  background: rgba(16, 185, 129, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.1);
+}
+
+.btn-secondary-white {
+  background: transparent;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary-white:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.1);
+}
+
+.btn-modern-sm {
+  background: white;
+  color: #10b981;
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.btn-modern-sm:hover {
+  background: #f0fdfa;
+  border-color: #10b981;
+  transform: translateX(4px);
+}
+
+.btn-modern-outline-lg {
+  background: transparent;
+  color: #10b981;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid #10b981;
+  transition: all 0.3s ease;
+}
+
+.btn-modern-outline-lg:hover {
+  background: rgba(16, 185, 129, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.1);
+}
+
+/* ===== MODALES MODERNOS ===== */
+.modal-modern {
+  background: transparent;
+  border: none;
+  max-width: 800px;
+  width: 90%;
+  margin: auto;
+  padding: 0;
+}
+
+.modal-modern::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.modal-modern-box {
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px #10b981,
+    0 0 40px rgba(16, 185, 129, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-modern-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #10b981, transparent);
+}
+
+.modal-modern-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.avatar-modern-lg {
+  flex-shrink: 0;
+}
+
+.badge-modal {
+  background: #f0fdfa;
+  color: #10b981;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid #a7f3d0;
+}
+
+.badge-rating {
+  background: #fef3c7;
+  color: #d97706;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid #fcd34d;
+}
+
+.btn-modal-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-modal-close:hover {
+  background: #e5e7eb;
+  transform: rotate(90deg);
+}
+
+.modal-section {
+  margin-bottom: 2rem;
+}
+
+.modal-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.time-card-modern {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.time-card-modern:hover {
+  border-color: #10b981;
+  background: #f0fdfa;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(163,225,240,0.2);
+}
+
+.modal-modern-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+}
+
+.btn-modal-primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-modal-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-modal-outline {
+  background: transparent;
+  color: #10b981;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid #10b981;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-modal-outline:hover {
+  background: rgba(16, 185, 129, 0.1);
+  transform: translateY(-2px);
+}
+
+.btn-modal-ghost {
+  background: transparent;
+  color: #6b7280;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-modal-ghost:hover {
+  background: #f3f4f6;
+  border-color: #10b981;
+}
+
+/* ===== TESTIMONIAL CARDS ===== */
+.testimonial-card-modern {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.testimonial-card-modern:hover {
+  border-color: #10b981;
+  transform: translateY(-5px);
+  box-shadow: 
+    0 15px 30px rgba(0, 0, 0, 0.1),
+    0 0 0 1px #10b981;
+}
+
+/* ===== FAQ CARDS ===== */
+.faq-card-modern {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.faq-card-modern:hover {
+  border-color: #10b981;
+  transform: translateX(5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== SOCIAL ICONS ===== */
+.social-icon-modern {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.social-icon-modern:hover {
+  transform: translateY(-3px) scale(1.1);
+  border-color: currentColor;
+}
+
+/* ===== UTILIDADES ===== */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.modal-modern-backdrop {
+  cursor: pointer;
+}
+
+/* Efectos de brillo en hover */
+.card-modern:hover .avatar-modern > div {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  nav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+  
+  nav a {
+    margin: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .modal-modern-box {
+    padding: 1rem;
+    margin: 1rem;
+  }
+  
+  .modal-modern-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .btn-modal-primary,
+  .btn-modal-outline,
+  .btn-modal-ghost {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .btn-primary,
+  .btn-secondary,
+  .btn-primary-white,
+  .btn-secondary-white {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .card-modern figure {
+    height: 200px;
+  }
+  
+  .service-card-image {
+    height: 250px;
+  }
+}
+
+/* Asegurar altura fija para todas las imágenes de las cards */
+.card-modern figure {
+  height: 192px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.card-modern figure img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Asegurar altura fija para las imágenes de servicios */
+.service-card-full {
+  height: 300px;
 }
 </style>

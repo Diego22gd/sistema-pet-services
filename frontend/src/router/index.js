@@ -8,6 +8,7 @@ import Services from '@/views/Services.vue'
 import Profile from '@/views/Profile.vue'
 import Appointments from '@/views/Appointments.vue'
 import MyPets from '@/views/MyPets.vue'
+import UserCommerces from '@/views/UserCommerces.vue' 
 
 // Vistas de administrador
 import AdminDashboard from '@/views/AdminDashboard.vue'
@@ -18,6 +19,7 @@ import AdminReports from '@/views/AdminReports.vue'
 import AdminServices from '@/views/AdminServices.vue'
 import AdminSettings from '@/views/AdminSettings.vue'
 import AdminUsers from '@/views/AdminUsers.vue'
+import AdminConmerces from '@/views/AdminConmerces.vue' // <-- NUEVO IMPORT
 
 // Vistas de proveedores
 import ProviderDashboard from '@/views/ProviderDashboard.vue'
@@ -26,6 +28,7 @@ import ProviderProfile from '@/views/ProviderProfile.vue'
 import ProviderNotifications from '@/views/ProviderNotifications.vue'
 import ProviderServices from '@/views/ProviderServices.vue'
 import ProviderReports from '@/views/ProviderReports.vue'
+import ProviderConmerces from '@/views/ProviderConmerces.vue' // <-- CORRECCIÓN: ProviderCommerces
 
 const routes = [
   // Rutas clientes
@@ -36,6 +39,11 @@ const routes = [
   { path: '/services', name: 'Services', component: Services },
   { path: '/profile', name: 'Profile', component: Profile },
   { path: '/appointments', name: 'Appointments', component: Appointments },
+  { 
+    path: '/commerces', 
+    name: 'UserCommerces', // <-- NUEVA RUTA PARA USUARIOS
+    component: UserCommerces
+  },
 
   // Rutas administrador
   { path: '/admin', name: 'AdminDashboard', component: AdminDashboard },
@@ -46,6 +54,7 @@ const routes = [
   { path: '/admin/services', name: 'AdminServices', component: AdminServices },
   { path: '/admin/settings', name: 'AdminSettings', component: AdminSettings },
   { path: '/admin/users', name: 'AdminUsers', component: AdminUsers },
+  { path: '/admin/commerces', name: 'AdminCommerces', component: AdminConmerces }, // <-- NUEVA RUTA
 
   // Rutas proveedores
   { path: '/provider/dashboard', name: 'ProviderDashboard', component: ProviderDashboard },
@@ -54,6 +63,7 @@ const routes = [
   { path: '/provider/notifications', name: 'ProviderNotifications', component: ProviderNotifications },
   { path: '/provider/services', name: 'ProviderServices', component: ProviderServices },
   { path: '/provider/reports', name: 'ProviderReports', component: ProviderReports },
+  { path: '/provider/commerces', name: 'ProviderConmerces', component: ProviderConmerces },
 
   // Ruta 404
   { path: '/:pathMatch(.*)*', redirect: '/' } // Redirige a landing page

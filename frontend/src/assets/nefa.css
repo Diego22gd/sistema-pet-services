@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.transform-fade-down-enter-active,
+.transform-fade-down-leave-active {
+  @apply transition-all translate-y-0 duration-300;
+}
+
+.transform-fade-down-enter,
+.transform-fade-down-leave-to {
+  @apply opacity-0 transform -translate-y-2;
+}
+
+.paragraph {
+  @apply text-gray-700 tracking-wide leading-relaxed;
+}
+
+/* remove spinner on number input */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}

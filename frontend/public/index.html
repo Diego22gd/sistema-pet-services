@@ -1,0 +1,29 @@
+<!-- Crea un archivo HTML simple para generar el placeholder -->
+<!DOCTYPE html>
+<html>
+<body>
+  <canvas id="canvas" width="400" height="300"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Fondo
+    ctx.fillStyle = '#f0fdfa';
+    ctx.fillRect(0, 0, 400, 300);
+    
+    // Texto
+    ctx.fillStyle = '#0d9488';
+    ctx.font = '24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🏬', 200, 140);
+    ctx.font = '18px Arial';
+    ctx.fillText('Imagen no disponible', 200, 180);
+    
+    // Guardar como imagen
+    const link = document.createElement('a');
+    link.download = 'placeholder-business.jpg';
+    link.href = canvas.toDataURL('image/jpeg');
+    link.click();
+  </script>
+</body>
+</html>

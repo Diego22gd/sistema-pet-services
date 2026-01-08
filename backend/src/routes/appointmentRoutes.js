@@ -6,13 +6,15 @@ import {
   getAppointmentsByUser,
   getAppointmentById,
   cancelAppointment,
-  rescheduleAppointment
+  rescheduleAppointment,
+   getAppointmentStats
 } from "../controllers/appointmentController.js";
 
 const router = express.Router();
 
 router.post("/", protect, createAppointment);
 router.get("/user/me", protect, getAppointmentsByUser);
+router.get("/stats", getAppointmentStats);   
 router.get("/:id", protect, getAppointmentById);
 
 // Cancelar cita

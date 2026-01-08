@@ -1,66 +1,55 @@
 <template>
-  <div class="bg-neutral-bg min-h-screen flex flex-col">
-    <!-- Header Mejorado -->
-    <header class="fixed top-0 left-0 right-0 w-full z-50 bg-primary-mint text-white shadow-md mb-16">
+  <div class="bg-white min-h-screen flex flex-col">
+    <!-- Header verde sólido con navegación lateral (ESTILO LANDING) -->
+    <header class="fixed top-0 left-0 right-0 w-full z-50 bg-emerald-600 shadow-lg">
       <div class="container mx-auto px-6">
-        <div class="flex justify-between items-center py-3">
-          <!-- Logo con diseño mejorado -->
+        <div class="flex justify-between items-center py-4">
+          <!-- Logo moderno -->
           <div class="flex items-center space-x-3">
-            <div class="relative group">
-              <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shadow-lg border border-white/20 transform group-hover:scale-110 transition-all duration-300">
-                <span class="text-2xl">🐾</span>
-              </div>
-              <div class="absolute -inset-1 bg-white/20 rounded-2xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+              <span class="text-2xl text-emerald-600">🐾</span>
             </div>
             <div class="text-2xl font-bold text-white">
               PetServices
             </div>
           </div>
 
-          <!-- Navegación mejorada -->
-          <nav class="flex items-center space-x-1">
-            <!-- Items de navegación -->
-            <div class="flex items-center space-x-1 bg-white/10 rounded-2xl p-1 border border-white/20">
-              <router-link 
-                v-for="item in navigationItems"
-                :key="item.to"
-                :to="item.to" 
-                class="relative px-4 py-2 rounded-xl font-medium transition-all duration-300 group nav-item text-white hover:text-neutral-light mx-2"
-                :class="{'bg-white/20': $route.path.includes(item.to)}"
-              >
-                <!-- Efecto de fondo al hover -->
-                <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-white/10 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                
-                <!-- Texto e ícono -->
-                <span class="relative z-10 flex items-center space-x-2 text-sm">
-                  <component :is="item.icon" class="w-4 h-4" />
-                  <span>{{ item.label }}</span>
-                </span>
+          <!-- Navegación LATERAL siempre visible -->
+          <nav class="flex items-center space-x-4">
+            <!-- Items de navegación del provider -->
+            <router-link 
+              v-for="item in navigationItems"
+              :key="item.to"
+              :to="item.to" 
+              class="text-white hover:text-emerald-100 transition-all duration-300 font-medium px-3 py-2 rounded-lg hover:bg-emerald-700 cursor-pointer flex items-center space-x-2"
+              :class="{'bg-emerald-700': $route.path.includes(item.to)}"
+            >
+              <span>{{ item.icon }}</span>
+              <span>{{ item.label }}</span>
+            </router-link>
 
-                <!-- Indicador activo -->
-                <div v-if="$route.path.includes(item.to)" class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>
-              </router-link>
-            </div>
+            <!-- Separador -->
+            <div class="w-px h-6 bg-white/30 mx-1"></div>
 
-            <!-- Separador visual -->
-            <div class="w-px h-8 bg-white/20 mx-2"></div>
+            <!-- Comercios - Link a la vista de comercios del proveedor -->
+            <router-link 
+              to="/provider/commerces" 
+              class="text-white hover:text-emerald-100 transition-all duration-300 font-medium px-3 py-2 rounded-lg hover:bg-emerald-700 cursor-pointer flex items-center space-x-2"
+              :class="{'bg-emerald-700': $route.path.includes('/provider/commerces')}"
+            >
+              <span>🏬</span>
+              <span>Mis Comercios</span>
+            </router-link>
+            
+            <!-- Separador -->
+            <div class="w-px h-6 bg-white/30 mx-1"></div>
 
-            <!-- Botón Cerrar Sesión mejorado -->
+            <!-- Botón Cerrar Sesión -->
             <button
               @click="logout"
-              class="btn-danger relative group px-3 py-1 rounded-lg font-semibold transition-all duration-300 transform hover:-translate-y-0.5 flex items-center space-x-2 text-xs ml-4"
+              class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-rose-600/25 hover:scale-105 group flex items-center space-x-2"
             >
-              <!-- Efecto de brillo -->
-              <div class="absolute inset-0 rounded-lg bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              
-              <!-- Ícono y texto -->
-              <svg class="w-3 h-3 transform group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-              </svg>
-              <span class="relative z-10">Cerrar Sesión</span>
-
-              <!-- Efecto de partículas al hover -->
-              <div class="absolute -inset-1 rounded-lg bg-state-error/20 opacity-0 group-hover:opacity-50 blur-sm transition-opacity duration-300"></div>
+              <span>Cerrar Sesión</span>
             </button>
           </nav>
         </div>
@@ -68,14 +57,78 @@
     </header>
 
     <!-- Contenido de la vista -->
-    <main class="flex-1 pt-28 px-6">
+    <main class="flex-1 pt-24">
       <slot />
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-neutral-light text-neutral-dark py-6 mt-auto shadow-inner">
-      <div class="max-w-7xl mx-auto text-center">
-        &copy; 2025 PetServices. Todos los derechos reservados.
+    <!-- Footer Moderno Verde (ESTILO LANDING) -->
+    <footer class="bg-emerald-600 text-white py-12 mt-auto">
+      <div class="container mx-auto max-w-6xl px-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                <span class="text-xl text-emerald-600">🐾</span>
+              </div>
+              <div class="text-2xl font-bold text-white">
+                PetServices
+              </div>
+            </div>
+            <p class="text-emerald-100 mb-6">Cuidando de tus mascotas desde 2023 con servicios de calidad y profesionales verificados.</p>
+            <div class="flex space-x-4">
+              <a href="#" class="social-icon-modern hover:bg-emerald-700">
+                <span class="text-white">🌐</span>
+              </a>
+              <a href="#" class="social-icon-modern hover:bg-emerald-700">
+                <span class="text-white">📱</span>
+              </a>
+              <a href="#" class="social-icon-modern hover:bg-emerald-700">
+                <span class="text-white">📷</span>
+              </a>
+              <a href="#" class="social-icon-modern hover:bg-emerald-700">
+                <span class="text-white">📹</span>
+              </a>
+            </div>
+          </div>
+          
+          <div>
+            <h3 class="font-bold text-lg text-white mb-4">Servicios</h3>
+            <ul class="space-y-3">
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Veterinaria</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Peluquería</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Guardería</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Entrenamiento</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Paseadores</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="font-bold text-lg text-white mb-4">Empresa</h3>
+            <ul class="space-y-3">
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Sobre nosotros</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Trabaja con nosotros</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Para negocios</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Blog</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Prensa</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="font-bold text-lg text-white mb-4">Soporte</h3>
+            <ul class="space-y-3">
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Centro de ayuda</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Contacto</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Política de privacidad</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Términos de servicio</a></li>
+              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Cookies</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="border-t border-emerald-500 mt-8 pt-8 text-center text-emerald-100">
+          <p class="mb-2">© 2025 PetServices. Todos los derechos reservados.</p>
+          <p class="text-sm">Creado con ❤️ para mascotas felices</p>
+        </div>
       </div>
     </footer>
   </div>
@@ -90,78 +143,30 @@ export default {
         {
           to: '/provider/dashboard',
           label: 'Dashboard',
-          icon: 'DashboardIcon'
+          icon: '📊'
         },
         {
           to: '/provider/appointments',
-          label: 'Appointments',
-          icon: 'AppointmentsIcon'
+          label: 'Citas',
+          icon: '📅'
         },
         {
           to: '/provider/profile',
-          label: 'Profile',
-          icon: 'ProfileIcon'
+          label: 'Perfil',
+          icon: '👤'
         },
         {
           to: '/provider/notifications',
-          label: 'Notifications',
-          icon: 'NotificationsIcon'
+          label: 'Notificaciones',
+          icon: '🔔'
         },
-        {
-          to: '/provider/services',
-          label: 'Services',
-          icon: 'ServicesIcon'
-        },
+        
         {
           to: '/provider/reports',
-          label: 'Reports',
-          icon: 'ReportsIcon'
+          label: 'Reportes',
+          icon: '📈'
         }
       ]
-    }
-  },
-  components: {
-    DashboardIcon: {
-      template: `
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-        </svg>
-      `
-    },
-    AppointmentsIcon: {
-      template: `
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-        </svg>
-      `
-    },
-    ProfileIcon: {
-      template: `
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-        </svg>
-      `
-    },
-    NotificationsIcon: {
-      template: `
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM10.24 8.56a5.97 5.97 0 01-4.66-7.11 1 1 0 00-1.14-1.14A9.97 9.97 0 002 12.29 9.96 9.96 0 0012 16c.74 0 1.47-.08 2.18-.23"></path>
-        </svg>
-      `
-    },
-    ServicesIcon: {
-      template: `
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-        </svg>
-      `
-    },
-    ReportsIcon: {
-      template: `
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-      `
     }
   },
   methods: {
@@ -179,50 +184,105 @@ export default {
 </script>
 
 <style scoped>
-/* Animaciones personalizadas */
-.nav-item {
+/* Aplicar los mismos estilos del landing */
+
+/* HEADER FIJADO */
+header {
+  background-color: #059669 !important; /* emerald-600 */
+}
+
+/* Asegurar que los textos sean visibles */
+nav a, nav button {
+  color: white !important;
+}
+
+nav a:hover, nav button:hover {
+  color: #d1fae5 !important; /* emerald-100 */
+}
+
+/* Botón de cerrar sesión con efecto hover */
+.bg-rose-600 {
+  background-color: #dc2626; /* rose-600 */
+}
+
+.bg-rose-600:hover {
+  background-color: #b91c1c; /* rose-700 */
+}
+
+.hover\:shadow-rose-600\/25:hover {
+  box-shadow: 0 10px 15px -3px rgba(220, 38, 38, 0.25);
+}
+
+/* Footer */
+footer {
+  background-color: #059669 !important; /* emerald-600 */
+}
+
+footer .text-emerald-100 {
+  color: #d1fae5 !important; /* emerald-100 */
+}
+
+.social-icon-modern {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.social-icon-modern:hover {
+  transform: translateY(-3px) scale(1.1);
+  border-color: currentColor;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Animación de entrada para header */
+header {
+  transform: translateY(-100%);
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Efecto hover para enlaces de navegación */
+nav a {
   position: relative;
   overflow: hidden;
 }
 
-.nav-item::before {
+nav a::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-  transition: left 0.5s ease-in-out;
-}
-
-.nav-item:hover::before {
-  left: 100%;
-}
-
-/* Efecto de brillo para el botón activo */
-.router-link-active {
-  position: relative;
-}
-
-.router-link-active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
+  bottom: 0;
   left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
+  width: 0;
   height: 2px;
-  background: white;
-  border-radius: 2px;
+  background-color: white;
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
 }
 
-/* Scroll suave para el header */
-header {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+nav a:hover::after {
+  width: 80%;
 }
 
-/* Responsive improvements */
+nav a.bg-emerald-700::after {
+  width: 80%;
+  background-color: #d1fae5;
+}
+
+/* Responsive */
 @media (max-width: 1024px) {
   .container {
     padding-left: 1rem;
@@ -232,10 +292,88 @@ header {
   nav {
     flex-wrap: wrap;
     justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  nav a, nav button {
+    margin: 0.125rem;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem;
   }
 }
 
+@media (max-width: 768px) {
+  .flex.justify-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  nav {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  
+  .w-px {
+    display: none;
+  }
+  
+  .grid.grid-cols-1.md\\:grid-cols-4 {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Scroll suave para el main */
 main {
-  min-height: calc(100vh - 120px); /* Ajusta para footer y header */
+  min-height: calc(100vh - 180px); /* Ajusta para footer y header */
+}
+
+/* Transiciones suaves */
+nav a, nav button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Efecto de elevación para botones */
+nav button {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+nav button:hover {
+  box-shadow: 0 10px 25px rgba(220, 38, 38, 0.25);
+  transform: translateY(-2px);
+}
+
+/* Efecto para enlaces activos */
+.router-link-active {
+  position: relative;
+}
+
+.router-link-active::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  background-color: white;
+  border-radius: 2px;
+}
+
+/* Mejoras para enlaces con íconos */
+nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+nav a span:first-child {
+  font-size: 1.125rem;
+}
+
+/* Separadores más visibles */
+.w-px {
+  background-color: rgba(255, 255, 255, 0.4);
 }
 </style>
