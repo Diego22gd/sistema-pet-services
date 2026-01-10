@@ -1,4 +1,4 @@
-// models/Appointment.js - VERSIÓN EN ESPAÑOL
+// models/Appointment.js - VERSIÓN CORREGIDA
 import mongoose from "mongoose";
 
 const appointmentSchema = new mongoose.Schema(
@@ -13,10 +13,11 @@ const appointmentSchema = new mongoose.Schema(
       ref: "Pet", 
       required: true 
     },
+    // CAMBIO IMPORTANTE: serviceId ahora es opcional
     serviceId: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: "Service", 
-      required: true 
+      required: false // Cambiado de true a false
     },
     providerId: { 
       type: mongoose.Schema.Types.ObjectId, 
@@ -41,16 +42,20 @@ const appointmentSchema = new mongoose.Schema(
       default: "" 
     },
 
+    // Asegurar que estos campos estén siempre disponibles
     serviceName: { 
       type: String, 
+      required: true, // Añadir required para servicio embebido
       default: "Servicio" 
     },
     servicePrice: { 
       type: Number, 
+      required: true, // Añadir required para servicio embebido
       default: 0 
     },
     serviceDuration: { 
       type: Number, 
+      required: true, // Añadir required para servicio embebido
       default: 60 
     },
 
@@ -67,6 +72,12 @@ const appointmentSchema = new mongoose.Schema(
       default: "" 
     },
 
+    // Campo para identificar servicios embebidos
+    isEmbeddedService: {
+      type: Boolean,
+      default: false
+    },
+
     // Estados en español para consistencia con el controlador
     status: {
       type: String,
@@ -80,6 +91,16 @@ const appointmentSchema = new mongoose.Schema(
       default: "pendiente"
     },
 
+    // Historial de cambios de estado
+    statusHistory: [{
+      from: String,
+      to: String,
+      changedAt: Date,
+      changedBy: mongoose.Schema.Types.ObjectId,
+      changedByRole: String,
+      reason: String
+    }],
+
     previousDate: { 
       type: String 
     },
@@ -91,6 +112,7 @@ const appointmentSchema = new mongoose.Schema(
       default: "" 
     },
 
+    // Timestamps de acciones
     cancelledAt: { 
       type: Date 
     },
@@ -101,6 +123,38 @@ const appointmentSchema = new mongoose.Schema(
       type: Date 
     },
 
+    // Usuarios que realizaron acciones
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    createdByRole: {
+      type: String,
+      enum: ["user", "admin", "provider"],
+      default: "user"
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    updatedByRole: {
+      type: String,
+      enum: ["user", "admin", "provider"]
+    },
+    cancelledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    rescheduledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+
+    // Campo para compatibilidad con versiones anteriores
     appointmentCreatedAt: { 
       type: Date, 
       default: Date.now 
@@ -111,9 +165,98 @@ const appointmentSchema = new mongoose.Schema(
   }
 );
 
-// Índices
+// Índices para mejor rendimiento
 appointmentSchema.index({ userId: 1, date: 1, time: 1 });
 appointmentSchema.index({ userId: 1, status: 1 });
+appointmentSchema.index({ providerId: 1, date: 1, status: 1 });
+appointmentSchema.index({ businessId: 1, date: 1 });
+appointmentSchema.index({ serviceId: 1 });
+appointmentSchema.index({ status: 1 });
+appointmentSchema.index({ date: 1 });
+
+// Middleware pre-save para asegurar datos mínimos
+appointmentSchema.pre('save', function(next) {
+  // Si es servicio embebido, asegurar que tengamos nombre de servicio
+  if (this.isEmbeddedService && (!this.serviceName || this.serviceName === '')) {
+    this.serviceName = 'Servicio embebido';
+  }
+  
+  // Asegurar precios y duraciones válidas
+  if (!this.servicePrice || this.servicePrice < 0) {
+    this.servicePrice = 0;
+  }
+  
+  if (!this.serviceDuration || this.serviceDuration <= 0) {
+    this.serviceDuration = 60;
+  }
+  
+  next();
+});
+
+// Método para validar si se puede crear la cita
+appointmentSchema.statics.canCreateAppointment = async function(userId, petId, date, time) {
+  const existingAppointment = await this.findOne({
+    userId,
+    date,
+    time,
+    status: { $nin: ['cancelada', 'completada'] }
+  });
+  
+  return !existingAppointment;
+};
+
+// Método para cambiar estado con validación
+appointmentSchema.methods.changeStatus = function(newStatus, changedBy, changedByRole, reason = '') {
+  const validTransitions = {
+    'pendiente': ['confirmada', 'cancelada'],
+    'confirmada': ['completada', 'cancelada', 'reprogramada'],
+    'reprogramada': ['confirmada', 'cancelada', 'completada'],
+    'completada': [],
+    'cancelada': []
+  };
+  
+  const currentStatus = this.status;
+  
+  if (!validTransitions[currentStatus]) {
+    throw new Error(`Estado actual "${currentStatus}" no tiene transiciones definidas`);
+  }
+  
+  if (!validTransitions[currentStatus].includes(newStatus)) {
+    throw new Error(`No se puede cambiar de "${currentStatus}" a "${newStatus}"`);
+  }
+  
+  // Actualizar estado
+  this.status = newStatus;
+  
+  // Registrar historial
+  if (!this.statusHistory) {
+    this.statusHistory = [];
+  }
+  
+  this.statusHistory.push({
+    from: currentStatus,
+    to: newStatus,
+    changedAt: new Date(),
+    changedBy,
+    changedByRole,
+    reason
+  });
+  
+  // Setear timestamps según el estado
+  const now = new Date();
+  if (newStatus === 'cancelada') {
+    this.cancelledAt = now;
+    this.cancelledBy = changedBy;
+  } else if (newStatus === 'completada') {
+    this.completedAt = now;
+    this.completedBy = changedBy;
+  } else if (newStatus === 'reprogramada') {
+    this.rescheduledAt = now;
+    this.rescheduledBy = changedBy;
+  }
+  
+  return this;
+};
 
 const Appointment = mongoose.model("Appointment", appointmentSchema);
 

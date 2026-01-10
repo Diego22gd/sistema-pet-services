@@ -3,9 +3,14 @@ import Appointment from "../models/Appointment.js";
 import Pet from "../models/Pet.js";
 import Service from "../models/Service.js";
 import Business from "../models/Business.js";
+import { 
+  notifyAppointmentCreated, 
+  notifyAppointmentCancelled,
+  notifyAppointmentRescheduled 
+} from "./notificationsController.js";
 
 // ======================================================
-// 📌 Crear cita (VERSIÓN ACTUALIZADA)
+// 📌 Crear cita (VERSIÓN ACTUALIZADA CON NOTIFICACIONES)
 // ======================================================
 export const createAppointment = async (req, res) => {
   console.log('🔔 Petición POST /appointments recibida');
@@ -132,7 +137,16 @@ export const createAppointment = async (req, res) => {
 
     console.log('✅ Cita creada exitosamente. ID:', appointment._id);
     
-    // 6. Respuesta exitosa
+    // 6. 🔔 CREAR NOTIFICACIÓN PARA EL PROVEEDOR
+    if (appointment.providerId) {
+      console.log(`📨 Creando notificación para proveedor: ${appointment.providerId}`);
+      await notifyAppointmentCreated(appointment);
+      console.log('✅ Notificación creada exitosamente');
+    } else {
+      console.log('ℹ️ No hay proveedor asignado, omitiendo notificación');
+    }
+
+    // 7. Respuesta exitosa
     res.status(201).json({
       success: true,
       message: "✅ Cita creada exitosamente",
@@ -368,7 +382,7 @@ export const getAppointmentById = async (req, res) => {
 };
 
 // ======================================================
-// 📌 Cancelar cita (ACTUALIZADO)
+// 📌 Cancelar cita (ACTUALIZADO CON NOTIFICACIONES)
 // ======================================================
 export const cancelAppointment = async (req, res) => {
   console.log('🔔 Petición PATCH /appointments/:id/cancel recibida');
@@ -410,10 +424,18 @@ export const cancelAppointment = async (req, res) => {
     // Cancelar la cita
     appointment.status = "cancelada";
     appointment.cancelledAt = new Date();
+    appointment.cancelledBy = req.user._id;
     await appointment.save();
 
     console.log('✅ Cita cancelada exitosamente:', appointment._id);
     
+    // 🔔 CREAR NOTIFICACIÓN DE CANCELACIÓN
+    if (appointment.providerId) {
+      console.log(`📨 Creando notificación de cancelación para proveedor: ${appointment.providerId}`);
+      await notifyAppointmentCancelled(appointment, req.user._id, 'Cancelada por el cliente');
+      console.log('✅ Notificación de cancelación creada');
+    }
+
     res.json({
       success: true,
       message: "✅ Cita cancelada correctamente",
@@ -434,7 +456,7 @@ export const cancelAppointment = async (req, res) => {
 };
 
 // ======================================================
-// 📌 Reprogramar cita (ACTUALIZADO)
+// 📌 Reprogramar cita (ACTUALIZADO CON NOTIFICACIONES)
 // ======================================================
 export const rescheduleAppointment = async (req, res) => {
   console.log('🔔 Petición PATCH /appointments/:id/reschedule recibida');
@@ -507,6 +529,7 @@ export const rescheduleAppointment = async (req, res) => {
     appointment.time = time;
     appointment.status = "reprogramada";
     appointment.rescheduledAt = new Date();
+    appointment.rescheduledBy = req.user._id;
     appointment.rescheduleReason = reason || '';
     appointment.previousDate = previousDate;
     appointment.previousTime = previousTime;
@@ -514,6 +537,13 @@ export const rescheduleAppointment = async (req, res) => {
     await appointment.save();
 
     console.log('✅ Cita reprogramada exitosamente:', appointment._id);
+    
+    // 🔔 CREAR NOTIFICACIÓN DE REPROGRAMACIÓN
+    if (appointment.providerId) {
+      console.log(`📨 Creando notificación de reprogramación para proveedor: ${appointment.providerId}`);
+      await notifyAppointmentRescheduled(appointment, req.user._id, previousDate, previousTime, reason);
+      console.log('✅ Notificación de reprogramación creada');
+    }
     
     res.json({
       success: true,
@@ -584,4 +614,276 @@ export const getAppointmentStats = async (req, res) => {
       message: "Error obteniendo estadísticas" 
     });
   }
+};
+
+// ======================================================
+// 📌 Actualizar estado de cita (CLIENTE)
+// ======================================================
+export const updateAppointmentStatus = async (req, res) => {
+  console.log('🔔 Petición PUT /appointments/:id/status recibida');
+  console.log('📌 Cita ID:', req.params.id);
+  console.log('📦 Estado:', req.body.status);
+  console.log('👤 Usuario:', req.user._id);
+  
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ 
+        success: false,
+        message: "El estado es requerido" 
+      });
+    }
+
+    // Validar estado
+    const validStatuses = ['pendiente', 'confirmada', 'cancelada', 'completada', 'reprogramada'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        success: false,
+        message: `Estado inválido. Debe ser uno de: ${validStatuses.join(', ')}` 
+      });
+    }
+
+    // Buscar la cita
+    const appointment = await Appointment.findOne({
+      _id: id,
+      userId: req.user._id
+    });
+
+    if (!appointment) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Cita no encontrada" 
+      });
+    }
+
+    // Validar transición de estado
+    const validTransitions = {
+      'pendiente': ['confirmada', 'cancelada'],
+      'confirmada': ['completada', 'cancelada', 'reprogramada'],
+      'reprogramada': ['confirmada', 'cancelada', 'completada'],
+      'completada': [],
+      'cancelada': []
+    };
+
+    const currentStatus = appointment.status;
+    if (validTransitions[currentStatus] && !validTransitions[currentStatus].includes(status)) {
+      return res.status(400).json({ 
+        success: false,
+        message: `No se puede cambiar de ${currentStatus} a ${status}`
+      });
+    }
+
+    // Guardar estado anterior para historial
+    const previousStatus = appointment.status;
+    
+    // Actualizar estado
+    appointment.status = status;
+    appointment.updatedAt = new Date();
+    
+    // Agregar timestamp según el estado
+    if (status === 'cancelada') {
+      appointment.cancelledAt = new Date();
+      appointment.cancelledBy = req.user._id;
+    } else if (status === 'completada') {
+      appointment.completedAt = new Date();
+    } else if (status === 'reprogramada') {
+      appointment.rescheduledAt = new Date();
+      appointment.rescheduledBy = req.user._id;
+    }
+    
+    // Guardar historial de cambios de estado
+    if (!appointment.statusHistory) {
+      appointment.statusHistory = [];
+    }
+    
+    appointment.statusHistory.push({
+      from: previousStatus,
+      to: status,
+      changedAt: new Date(),
+      changedBy: req.user._id,
+      changedByRole: 'client'
+    });
+    
+    await appointment.save();
+
+    console.log('✅ Estado de cita actualizado por cliente:', appointment._id, `${previousStatus} → ${status}`);
+    
+    // 🔔 NOTIFICAR AL PROVEEDOR SOBRE EL CAMBIO DE ESTADO
+    if (appointment.providerId) {
+      console.log(`📨 Notificando cambio de estado a proveedor: ${appointment.providerId}`);
+      
+      // Importar dinámicamente para evitar dependencia circular
+      const { createNotification } = await import('./notificationsController.js');
+      
+      const message = `El cliente ha cambiado el estado de la cita del ${appointment.date} a las ${appointment.time} de ${previousStatus} a ${status}`;
+      
+      await createNotification({
+        providerId: appointment.providerId,
+        type: "appointment_updated",
+        title: "✏️ Estado de cita actualizado",
+        message: message,
+        appointmentId: appointment._id,
+        userId: req.user._id,
+        metadata: {
+          appointmentDate: appointment.date,
+          appointmentTime: appointment.time,
+          serviceName: appointment.serviceName,
+          previousStatus,
+          newStatus: status,
+          changedAt: new Date()
+        }
+      });
+      
+      console.log('✅ Notificación de cambio de estado creada');
+    }
+    
+    res.json({
+      success: true,
+      message: `✅ Cita ${status} correctamente`,
+      appointment: {
+        _id: appointment._id,
+        status: appointment.status,
+        previousStatus,
+        updatedAt: appointment.updatedAt,
+        statusHistory: appointment.statusHistory
+      }
+    });
+
+  } catch (err) {
+    console.error("❌ Error actualizando estado de cita:", err);
+    
+    if (err.name === 'CastError') {
+      return res.status(400).json({ 
+        success: false,
+        message: "ID de cita inválido" 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false,
+      message: "Error del servidor al actualizar estado",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// ======================================================
+// 📌 Función para actualizar estado y notificar
+// ======================================================
+const updateStatusAndNotify = async (appointmentId, status, userId, reason = '') => {
+  try {
+    const appointment = await Appointment.findById(appointmentId);
+    
+    if (!appointment) {
+      throw new Error('Cita no encontrada');
+    }
+    
+    const previousStatus = appointment.status;
+    
+    // Actualizar estado
+    appointment.status = status;
+    appointment.updatedAt = new Date();
+    
+    if (status === 'cancelada') {
+      appointment.cancelledAt = new Date();
+      appointment.cancelledBy = userId;
+      appointment.cancellationReason = reason;
+    } else if (status === 'completada') {
+      appointment.completedAt = new Date();
+    } else if (status === 'reprogramada') {
+      appointment.rescheduledAt = new Date();
+      appointment.rescheduledBy = userId;
+    }
+    
+    // Guardar historial
+    if (!appointment.statusHistory) {
+      appointment.statusHistory = [];
+    }
+    
+    appointment.statusHistory.push({
+      from: previousStatus,
+      to: status,
+      changedAt: new Date(),
+      changedBy: userId,
+      changedByRole: 'system',
+      reason: reason
+    });
+    
+    await appointment.save();
+    
+    // Notificar al proveedor si hay cambio de estado
+    if (appointment.providerId && previousStatus !== status) {
+      // Importar dinámicamente
+      const { createNotification } = await import('./notificationsController.js');
+      
+      const user = await import("../models/User.js")
+        .then(mod => mod.default)
+        .then(User => User.findById(userId).select('name role'));
+      
+      const message = `El estado de la cita del ${appointment.date} a las ${appointment.time} ha cambiado de ${previousStatus} a ${status}`;
+      
+      await createNotification({
+        providerId: appointment.providerId,
+        type: "appointment_updated",
+        title: `📊 Estado actualizado: ${status}`,
+        message: message,
+        appointmentId: appointment._id,
+        userId: userId,
+        metadata: {
+          appointmentDate: appointment.date,
+          appointmentTime: appointment.time,
+          serviceName: appointment.serviceName,
+          previousStatus,
+          newStatus: status,
+          changedBy: user?.name || 'Sistema',
+          changedByRole: user?.role || 'system',
+          reason: reason,
+          changedAt: new Date()
+        }
+      });
+    }
+    
+    return appointment;
+    
+  } catch (error) {
+    console.error('❌ Error en updateStatusAndNotify:', error);
+    throw error;
+  }
+};
+
+// ======================================================
+// 📌 Función auxiliar para verificar notificaciones
+// ======================================================
+export const checkNotificationsForProvider = async (providerId) => {
+  try {
+    const Notification = await import("../models/notifications.js")
+      .then(mod => mod.default);
+    
+    const count = await Notification.countDocuments({
+      providerId,
+      read: false
+    });
+    
+    console.log(`🔔 Proveedor ${providerId} tiene ${count} notificaciones no leídas`);
+    return count;
+    
+  } catch (error) {
+    console.error('❌ Error verificando notificaciones:', error);
+    return 0;
+  }
+};
+
+// Exportar todas las funciones
+export default {
+  createAppointment,
+  getAppointmentsByUser,
+  getAppointmentById,
+  cancelAppointment,
+  rescheduleAppointment,
+  getAppointmentStats,
+  updateAppointmentStatus,
+  updateStatusAndNotify,
+  checkNotificationsForProvider
 };

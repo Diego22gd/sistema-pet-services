@@ -222,11 +222,7 @@ export default {
           label: 'Citas',
           icon: '📅'
         },
-        {
-          to: '/admin/services',
-          label: 'Servicios',
-          icon: '⚙️'
-        },
+        
         {
           to: '/admin/reports',
           label: 'Reportes',

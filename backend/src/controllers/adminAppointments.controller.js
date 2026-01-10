@@ -4,6 +4,13 @@ import User from "../models/User.js";
 import Pet from "../models/Pet.js";
 import Service from "../models/Service.js";
 import Business from "../models/Business.js";
+import mongoose from "mongoose";
+import { 
+  notifyAppointmentCreated, 
+  notifyAppointmentCancelled,
+  notifyAppointmentRescheduled,
+  createNotification 
+} from "./notificationsController.js";
 
 // ======================================================
 // 📌 OBTENER TODAS LAS CITAS (ADMIN)
@@ -48,7 +55,7 @@ export const getAllAppointmentsAdmin = async (req, res) => {
 };
 
 // ======================================================
-// 📌 CREAR CITA COMO ADMINISTRADOR
+// 📌 CREAR CITA COMO ADMINISTRADOR (CON NOTIFICACIONES)
 // ======================================================
 export const createAppointmentAsAdmin = async (req, res) => {
   console.log('🔔 Petición POST /admin/appointments recibida');
@@ -71,11 +78,13 @@ export const createAppointmentAsAdmin = async (req, res) => {
       serviceId,
       date,
       time,
-      notes
+      notes,
+      serviceName,
+      servicePrice
     } = req.body;
 
     // Validar campos obligatorios
-    const requiredFields = ['clientId', 'petId', 'serviceId', 'date', 'time'];
+    const requiredFields = ['clientId', 'petId', 'date', 'time'];
     const missingFields = requiredFields.filter(field => !req.body[field]);
     
     if (missingFields.length > 0) {
@@ -103,20 +112,58 @@ export const createAppointmentAsAdmin = async (req, res) => {
       });
     }
 
-    // 3. Verificar servicio
-    const service = await Service.findById(serviceId)
-      .populate('providerId', 'name email')
-      .populate('businessId', 'name address phone');
+    // Variables para almacenar datos del servicio
+    let service = null;
+    let provider = null;
+    let business = null;
+    let serviceData = {};
 
-    if (!service) {
-      return res.status(404).json({
+    // 3. Manejar servicio (puede ser ID de modelo Service o datos embebidos)
+    if (serviceId) {
+      // Buscar servicio en el modelo Service
+      service = await Service.findById(serviceId)
+        .populate('providerId', 'name email')
+        .populate('businessId', 'name address phone');
+
+      if (!service) {
+        return res.status(404).json({
+          success: false,
+          message: "Servicio no encontrado"
+        });
+      }
+
+      serviceData = {
+        serviceId: service._id,
+        serviceName: service.name,
+        servicePrice: service.price,
+        serviceDuration: service.duration || 60
+      };
+
+      // Usar proveedor y negocio del servicio si no se especificaron
+      if (service.providerId && !providerId) {
+        providerId = service.providerId._id;
+        provider = service.providerId;
+      }
+      if (service.businessId && !businessId) {
+        businessId = service.businessId._id;
+        business = service.businessId;
+      }
+    } else if (serviceName) {
+      // Es un servicio embebido (de Business.services)
+      serviceData = {
+        serviceId: null,
+        serviceName: serviceName,
+        servicePrice: servicePrice || 0,
+        serviceDuration: 60
+      };
+    } else {
+      return res.status(400).json({
         success: false,
-        message: "Servicio no encontrado"
+        message: "Debe especificar un servicio (ID o nombre)"
       });
     }
 
     // 4. Verificar proveedor (si se proporciona)
-    let provider = null;
     if (providerId) {
       provider = await User.findById(providerId);
       if (!provider || provider.role !== 'provider') {
@@ -125,19 +172,9 @@ export const createAppointmentAsAdmin = async (req, res) => {
           message: "Proveedor no encontrado o no es un proveedor válido"
         });
       }
-      
-      // Si el servicio tiene providerId, verificar que coincida
-      if (service.providerId && service.providerId._id.toString() !== providerId) {
-        console.warn('⚠️ Proveedor del servicio no coincide con el seleccionado');
-      }
-    } else if (service.providerId) {
-      // Usar el provider del servicio si no se especificó uno
-      providerId = service.providerId._id;
-      provider = service.providerId;
     }
 
     // 5. Verificar negocio (si se proporciona)
-    let business = null;
     if (businessId) {
       business = await Business.findById(businessId);
       if (!business) {
@@ -147,17 +184,12 @@ export const createAppointmentAsAdmin = async (req, res) => {
         });
       }
       
-      // Verificar que el negocio pertenezca al proveedor si ambos están seleccionados
       if (providerId && business.provider && business.provider.toString() !== providerId) {
         return res.status(400).json({
           success: false,
           message: "El negocio seleccionado no pertenece al proveedor"
         });
       }
-    } else if (service.businessId) {
-      // Usar el negocio del servicio si no se especificó uno
-      businessId = service.businessId._id;
-      business = service.businessId;
     }
 
     // 6. Verificar que no haya conflicto de horario para el cliente
@@ -179,28 +211,65 @@ export const createAppointmentAsAdmin = async (req, res) => {
     const appointmentData = {
       userId: clientId,
       petId,
-      serviceId,
-      providerId: providerId || service.providerId?._id || null,
-      businessId: businessId || service.businessId?._id || null,
+      serviceId: serviceData.serviceId,
+      providerId: providerId || null,
+      businessId: businessId || null,
       date,
       time,
       notes: notes || '',
-      serviceName: service.name,
-      servicePrice: service.price,
-      serviceDuration: service.duration,
-      businessName: business?.name || service.businessId?.name || '',
-      businessAddress: business?.address || service.businessId?.address || '',
-      businessPhone: business?.phone || service.businessId?.phone || '',
+      serviceName: serviceData.serviceName,
+      servicePrice: serviceData.servicePrice,
+      serviceDuration: serviceData.serviceDuration,
+      businessName: business?.name || '',
+      businessAddress: business?.address || '',
+      businessPhone: business?.phone || '',
       status: "pendiente",
       createdAt: new Date(),
       createdBy: req.user._id,
-      createdByRole: 'admin'
+      createdByRole: 'admin',
+      isEmbeddedService: !serviceId && serviceName ? true : false
     };
 
     // 8. Crear la cita
     const appointment = await Appointment.create(appointmentData);
 
-    // 9. Construir respuesta poblada
+    console.log('✅ Cita creada exitosamente por admin. ID:', appointment._id);
+    
+    // 9. 🔔 CREAR NOTIFICACIÓN PARA EL PROVEEDOR
+    if (appointment.providerId) {
+      console.log(`📨 Creando notificación (admin) para proveedor: ${appointment.providerId}`);
+      
+      try {
+        await notifyAppointmentCreated(appointment);
+        console.log('✅ Notificación creada exitosamente para proveedor');
+        
+        // También notificar al admin sobre la creación
+        await createNotification({
+          providerId: req.user._id, // Notificar al admin también
+          type: "system",
+          title: "📋 Cita creada por administrador",
+          message: `Has creado una cita para ${client.name} el ${date} a las ${time}`,
+          appointmentId: appointment._id,
+          userId: clientId,
+          metadata: {
+            appointmentDate: date,
+            appointmentTime: time,
+            serviceName: serviceData.serviceName,
+            clientName: client.name,
+            petName: pet.name,
+            createdBy: req.user.name || 'Administrador'
+          }
+        });
+        
+      } catch (notificationError) {
+        console.error('❌ Error creando notificación:', notificationError);
+        // No fallar la operación principal por error en notificación
+      }
+    } else {
+      console.log('ℹ️ No hay proveedor asignado, omitiendo notificación');
+    }
+
+    // 10. Construir respuesta poblada
     const populatedAppointment = await Appointment.findById(appointment._id)
       .populate('userId', 'name lastname email phone')
       .populate('petId', 'name type breed age')
@@ -208,12 +277,11 @@ export const createAppointmentAsAdmin = async (req, res) => {
       .populate('providerId', 'name email phone serviceType')
       .populate('businessId', 'name address phone category');
 
-    console.log('✅ Cita creada exitosamente por admin. ID:', appointment._id);
-    
     res.status(201).json({
       success: true,
       message: "✅ Cita creada exitosamente",
-      appointment: populatedAppointment
+      appointment: populatedAppointment,
+      notificationSent: !!appointment.providerId
     });
 
   } catch (err) {
@@ -258,7 +326,6 @@ export const getAppointmentFormData = async (req, res) => {
   console.log('🔔 Petición GET /admin/appointments/form-data recibida');
   
   try {
-    // Verificar que el usuario sea admin
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -266,37 +333,95 @@ export const getAppointmentFormData = async (req, res) => {
       });
     }
 
-    // Obtener todos los datos necesarios para el formulario
     const [clients, providers, businesses, services] = await Promise.all([
-      // Clientes
       User.find({ role: 'client' })
         .select('_id name lastname email phone')
         .sort({ name: 1 })
         .lean(),
       
-      // Proveedores
       User.find({ role: 'provider' })
         .select('_id name email phone serviceType')
         .sort({ name: 1 })
         .lean(),
       
-      // Negocios - ¡IMPORTANTE! Incluir provider
-      Business.find({ approved: true, status: 'active' })
-        .populate('provider', '_id name email') // Poblar provider
-        .select('_id name address phone category provider')
-        .sort({ name: 1 })
-        .lean(),
+      Business.find({ 
+        approved: true, 
+        status: 'active',
+        isDeleted: { $ne: true }
+      })
+      .populate({
+        path: 'provider',
+        select: '_id name email phone serviceType',
+        model: 'User'
+      })
+      .select('_id name address phone category provider services')
+      .sort({ name: 1 })
+      .lean()
+      .then(businesses => {
+        return businesses.map(business => {
+          const businessObj = { ...business };
+          
+          if (business.provider) {
+            if (typeof business.provider === 'object' && business.provider._id) {
+              businessObj.providerId = business.provider._id.toString();
+              businessObj.providerName = business.provider.name;
+            } else if (typeof business.provider === 'string') {
+              businessObj.providerId = business.provider;
+              businessObj.providerName = 'Proveedor';
+            }
+          }
+          
+          if (business.services && Array.isArray(business.services)) {
+            businessObj.embeddedServices = business.services.map(service => ({
+              _id: service._id || `embedded_${business._id}_${service.name}`,
+              name: service.name,
+              description: service.description || '',
+              price: service.price || 0,
+              duration: service.duration || 60,
+              isActive: service.isActive !== false,
+              businessId: business._id,
+              businessName: business.name,
+              isEmbedded: true
+            }));
+          } else {
+            businessObj.embeddedServices = [];
+          }
+          
+          return businessObj;
+        });
+      }),
       
-      // Servicios - Incluir providerId y businessId
       Service.find({ isActive: true })
         .populate('providerId', '_id name email')
         .populate('businessId', '_id name address phone')
         .select('_id name description price duration providerId businessId')
         .sort({ name: 1 })
         .lean()
+        .then(services => {
+          return services.map(service => {
+            const serviceObj = { ...service };
+            
+            if (service.providerId && typeof service.providerId === 'object') {
+              serviceObj.providerId = service.providerId._id.toString();
+            }
+            
+            if (service.businessId && typeof service.businessId === 'object') {
+              serviceObj.businessId = service.businessId._id.toString();
+            }
+            
+            serviceObj.isEmbedded = false;
+            
+            return serviceObj;
+          });
+        })
     ]);
 
-    console.log(`✅ Datos obtenidos: ${clients.length} clientes, ${providers.length} proveedores, ${businesses.length} negocios, ${services.length} servicios`);
+    const totalEmbeddedServices = businesses.reduce((total, business) => 
+      total + (business.embeddedServices?.length || 0), 0
+    );
+
+    console.log(`✅ Datos obtenidos: ${clients.length} clientes, ${providers.length} proveedores, ${businesses.length} negocios, ${services.length} servicios standalone`);
+    console.log(`✅ Servicios embebidos totales: ${totalEmbeddedServices}`);
 
     res.json({
       success: true,
@@ -304,7 +429,8 @@ export const getAppointmentFormData = async (req, res) => {
         clients,
         providers,
         businesses,
-        services
+        services,
+        totalServices: services.length + totalEmbeddedServices
       }
     });
 
@@ -326,7 +452,6 @@ export const getClientPets = async (req, res) => {
   console.log('👤 Cliente ID:', req.params.clientId);
   
   try {
-    // Verificar que el usuario sea admin
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -336,7 +461,6 @@ export const getClientPets = async (req, res) => {
 
     const { clientId } = req.params;
 
-    // Verificar que el cliente existe
     const client = await User.findById(clientId);
     if (!client || client.role !== 'client') {
       return res.status(404).json({
@@ -345,7 +469,6 @@ export const getClientPets = async (req, res) => {
       });
     }
 
-    // Obtener mascotas del cliente
     const pets = await Pet.find({ owner: clientId })
       .select('_id name type breed age owner')
       .sort({ name: 1 })
@@ -384,7 +507,6 @@ export const getProviderBusinesses = async (req, res) => {
   console.log('👨‍⚕️ Proveedor ID:', req.params.providerId);
   
   try {
-    // Verificar que el usuario sea admin
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -394,7 +516,6 @@ export const getProviderBusinesses = async (req, res) => {
 
     const { providerId } = req.params;
 
-    // Verificar que el proveedor existe
     const provider = await User.findById(providerId);
     if (!provider || provider.role !== 'provider') {
       return res.status(404).json({
@@ -403,21 +524,48 @@ export const getProviderBusinesses = async (req, res) => {
       });
     }
 
-    // Obtener negocios del proveedor
     const businesses = await Business.find({ 
       provider: providerId,
       approved: true,
-      status: 'active'
+      status: 'active',
+      isDeleted: { $ne: true }
     })
-      .select('_id name category address phone')
+      .select('_id name category address phone image description services')
       .sort({ name: 1 })
       .lean();
 
-    console.log(`✅ ${businesses.length} negocios encontrados para proveedor ${providerId}`);
+    const businessesWithEmbeddedServices = businesses.map(business => {
+      const businessObj = { ...business };
+      
+      if (business.services && Array.isArray(business.services)) {
+        businessObj.embeddedServices = business.services.map(service => ({
+          _id: service._id || `embedded_${business._id}_${service.name}`,
+          name: service.name,
+          description: service.description || '',
+          price: service.price || 0,
+          duration: service.duration || 60,
+          isActive: service.isActive !== false,
+          businessId: business._id,
+          businessName: business.name,
+          isEmbedded: true
+        }));
+      } else {
+        businessObj.embeddedServices = [];
+      }
+      
+      return businessObj;
+    });
+
+    const totalEmbeddedServices = businessesWithEmbeddedServices.reduce(
+      (total, business) => total + (business.embeddedServices?.length || 0), 0
+    );
+
+    console.log(`✅ ${businesses.length} negocios encontrados para proveedor ${providerId} con ${totalEmbeddedServices} servicios embebidos`);
 
     res.json({
       success: true,
-      businesses
+      businesses: businessesWithEmbeddedServices,
+      totalEmbeddedServices
     });
 
   } catch (err) {
@@ -446,7 +594,6 @@ export const getBusinessServices = async (req, res) => {
   console.log('🏬 Negocio ID:', req.params.businessId);
   
   try {
-    // Verificar que el usuario sea admin
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -456,7 +603,6 @@ export const getBusinessServices = async (req, res) => {
 
     const { businessId } = req.params;
 
-    // Verificar que el negocio existe
     const business = await Business.findById(businessId);
     if (!business) {
       return res.status(404).json({
@@ -465,21 +611,60 @@ export const getBusinessServices = async (req, res) => {
       });
     }
 
-    // Obtener servicios del negocio
-    const services = await Service.find({ 
-      businessId,
+    const standaloneServices = await Service.find({ 
+      businessId: businessId,
       isActive: true 
     })
       .populate('providerId', '_id name email')
-      .select('_id name description price duration providerId')
+      .select('_id name description price duration providerId businessId')
       .sort({ name: 1 })
-      .lean();
+      .lean()
+      .then(services => {
+        return services.map(service => {
+          const serviceObj = { ...service };
+          
+          if (service.providerId && typeof service.providerId === 'object') {
+            serviceObj.providerId = service.providerId._id.toString();
+          }
+          
+          serviceObj.businessId = businessId;
+          serviceObj.isEmbedded = false;
+          
+          return serviceObj;
+        });
+      });
 
-    console.log(`✅ ${services.length} servicios encontrados para negocio ${businessId}`);
+    let embeddedServices = [];
+    if (business.services && Array.isArray(business.services)) {
+      embeddedServices = business.services.map(service => ({
+        _id: service._id || `embedded_${businessId}_${service.name}`,
+        name: service.name,
+        description: service.description || '',
+        price: service.price || 0,
+        duration: service.duration || 60,
+        isActive: service.isActive !== false,
+        businessId: businessId,
+        businessName: business.name,
+        isEmbedded: true
+      }));
+    }
+
+    const allServices = [...embeddedServices, ...standaloneServices];
+
+    console.log(`✅ ${allServices.length} servicios encontrados para negocio ${businessId} (${embeddedServices.length} embebidos, ${standaloneServices.length} standalone)`);
 
     res.json({
       success: true,
-      services
+      services: allServices,
+      business: {
+        _id: business._id,
+        name: business.name
+      },
+      counts: {
+        total: allServices.length,
+        embedded: embeddedServices.length,
+        standalone: standaloneServices.length
+      }
     });
 
   } catch (err) {
@@ -508,7 +693,6 @@ export const getProviderServices = async (req, res) => {
   console.log('👨‍⚕️ Proveedor ID:', req.params.providerId);
   
   try {
-    // Verificar que el usuario sea admin
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -518,7 +702,6 @@ export const getProviderServices = async (req, res) => {
 
     const { providerId } = req.params;
 
-    // Verificar que el proveedor existe
     const provider = await User.findById(providerId);
     if (!provider || provider.role !== 'provider') {
       return res.status(404).json({
@@ -527,21 +710,68 @@ export const getProviderServices = async (req, res) => {
       });
     }
 
-    // Obtener servicios del proveedor
-    const services = await Service.find({ 
-      providerId,
+    const standaloneServices = await Service.find({ 
+      providerId: providerId,
       isActive: true 
     })
       .populate('businessId', '_id name address')
-      .select('_id name description price duration businessId')
+      .select('_id name description price duration businessId providerId')
       .sort({ name: 1 })
-      .lean();
+      .lean()
+      .then(services => {
+        return services.map(service => {
+          const serviceObj = { ...service };
+          
+          if (service.businessId && typeof service.businessId === 'object') {
+            serviceObj.businessId = service.businessId._id.toString();
+          }
+          
+          serviceObj.providerId = providerId;
+          serviceObj.isEmbedded = false;
+          
+          return serviceObj;
+        });
+      });
 
-    console.log(`✅ ${services.length} servicios encontrados para proveedor ${providerId}`);
+    const providerBusinesses = await Business.find({ 
+      provider: providerId,
+      approved: true,
+      status: 'active'
+    })
+    .select('_id name services')
+    .lean();
+
+    let embeddedServices = [];
+    providerBusinesses.forEach(business => {
+      if (business.services && Array.isArray(business.services)) {
+        const businessEmbeddedServices = business.services.map(service => ({
+          _id: service._id || `embedded_${business._id}_${service.name}`,
+          name: service.name,
+          description: service.description || '',
+          price: service.price || 0,
+          duration: service.duration || 60,
+          isActive: service.isActive !== false,
+          businessId: business._id,
+          businessName: business.name,
+          providerId: providerId,
+          isEmbedded: true
+        }));
+        embeddedServices = [...embeddedServices, ...businessEmbeddedServices];
+      }
+    });
+
+    const allServices = [...embeddedServices, ...standaloneServices];
+
+    console.log(`✅ ${allServices.length} servicios encontrados para proveedor ${providerId} (${embeddedServices.length} embebidos, ${standaloneServices.length} standalone)`);
 
     res.json({
       success: true,
-      services
+      services: allServices,
+      counts: {
+        total: allServices.length,
+        embedded: embeddedServices.length,
+        standalone: standaloneServices.length
+      }
     });
 
   } catch (err) {
@@ -563,15 +793,217 @@ export const getProviderServices = async (req, res) => {
 };
 
 // ======================================================
-// 📌 ACTUALIZAR ESTADO DE CITA (ADMIN)
+// 📌 OBTENER TODOS LOS DATOS EN UNA SOLA PETICIÓN
+// ======================================================
+export const getCompleteFormData = async (req, res) => {
+  console.log('🔔 Petición GET /admin/appointments/complete-form-data recibida');
+  
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: "Acceso denegado. Solo administradores"
+      });
+    }
+
+    const [clients, providers, businesses, standaloneServices] = await Promise.all([
+      User.find({ role: 'client' })
+        .select('_id name lastname email phone')
+        .sort({ name: 1 })
+        .lean(),
+      
+      User.find({ role: 'provider' })
+        .select('_id name email phone serviceType')
+        .sort({ name: 1 })
+        .lean(),
+      
+      Business.find({ 
+        approved: true, 
+        status: 'active',
+        isDeleted: { $ne: true }
+      })
+      .populate({
+        path: 'provider',
+        select: '_id name email',
+        model: 'User'
+      })
+      .select('_id name category address phone description provider services')
+      .sort({ name: 1 })
+      .lean()
+      .then(businesses => {
+        return businesses.map(business => {
+          const businessObj = { ...business };
+          
+          if (business.provider) {
+            if (typeof business.provider === 'object' && business.provider._id) {
+              businessObj.providerId = business.provider._id.toString();
+              businessObj.providerName = business.provider.name;
+            } else if (typeof business.provider === 'string') {
+              businessObj.providerId = business.provider;
+              businessObj.providerName = 'Proveedor';
+            }
+          }
+          
+          if (business.services && Array.isArray(business.services)) {
+            businessObj.embeddedServices = business.services.map(service => ({
+              _id: service._id || `embedded_${business._id}_${service.name}`,
+              name: service.name,
+              description: service.description || '',
+              price: service.price || 0,
+              duration: service.duration || 60,
+              isActive: service.isActive !== false,
+              businessId: business._id,
+              businessName: business.name,
+              providerId: businessObj.providerId,
+              providerName: businessObj.providerName,
+              isEmbedded: true
+            }));
+          } else {
+            businessObj.embeddedServices = [];
+          }
+          
+          return businessObj;
+        });
+      }),
+      
+      Service.find({ isActive: true })
+        .populate('providerId', '_id name')
+        .populate('businessId', '_id name address')
+        .select('_id name description price duration providerId businessId')
+        .sort({ name: 1 })
+        .lean()
+        .then(services => {
+          return services.map(service => {
+            const serviceObj = { ...service };
+            
+            if (service.providerId && typeof service.providerId === 'object') {
+              serviceObj.providerId = service.providerId._id.toString();
+            }
+            
+            if (service.businessId && typeof service.businessId === 'object') {
+              serviceObj.businessId = service.businessId._id.toString();
+            }
+            
+            serviceObj.isEmbedded = false;
+            
+            return serviceObj;
+          });
+        })
+    ]);
+
+    let allEmbeddedServices = [];
+    businesses.forEach(business => {
+      if (business.embeddedServices && business.embeddedServices.length > 0) {
+        allEmbeddedServices = [...allEmbeddedServices, ...business.embeddedServices];
+      }
+    });
+
+    const allServices = [...allEmbeddedServices, ...standaloneServices];
+
+    const businessesByProvider = {};
+    businesses.forEach(business => {
+      if (business.providerId) {
+        if (!businessesByProvider[business.providerId]) {
+          businessesByProvider[business.providerId] = [];
+        }
+        businessesByProvider[business.providerId].push({
+          _id: business._id,
+          name: business.name,
+          category: business.category,
+          address: business.address,
+          phone: business.phone,
+          provider: business.provider,
+          embeddedServicesCount: business.embeddedServices?.length || 0
+        });
+      }
+    });
+
+    const servicesByBusiness = {};
+    allServices.forEach(service => {
+      if (service.businessId) {
+        const businessId = service.businessId.toString();
+        if (!servicesByBusiness[businessId]) {
+          servicesByBusiness[businessId] = [];
+        }
+        servicesByBusiness[businessId].push({
+          _id: service._id,
+          name: service.name,
+          description: service.description,
+          price: service.price,
+          duration: service.duration,
+          providerId: service.providerId || null,
+          isEmbedded: service.isEmbedded || false,
+          businessName: service.businessName || ''
+        });
+      }
+    });
+
+    const servicesByProvider = {};
+    allServices.forEach(service => {
+      if (service.providerId) {
+        const providerId = service.providerId.toString();
+        if (!servicesByProvider[providerId]) {
+          servicesByProvider[providerId] = [];
+        }
+        servicesByProvider[providerId].push({
+          _id: service._id,
+          name: service.name,
+          description: service.description,
+          price: service.price,
+          duration: service.duration,
+          businessId: service.businessId || null,
+          businessName: service.businessName || '',
+          isEmbedded: service.isEmbedded || false
+        });
+      }
+    });
+
+    console.log(`✅ Datos completos obtenidos: ${clients.length} clientes, ${providers.length} proveedores, ${businesses.length} negocios, ${allServices.length} servicios totales`);
+
+    res.json({
+      success: true,
+      formData: {
+        clients,
+        providers,
+        businesses: {
+          all: businesses,
+          byProvider: businessesByProvider
+        },
+        services: {
+          all: allServices,
+          byBusiness: servicesByBusiness,
+          byProvider: servicesByProvider,
+          embeddedServices: allEmbeddedServices,
+          standaloneServices: standaloneServices,
+          counts: {
+            total: allServices.length,
+            embedded: allEmbeddedServices.length,
+            standalone: standaloneServices.length
+          }
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error("❌ Error obteniendo datos completos para formulario:", err);
+    res.status(500).json({
+      success: false,
+      message: "Error del servidor al obtener datos del formulario",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// ======================================================
+// 📌 ACTUALIZAR ESTADO DE CITA (ADMIN CON NOTIFICACIONES)
 // ======================================================
 export const updateAppointmentStatusAdmin = async (req, res) => {
   console.log('🔔 Petición PUT /admin/appointments/:id/status recibida');
   console.log('📌 Cita ID:', req.params.id);
   console.log('📦 Estado:', req.body.status);
+  console.log('📝 Razón:', req.body.reason || 'Sin razón especificada');
   
   try {
-    // Verificar que el usuario sea admin
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -580,7 +1012,7 @@ export const updateAppointmentStatusAdmin = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, reason } = req.body;
 
     if (!status) {
       return res.status(400).json({
@@ -589,7 +1021,6 @@ export const updateAppointmentStatusAdmin = async (req, res) => {
       });
     }
 
-    // Validar estado
     const validStatuses = ['pendiente', 'confirmada', 'cancelada', 'completada', 'reprogramada'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -598,8 +1029,9 @@ export const updateAppointmentStatusAdmin = async (req, res) => {
       });
     }
 
-    // Buscar la cita (admin puede acceder a cualquier cita)
-    const appointment = await Appointment.findById(id);
+    const appointment = await Appointment.findById(id)
+      .populate('userId', 'name email')
+      .populate('providerId', 'name email');
 
     if (!appointment) {
       return res.status(404).json({
@@ -608,7 +1040,6 @@ export const updateAppointmentStatusAdmin = async (req, res) => {
       });
     }
 
-    // Validar transición de estado
     const validTransitions = {
       'pendiente': ['confirmada', 'cancelada'],
       'confirmada': ['completada', 'cancelada', 'reprogramada'],
@@ -625,19 +1056,17 @@ export const updateAppointmentStatusAdmin = async (req, res) => {
       });
     }
 
-    // Guardar estado anterior para historial
     const previousStatus = appointment.status;
     
-    // Actualizar estado
     appointment.status = status;
     appointment.updatedAt = new Date();
     appointment.updatedBy = req.user._id;
     appointment.updatedByRole = 'admin';
     
-    // Agregar timestamp según el estado
     if (status === 'cancelada') {
       appointment.cancelledAt = new Date();
       appointment.cancelledBy = req.user._id;
+      appointment.cancellationReason = reason || '';
     } else if (status === 'completada') {
       appointment.completedAt = new Date();
       appointment.completedBy = req.user._id;
@@ -646,7 +1075,6 @@ export const updateAppointmentStatusAdmin = async (req, res) => {
       appointment.rescheduledBy = req.user._id;
     }
     
-    // Guardar historial de cambios de estado
     if (!appointment.statusHistory) {
       appointment.statusHistory = [];
     }
@@ -656,12 +1084,56 @@ export const updateAppointmentStatusAdmin = async (req, res) => {
       to: status,
       changedAt: new Date(),
       changedBy: req.user._id,
-      changedByRole: 'admin'
+      changedByRole: 'admin',
+      reason: reason || ''
     });
     
     await appointment.save();
 
     console.log('✅ Estado de cita actualizado por admin:', appointment._id, `${previousStatus} → ${status}`);
+    
+    // 🔔 NOTIFICAR AL PROVEEDOR SOBRE EL CAMBIO DE ESTADO
+    if (appointment.providerId) {
+      console.log(`📨 Notificando cambio de estado a proveedor: ${appointment.providerId}`);
+      
+      try {
+        const message = `El administrador ha cambiado el estado de la cita del ${appointment.date} a las ${appointment.time} de ${previousStatus} a ${status}`;
+        
+        if (status === 'cancelada') {
+          await notifyAppointmentCancelled(appointment, req.user._id, reason || 'Cancelada por administrador');
+        } else {
+          await createNotification({
+            providerId: appointment.providerId,
+            type: "appointment_updated",
+            title: `📊 Estado actualizado por administrador`,
+            message: message,
+            appointmentId: appointment._id,
+            userId: req.user._id,
+            metadata: {
+              appointmentDate: appointment.date,
+              appointmentTime: appointment.time,
+              serviceName: appointment.serviceName,
+              previousStatus,
+              newStatus: status,
+              changedBy: req.user.name || 'Administrador',
+              changedByRole: 'admin',
+              reason: reason || '',
+              changedAt: new Date()
+            }
+          });
+        }
+        
+        console.log('✅ Notificación de cambio de estado enviada al proveedor');
+      } catch (notificationError) {
+        console.error('❌ Error creando notificación:', notificationError);
+      }
+    }
+
+    // 🔔 NOTIFICAR AL CLIENTE (opcional, podrías implementar notificaciones para clientes también)
+    if (appointment.userId) {
+      console.log(`📨 Notificando cambio de estado a cliente: ${appointment.userId._id}`);
+      // Aquí podrías agregar notificaciones para clientes si tienes un sistema
+    }
     
     res.json({
       success: true,
@@ -694,14 +1166,14 @@ export const updateAppointmentStatusAdmin = async (req, res) => {
 };
 
 // ======================================================
-// 📌 ELIMINAR CITA (ADMIN)
+// 📌 ELIMINAR CITA (ADMIN CON NOTIFICACIONES)
 // ======================================================
 export const deleteAppointmentAdmin = async (req, res) => {
   console.log('🔔 Petición DELETE /admin/appointments/:id recibida');
   console.log('📌 Cita ID a eliminar:', req.params.id);
+  console.log('📝 Razón:', req.body.reason || 'Sin razón especificada');
   
   try {
-    // Verificar que el usuario sea admin
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -710,9 +1182,11 @@ export const deleteAppointmentAdmin = async (req, res) => {
     }
 
     const { id } = req.params;
+    const { reason } = req.body;
 
-    // Buscar y eliminar la cita
-    const appointment = await Appointment.findByIdAndDelete(id);
+    const appointment = await Appointment.findById(id)
+      .populate('userId', 'name email')
+      .populate('providerId', 'name email');
 
     if (!appointment) {
       return res.status(404).json({
@@ -720,6 +1194,38 @@ export const deleteAppointmentAdmin = async (req, res) => {
         message: "Cita no encontrada"
       });
     }
+
+    // 🔔 NOTIFICAR AL PROVEEDOR SOBRE LA ELIMINACIÓN
+    if (appointment.providerId) {
+      console.log(`📨 Notificando eliminación a proveedor: ${appointment.providerId}`);
+      
+      try {
+        await createNotification({
+          providerId: appointment.providerId,
+          type: "appointment_cancelled",
+          title: "❌ Cita eliminada por administrador",
+          message: `El administrador ha eliminado la cita programada para el ${appointment.date} a las ${appointment.time}. ${reason ? `Razón: ${reason}` : ''}`,
+          appointmentId: appointment._id,
+          userId: req.user._id,
+          metadata: {
+            appointmentDate: appointment.date,
+            appointmentTime: appointment.time,
+            serviceName: appointment.serviceName,
+            clientName: appointment.userId?.name || 'Cliente',
+            deletedBy: req.user.name || 'Administrador',
+            deletedAt: new Date(),
+            reason: reason || ''
+          }
+        });
+        
+        console.log('✅ Notificación de eliminación enviada al proveedor');
+      } catch (notificationError) {
+        console.error('❌ Error creando notificación de eliminación:', notificationError);
+      }
+    }
+
+    // Eliminar la cita
+    await Appointment.findByIdAndDelete(id);
 
     console.log('✅ Cita eliminada por admin:', id);
     
@@ -729,9 +1235,12 @@ export const deleteAppointmentAdmin = async (req, res) => {
       deletedAppointment: {
         _id: appointment._id,
         clientId: appointment.userId,
+        clientName: appointment.userId?.name,
         date: appointment.date,
         time: appointment.time,
-        status: appointment.status
+        status: appointment.status,
+        providerId: appointment.providerId,
+        providerName: appointment.providerId?.name
       }
     });
 
@@ -754,7 +1263,7 @@ export const deleteAppointmentAdmin = async (req, res) => {
 };
 
 // ======================================================
-// 📌 REPROGRAMAR CITA (ADMIN)
+// 📌 REPROGRAMAR CITA (ADMIN CON NOTIFICACIONES)
 // ======================================================
 export const rescheduleAppointmentAdmin = async (req, res) => {
   console.log('🔔 Petición PATCH /admin/appointments/:id/reschedule recibida');
@@ -762,7 +1271,6 @@ export const rescheduleAppointmentAdmin = async (req, res) => {
   console.log('📦 Nuevos datos:', req.body);
   
   try {
-    // Verificar que el usuario sea admin
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -780,7 +1288,6 @@ export const rescheduleAppointmentAdmin = async (req, res) => {
       });
     }
 
-    // Buscar la cita
     const appointment = await Appointment.findById(id)
       .populate('userId', '_id name email');
 
@@ -792,7 +1299,6 @@ export const rescheduleAppointmentAdmin = async (req, res) => {
       });
     }
 
-    // Verificar que no esté cancelada
     if (appointment.status === 'cancelada') {
       return res.status(400).json({
         success: false,
@@ -800,7 +1306,6 @@ export const rescheduleAppointmentAdmin = async (req, res) => {
       });
     }
 
-    // Verificar que no esté completada
     if (appointment.status === 'completada') {
       return res.status(400).json({
         success: false,
@@ -808,7 +1313,6 @@ export const rescheduleAppointmentAdmin = async (req, res) => {
       });
     }
 
-    // Verificar nuevo horario no conflictivo para el usuario
     const existingAppointment = await Appointment.findOne({
       userId: appointment.userId,
       date,
@@ -824,12 +1328,10 @@ export const rescheduleAppointmentAdmin = async (req, res) => {
       });
     }
 
-    // Guardar datos anteriores para historial
     const previousDate = appointment.date;
     const previousTime = appointment.time;
     const previousStatus = appointment.status;
     
-    // Actualizar cita
     appointment.date = date;
     appointment.time = time;
     appointment.status = "reprogramada";
@@ -841,7 +1343,6 @@ export const rescheduleAppointmentAdmin = async (req, res) => {
     appointment.updatedAt = new Date();
     appointment.updatedBy = req.user._id;
     
-    // Agregar al historial de cambios
     if (!appointment.statusHistory) {
       appointment.statusHistory = [];
     }
@@ -858,6 +1359,18 @@ export const rescheduleAppointmentAdmin = async (req, res) => {
     await appointment.save();
 
     console.log('✅ Cita reprogramada por admin:', appointment._id);
+    
+    // 🔔 NOTIFICAR AL PROVEEDOR SOBRE LA REPROGRAMACIÓN
+    if (appointment.providerId) {
+      console.log(`📨 Notificando reprogramación a proveedor: ${appointment.providerId}`);
+      
+      try {
+        await notifyAppointmentRescheduled(appointment, req.user._id, previousDate, previousTime, reason || 'Reprogramada por administrador');
+        console.log('✅ Notificación de reprogramación enviada al proveedor');
+      } catch (notificationError) {
+        console.error('❌ Error creando notificación de reprogramación:', notificationError);
+      }
+    }
     
     res.json({
       success: true,
@@ -899,7 +1412,6 @@ export const getAppointmentStatsAdmin = async (req, res) => {
   console.log('🔔 Petición GET /admin/appointments/stats recibida');
   
   try {
-    // Verificar que el usuario sea admin
     if (!req.user || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -907,10 +1419,8 @@ export const getAppointmentStatsAdmin = async (req, res) => {
       });
     }
 
-    // Obtener estadísticas generales
     const totalAppointments = await Appointment.countDocuments({});
     
-    // Estadísticas por estado
     const statsByStatus = await Appointment.aggregate([
       {
         $group: {
@@ -922,7 +1432,6 @@ export const getAppointmentStatsAdmin = async (req, res) => {
       { $sort: { count: -1 } }
     ]);
 
-    // Estadísticas por proveedor
     const statsByProvider = await Appointment.aggregate([
       {
         $match: { providerId: { $ne: null } }
@@ -957,7 +1466,6 @@ export const getAppointmentStatsAdmin = async (req, res) => {
       }
     ]);
 
-    // Estadísticas por mes (últimos 6 meses)
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     
@@ -980,7 +1488,6 @@ export const getAppointmentStatsAdmin = async (req, res) => {
       { $sort: { "_id.year": 1, "_id.month": 1 } }
     ]);
 
-    // Estadísticas por día de la semana
     const statsByDay = await Appointment.aggregate([
       {
         $addFields: {
@@ -996,7 +1503,6 @@ export const getAppointmentStatsAdmin = async (req, res) => {
       { $sort: { _id: 1 } }
     ]);
 
-    // Mapear días de la semana
     const daysMap = {
       1: 'Domingo',
       2: 'Lunes',
@@ -1012,7 +1518,6 @@ export const getAppointmentStatsAdmin = async (req, res) => {
       count: stat.count
     }));
 
-    // Total de ingresos
     const totalRevenue = statsByStatus.reduce((total, stat) => total + (stat.totalRevenue || 0), 0);
 
     console.log('✅ Estadísticas obtenidas para admin');
@@ -1050,4 +1555,90 @@ export const getAppointmentStatsAdmin = async (req, res) => {
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
+};
+
+// ======================================================
+// 📌 NOTIFICAR TODOS LOS CAMBIOS DE UNA CITA
+// ======================================================
+export const notifyAppointmentChanges = async (appointmentId, changes, changedByUserId) => {
+  try {
+    const appointment = await Appointment.findById(appointmentId)
+      .populate('providerId', '_id name email')
+      .populate('userId', '_id name email');
+
+    if (!appointment || !appointment.providerId) {
+      return null;
+    }
+
+    const changedByUser = await User.findById(changedByUserId).select('name role');
+    
+    let title = '';
+    let message = '';
+    let type = 'appointment_updated';
+
+    // Determinar tipo de cambio
+    if (changes.status) {
+      title = `📊 Estado actualizado: ${changes.status}`;
+      message = `El ${changedByUser?.role === 'admin' ? 'administrador' : 'cliente'} ha cambiado el estado de la cita a ${changes.status}`;
+      type = 'appointment_updated';
+    } else if (changes.date || changes.time) {
+      title = '🔄 Cita reprogramada';
+      message = `La cita ha sido reprogramada`;
+      type = 'appointment_rescheduled';
+    } else if (changes.serviceName || changes.servicePrice) {
+      title = '✏️ Detalles de cita actualizados';
+      message = 'Los detalles de la cita han sido actualizados';
+      type = 'appointment_updated';
+    }
+
+    // Agregar detalles específicos
+    if (changes.date || changes.time) {
+      message += ` para el ${changes.date || appointment.date} a las ${changes.time || appointment.time}`;
+    }
+
+    if (changes.reason) {
+      message += `. Razón: ${changes.reason}`;
+    }
+
+    const notification = await createNotification({
+      providerId: appointment.providerId._id,
+      type,
+      title,
+      message,
+      appointmentId: appointment._id,
+      userId: changedByUserId,
+      metadata: {
+        appointmentDate: changes.date || appointment.date,
+        appointmentTime: changes.time || appointment.time,
+        serviceName: appointment.serviceName,
+        changes,
+        changedBy: changedByUser?.name || 'Sistema',
+        changedByRole: changedByUser?.role || 'system',
+        changedAt: new Date()
+      }
+    });
+
+    console.log(`✅ Notificación de cambios creada para cita ${appointmentId}`);
+    return notification;
+
+  } catch (error) {
+    console.error('❌ Error notificando cambios de cita:', error);
+    return null;
+  }
+};
+
+export default {
+  getAllAppointmentsAdmin,
+  createAppointmentAsAdmin,
+  getAppointmentFormData,
+  getClientPets,
+  getProviderBusinesses,
+  getBusinessServices,
+  getProviderServices,
+  getCompleteFormData,
+  updateAppointmentStatusAdmin,
+  deleteAppointmentAdmin,
+  rescheduleAppointmentAdmin,
+  getAppointmentStatsAdmin,
+  notifyAppointmentChanges
 };

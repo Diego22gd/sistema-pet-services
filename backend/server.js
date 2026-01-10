@@ -32,7 +32,7 @@ import appointmentsRoutes from "./src/routes/appointmentRoutes.js";
 import providerRoutes from "./src/routes/providerRoutes.js";
 import chatRoutes from "./src/routes/chat.js";
 import chatAdminRoutes from "./src/routes/chatAdmin.js";
-
+import notificationRoutes from "./src/routes/notificationsRoutes.js";
 // Importar rutas adicionales que necesitas
 import authRoutes from "./src/routes/authRoutes.js"; // Asegúrate de tener este archivo
 import businessRoutes from "./src/routes/businessRoutes.js"; // Asegúrate de tener este archivo
@@ -107,6 +107,7 @@ app.use("/api/admin/appointments", adminAppointmentsRoutes);
 app.use("/api/admin/reports", adminReportRoutes);
 app.use("/api/admin/services", adminServiceRoutes);
 app.use("/api/admin/users", adminUsersRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Provider
 app.use("/api/provider/profile", providerProfileRoutes);
@@ -116,6 +117,7 @@ app.use("/api/client/services", clientServiceRoutes);
 app.use("/api/pets", petRoutes);
 app.use("/api/appointments", appointmentsRoutes);
 app.use("/api/providers", providerRoutes);
+// Solo esto
 
 // Chat
 app.use("/api/chat", chatRoutes);

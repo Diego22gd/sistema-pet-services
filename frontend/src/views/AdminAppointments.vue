@@ -358,29 +358,13 @@
         <div class="modal-modern-header flex justify-between items-start">
           <div class="flex items-start gap-4">
             <div class="avatar-modern-lg">
-              <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-500 flex items-center justify-center">
-                <span class="text-4xl">👑</span>
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-500 flex items-center justify-center">
+                <span class="text-3xl">📅</span>
               </div>
             </div>
             <div>
-              <h2 class="text-3xl font-bold text-gray-900">Detalles de la Cita</h2>
-              <div class="flex items-center gap-2 mt-2 flex-wrap">
-                <div :class="[
-                  'px-3 py-1 rounded-full text-sm font-bold',
-                  statusClass(selectedAppointment.status)
-                ]">
-                  {{ translateStatus(selectedAppointment.status) }}
-                </div>
-                <div class="badge-outline-admin">
-                  👤 {{ selectedAppointment.userId?.name }} {{ selectedAppointment.userId?.lastname }}
-                </div>
-                <div class="badge-outline-admin">
-                  📅 {{ formatDate(selectedAppointment.date) }}
-                </div>
-                <div class="badge-outline-admin">
-                  ⏰ {{ selectedAppointment.time }}
-                </div>
-              </div>
+              <h2 class="text-2xl font-bold text-gray-900">Detalles de la Cita</h2>
+              <p class="text-gray-600 mt-1">Información completa de la cita seleccionada</p>
             </div>
           </div>
           <button @click="closeDetailsModal" class="btn-modal-close">
@@ -389,195 +373,171 @@
         </div>
 
         <div class="modal-modern-content mt-6">
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Columna 1: Cliente y Mascota -->
-            <div class="space-y-6">
-              <!-- Información del cliente -->
-              <div class="modal-section">
-                <h3 class="modal-section-title-admin">
-                  <span>👤</span> Información del Cliente
-                </h3>
-                <div class="flex items-center gap-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
-                  <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-indigo-500 flex items-center justify-center">
-                    <span class="text-white text-2xl">
-                      {{ getInitials(selectedAppointment.userId?.name, selectedAppointment.userId?.lastname) }}
-                    </span>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Información del Cliente -->
+            <div class="modal-section">
+              <h3 class="modal-section-title-admin">
+                <span>👤</span> Información del Cliente
+              </h3>
+              <div class="bg-gray-50 rounded-xl p-4">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                    {{ getInitials(selectedAppointment.userId?.name, selectedAppointment.userId?.lastname) }}
                   </div>
-                  <div class="flex-1">
-                    <p class="font-bold text-gray-900 text-lg">
-                      {{ selectedAppointment.userId?.name }} {{ selectedAppointment.userId?.lastname }}
-                    </p>
-                    <div class="space-y-1 mt-2">
-                      <p class="text-sm text-gray-600 flex items-center gap-2">
-                        <span>📧</span> {{ selectedAppointment.userId?.email }}
-                      </p>
-                      <p v-if="selectedAppointment.userId?.phone" class="text-sm text-gray-600 flex items-center gap-2">
-                        <span>📱</span> {{ selectedAppointment.userId?.phone }}
-                      </p>
-                    </div>
+                  <div>
+                    <h4 class="font-bold text-gray-900">{{ selectedAppointment.userId?.name }} {{ selectedAppointment.userId?.lastname }}</h4>
+                    <p class="text-sm text-gray-600">{{ selectedAppointment.userId?.email }}</p>
                   </div>
                 </div>
-              </div>
-
-              <!-- Información de la mascota -->
-              <div class="modal-section">
-                <h3 class="modal-section-title-admin">
-                  <span>🐾</span> Información de la Mascota
-                </h3>
-                <div class="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
-                  <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
-                      <span class="text-white text-xl">{{ getPetIcon(selectedAppointment.petId?.type) }}</span>
-                    </div>
-                    <div class="flex-1">
-                      <p class="font-bold text-gray-900">{{ selectedAppointment.petId?.name }}</p>
-                      <div class="flex flex-wrap gap-2 mt-1">
-                        <span class="badge-tag-admin capitalize">{{ selectedAppointment.petId?.type }}</span>
-                        <span v-if="selectedAppointment.petId?.breed" class="badge-tag-admin">
-                          {{ selectedAppointment.petId?.breed }}
-                        </span>
-                        <span v-if="selectedAppointment.petId?.age" class="badge-tag-admin">
-                          {{ selectedAppointment.petId?.age }} años
-                        </span>
-                      </div>
-                    </div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span class="text-gray-500">Teléfono:</span>
+                    <p class="font-medium">{{ selectedAppointment.userId?.phone || 'No disponible' }}</p>
+                  </div>
+                  <div>
+                    <span class="text-gray-500">ID Cliente:</span>
+                    <p class="font-mono text-xs font-medium">{{ selectedAppointment.userId?._id || 'N/A' }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Columna 2: Proveedor y Negocio -->
-            <div class="space-y-6">
-              <!-- Información del proveedor -->
-              <div v-if="selectedAppointment.providerId" class="modal-section">
-                <h3 class="modal-section-title-admin">
-                  <span>👨‍⚕️</span> Información del Proveedor
-                </h3>
-                <div class="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
-                  <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                    <span class="text-white text-xl">👤</span>
+            <!-- Información de la Mascota -->
+            <div class="modal-section">
+              <h3 class="modal-section-title-admin">
+                <span>🐾</span> Información de la Mascota
+              </h3>
+              <div class="bg-gray-50 rounded-xl p-4">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                    <span class="text-white text-xl">{{ getPetIcon(selectedAppointment.petId?.type) }}</span>
                   </div>
-                  <div class="flex-1">
-                    <p class="font-bold text-gray-900">{{ selectedAppointment.providerId?.name }}</p>
-                    <div class="space-y-1 mt-2">
-                      <p class="text-sm text-gray-600">
-                        {{ selectedAppointment.providerId?.email }}
-                      </p>
-                      <p v-if="selectedAppointment.providerId?.phone" class="text-sm text-gray-600">
-                        {{ selectedAppointment.providerId?.phone }}
-                      </p>
-                      <p v-if="selectedAppointment.providerId?.serviceType" class="text-sm text-blue-600">
-                        {{ selectedAppointment.providerId?.serviceType }}
-                      </p>
-                    </div>
+                  <div>
+                    <h4 class="font-bold text-gray-900">{{ selectedAppointment.petId?.name }}</h4>
+                    <p class="text-sm text-gray-600 capitalize">{{ selectedAppointment.petId?.type || 'No especificado' }}</p>
                   </div>
                 </div>
-              </div>
-
-              <!-- Información del negocio -->
-              <div v-if="selectedAppointment.businessId" class="modal-section">
-                <h3 class="modal-section-title-admin">
-                  <span>🏬</span> Información del Negocio
-                </h3>
-                <div class="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200">
-                  <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
-                      <span class="text-white text-xl">🏬</span>
-                    </div>
-                    <div class="flex-1">
-                      <p class="font-bold text-gray-900">{{ selectedAppointment.businessId?.name }}</p>
-                      <p class="text-sm text-gray-600">{{ selectedAppointment.businessId?.address }}</p>
-                      <p class="text-sm text-gray-600">{{ selectedAppointment.businessId?.phone }}</p>
-                      <p v-if="selectedAppointment.businessId?.category" class="text-xs text-orange-600">
-                        {{ selectedAppointment.businessId?.category }}
-                      </p>
-                    </div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span class="text-gray-500">Raza:</span>
+                    <p class="font-medium">{{ selectedAppointment.petId?.breed || 'No especificada' }}</p>
                   </div>
-                </div>
-              </div>
-
-              <!-- Información del servicio -->
-              <div class="modal-section">
-                <h3 class="modal-section-title-admin">
-                  <span>⚙️</span> Información del Servicio
-                </h3>
-                <div class="border border-gray-200 rounded-xl p-4">
-                  <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-bold text-gray-900">{{ selectedAppointment.serviceId?.name || selectedAppointment.serviceName }}</h4>
-                    <span class="text-xl font-bold text-purple-600">
-                      ${{ selectedAppointment.servicePrice || selectedAppointment.serviceId?.price || '0' }}
-                    </span>
-                  </div>
-                  <p class="text-sm text-gray-600 mb-2">
-                    {{ selectedAppointment.serviceId?.description || 'Sin descripción disponible' }}
-                  </p>
-                  <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">
-                      Duración: {{ selectedAppointment.serviceDuration || selectedAppointment.serviceId?.duration || 60 }} min
-                    </span>
+                  <div>
+                    <span class="text-gray-500">Edad:</span>
+                    <p class="font-medium">{{ selectedAppointment.petId?.age || 'No especificada' }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Columna 3: Detalles de la cita -->
-            <div class="space-y-6">
-              <!-- Detalles de la cita -->
-              <div class="modal-section">
-                <h3 class="modal-section-title-admin">
-                  <span>📋</span> Detalles de la Cita
-                </h3>
-                <div class="space-y-3 p-4 border border-gray-200 rounded-xl">
-                  <div class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Fecha:</span>
-                    <span class="font-bold">{{ formatDate(selectedAppointment.date) }}</span>
+            <!-- Información del Servicio -->
+            <div class="modal-section">
+              <h3 class="modal-section-title-admin">
+                <span>⚙️</span> Información del Servicio
+              </h3>
+              <div class="bg-gray-50 rounded-xl p-4">
+                <h4 class="font-bold text-gray-900 mb-2">{{ selectedAppointment.serviceId?.name || selectedAppointment.serviceName }}</h4>
+                <p class="text-sm text-gray-600 mb-4">{{ selectedAppointment.serviceId?.description || 'Sin descripción' }}</p>
+                <div class="grid grid-cols-3 gap-3 text-sm">
+                  <div class="text-center">
+                    <div class="font-bold text-purple-600">${{ selectedAppointment.servicePrice || selectedAppointment.serviceId?.price || '0' }}</div>
+                    <div class="text-xs text-gray-500">Precio</div>
                   </div>
-                  <div class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Hora:</span>
-                    <span class="font-bold">{{ selectedAppointment.time }}</span>
+                  <div class="text-center">
+                    <div class="font-bold text-blue-600">{{ selectedAppointment.serviceDuration || selectedAppointment.serviceId?.duration || '60' }} min</div>
+                    <div class="text-xs text-gray-500">Duración</div>
                   </div>
-                  <div class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Estado:</span>
-                    <span :class="[
-                      'px-3 py-1 rounded-full text-sm font-bold',
-                      statusClass(selectedAppointment.status)
-                    ]">
-                      {{ translateStatus(selectedAppointment.status) }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Creada:</span>
-                    <span class="text-sm text-gray-600">{{ formatDateTime(selectedAppointment.createdAt) }}</span>
-                  </div>
-                  <div v-if="selectedAppointment.updatedAt" class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Actualizada:</span>
-                    <span class="text-sm text-gray-600">{{ formatDateTime(selectedAppointment.updatedAt) }}</span>
-                  </div>
-                  <div v-if="selectedAppointment.cancelledAt" class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Cancelada:</span>
-                    <span class="text-sm text-gray-600">{{ formatDateTime(selectedAppointment.cancelledAt) }}</span>
-                  </div>
-                  <div v-if="selectedAppointment.completedAt" class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Completada:</span>
-                    <span class="text-sm text-gray-600">{{ formatDateTime(selectedAppointment.completedAt) }}</span>
-                  </div>
-                  <div v-if="selectedAppointment.rescheduledAt" class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Reprogramada:</span>
-                    <span class="text-sm text-gray-600">{{ formatDateTime(selectedAppointment.rescheduledAt) }}</span>
+                  <div class="text-center">
+                    <div class="font-bold text-green-600">{{ selectedAppointment.status ? translateStatus(selectedAppointment.status) : 'Pendiente' }}</div>
+                    <div class="text-xs text-gray-500">Estado</div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <!-- Notas -->
-              <div class="modal-section">
-                <h3 class="modal-section-title-admin">
-                  <span>📝</span> Notas
-                </h3>
-                <div :class="[
-                  'rounded-xl p-4 border',
-                  selectedAppointment.notes ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'
-                ]">
-                  <p class="text-gray-700">{{ selectedAppointment.notes || 'Sin notas adicionales' }}</p>
+            <!-- Información de Proveedor/Negocio -->
+            <div class="modal-section">
+              <h3 class="modal-section-title-admin">
+                <span>🏬</span> Proveedor y Negocio
+              </h3>
+              <div class="bg-gray-50 rounded-xl p-4 space-y-4">
+                <!-- Proveedor -->
+                <div v-if="selectedAppointment.providerId" class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+                    <span class="text-white text-sm">👨‍⚕️</span>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-900">{{ selectedAppointment.providerId?.name }}</h4>
+                    <p class="text-xs text-gray-600">{{ selectedAppointment.providerId?.email }}</p>
+                    <p class="text-xs text-gray-500">{{ selectedAppointment.providerId?.serviceType || 'Proveedor' }}</p>
+                  </div>
+                </div>
+
+                <!-- Negocio -->
+                <div v-if="selectedAppointment.businessId" class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                    <span class="text-white text-sm">🏬</span>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-900">{{ selectedAppointment.businessId?.name }}</h4>
+                    <p class="text-xs text-gray-600">{{ selectedAppointment.businessId?.address || 'Sin dirección' }}</p>
+                    <p class="text-xs text-gray-500">{{ selectedAppointment.businessId?.phone || 'Sin teléfono' }}</p>
+                  </div>
+                </div>
+
+                <div v-if="!selectedAppointment.providerId && !selectedAppointment.businessId" class="text-center py-4">
+                  <p class="text-gray-500">Sin proveedor o negocio asignado</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información de Fecha y Hora -->
+            <div class="modal-section">
+              <h3 class="modal-section-title-admin">
+                <span>📅</span> Fecha y Hora
+              </h3>
+              <div class="bg-gray-50 rounded-xl p-4">
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-gray-900 mb-1">
+                    {{ selectedAppointment.date ? formatDate(selectedAppointment.date) : 'Fecha no disponible' }}
+                  </div>
+                  <div class="text-lg text-gray-600 mb-4">
+                    {{ selectedAppointment.time || 'Hora no disponible' }}
+                  </div>
+                  <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800">
+                    <span class="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>
+                    {{ selectedAppointment.createdAt ? formatDateTime(selectedAppointment.createdAt) : 'Creada recientemente' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notas y Observaciones -->
+            <div class="modal-section">
+              <h3 class="modal-section-title-admin">
+                <span>📝</span> Notas y Observaciones
+              </h3>
+              <div class="bg-gray-50 rounded-xl p-4">
+                <div v-if="selectedAppointment.notes" class="text-sm text-gray-700">
+                  {{ selectedAppointment.notes }}
+                </div>
+                <div v-else class="text-center text-gray-500 py-4">
+                  No hay notas para esta cita
+                </div>
+                
+                <!-- Historial de Estado -->
+                <div v-if="selectedAppointment.statusHistory && selectedAppointment.statusHistory.length > 0" class="mt-4 pt-4 border-t border-gray-200">
+                  <h4 class="font-medium text-gray-900 mb-2">Historial de Estado</h4>
+                  <div class="space-y-2 max-h-32 overflow-y-auto">
+                    <div v-for="history in selectedAppointment.statusHistory" :key="history.changedAt" class="text-xs">
+                      <span class="font-medium">{{ formatDateTime(history.changedAt) }}:</span>
+                      <span class="mx-1">Cambió de</span>
+                      <span class="font-medium text-amber-600">{{ history.from }}</span>
+                      <span class="mx-1">a</span>
+                      <span class="font-medium text-green-600">{{ history.to }}</span>
+                      <span v-if="history.reason" class="text-gray-500 ml-1">({{ history.reason }})</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -588,41 +548,39 @@
           <button @click="closeDetailsModal" class="btn-modal-ghost">
             Cerrar
           </button>
-          <div class="flex gap-2">
-            <button 
-              v-if="selectedAppointment.status === 'pendiente'"
-              @click="updateStatus(selectedAppointment, 'confirmada')"
-              class="btn-modal-confirm-admin"
-            >
-              ✅ Confirmar
-            </button>
-            <button 
-              v-if="selectedAppointment.status === 'confirmada'"
-              @click="updateStatus(selectedAppointment, 'completada')"
-              class="btn-modal-complete-admin"
-            >
-              ✓ Completar
-            </button>
-            <button 
-              v-if="selectedAppointment.status === 'pendiente' || selectedAppointment.status === 'confirmada'"
-              @click="updateStatus(selectedAppointment, 'cancelada')"
-              class="btn-modal-cancel-admin"
-            >
-              ❌ Cancelar
-            </button>
-            <button 
-              v-if="selectedAppointment.status === 'pendiente' || selectedAppointment.status === 'confirmada'"
-              @click="showRescheduleModal(selectedAppointment)"
-              class="btn-modal-reschedule-admin"
-            >
-              🔄 Reprogramar
-            </button>
-          </div>
+          <button 
+            v-if="selectedAppointment.status === 'pendiente'"
+            @click="updateStatus(selectedAppointment, 'confirmada')"
+            class="btn-modal-confirm-admin"
+          >
+            ✅ Confirmar Cita
+          </button>
+          <button 
+            v-if="selectedAppointment.status === 'confirmada'"
+            @click="updateStatus(selectedAppointment, 'completada')"
+            class="btn-modal-complete-admin"
+          >
+            ✓ Marcar como Completada
+          </button>
+          <button 
+            v-if="selectedAppointment.status !== 'cancelada' && selectedAppointment.status !== 'completada'"
+            @click="updateStatus(selectedAppointment, 'cancelada')"
+            class="btn-modal-cancel-admin"
+          >
+            ❌ Cancelar Cita
+          </button>
+          <button 
+            v-if="selectedAppointment.status === 'pendiente' || selectedAppointment.status === 'confirmada'"
+            @click="showRescheduleModal(selectedAppointment)"
+            class="btn-modal-reschedule-admin"
+          >
+            🔄 Reprogramar
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Modal para crear nueva cita -->
+    <!-- Modal para crear nueva cita - VERSIÓN CORREGIDA -->
     <div v-if="showCreateModal" class="modal-overlay" @click.self="closeCreateModal">
       <div class="modal-modern-box max-w-4xl" @click.stop>
         <div class="modal-modern-header flex justify-between items-start">
@@ -694,7 +652,7 @@
                 </label>
                 <select
                   v-model="newAppointment.providerId"
-                  @change="loadProviderBusinesses"
+                  @change="filterBusinessesByProvider"
                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
                 >
                   <option value="">Selecciona un proveedor (opcional)</option>
@@ -705,74 +663,135 @@
                 <p class="text-xs text-gray-500 mt-1">Proveedor que atenderá la cita</p>
               </div>
 
-              <!-- Negocio -->
+              <!-- Negocio - VERSIÓN CORREGIDA -->
               <div>
                 <label class="block mb-2 font-medium text-gray-900">
                   <span class="text-purple-600">🏬</span> Negocio
                 </label>
                 <select
                   v-model="newAppointment.businessId"
-                  @change="loadBusinessServices"
                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
                 >
                   <option value="">Selecciona un negocio</option>
                   
                   <!-- Negocios del proveedor seleccionado -->
-                  <optgroup v-if="newAppointment.providerId && providerBusinesses.length > 0" label="Negocios del proveedor">
-                    <option v-for="business in providerBusinesses" :key="business._id" :value="business._id">
+                  <optgroup v-if="newAppointment.providerId && filteredProviderBusinesses.length > 0" 
+                           :label="`Negocios del proveedor (${filteredProviderBusinesses.length})`">
+                    <option v-for="business in filteredProviderBusinesses" :key="business._id" :value="business._id">
                       {{ business.name }} - {{ business.category }}
                     </option>
                   </optgroup>
                   
                   <!-- Todos los negocios -->
-                  <optgroup label="Todos los negocios">
-                    <option v-for="business in formData.businesses" :key="business._id" :value="business._id">
+                  <optgroup v-if="!newAppointment.providerId || filteredProviderBusinesses.length === 0" 
+                           :label="`Todos los negocios (${allBusinesses.length})`">
+                    <option v-for="business in allBusinesses" :key="business._id" :value="business._id">
                       {{ business.name }} - {{ business.category }}
                     </option>
                   </optgroup>
                 </select>
-                <p v-if="newAppointment.providerId && providerBusinesses.length === 0" class="text-xs text-amber-600 mt-1">
-                  Este proveedor no tiene negocios registrados
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ newAppointment.businessId ? `Negocio seleccionado: ${selectedBusiness?.name || ''}` : 'Selecciona un negocio para ver servicios' }}
                 </p>
               </div>
             </div>
 
-            <!-- Tercera fila: Servicio -->
+            <!-- Tercera fila: Servicio - VERSIÓN CORREGIDA COMPLETA -->
             <div>
               <label class="block mb-2 font-medium text-gray-900">
                 <span class="text-purple-600">⚙️</span> Servicio *
               </label>
+              
+              <!-- Debug button -->
+              <div v-if="newAppointment.businessId" class="mb-2">
+                <button 
+                  type="button"
+                  @click="debugServiceData"
+                  class="text-xs px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
+                >
+                  🔍 Debug servicios ({{ availableServicesForBusiness.length }} disponibles)
+                </button>
+              </div>
+              
               <select
                 v-model="newAppointment.serviceId"
                 class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
+                :disabled="availableServicesForBusiness.length === 0"
                 required
               >
                 <option value="">Selecciona un servicio</option>
                 
-                <!-- Servicios del negocio seleccionado -->
-                <optgroup v-if="newAppointment.businessId && businessServices.length > 0" label="Servicios del negocio seleccionado">
-                  <option v-for="service in businessServices" :key="service._id" :value="service._id">
-                    {{ service.name }} - ${{ service.price }} ({{ service.duration }} min)
+                <!-- Opción para servicios embebidos del negocio -->
+                <optgroup 
+                  v-if="selectedBusinessEmbeddedServices.length > 0" 
+                  label="🔄 Servicios del comercio"
+                >
+                  <option 
+                    v-for="service in selectedBusinessEmbeddedServices" 
+                    :key="`embedded_${service._id || service.name}`"
+                    :value="JSON.stringify({ isEmbedded: true, serviceData: service })"
+                    class="text-green-700"
+                  >
+                    {{ service.name }} - ${{ service.price }} ({{ service.duration || '60' }} min) 
+                    <span class="text-xs text-gray-500">[Embe]</span>
                   </option>
                 </optgroup>
                 
-                <!-- Servicios del proveedor seleccionado -->
-                <optgroup v-if="newAppointment.providerId && providerServices.length > 0" label="Servicios del proveedor">
-                  <option v-for="service in providerServices" :key="service._id" :value="service._id">
-                    {{ service.name }} - ${{ service.price }} ({{ service.duration }} min)
+                <!-- Opción para servicios del modelo Service para este negocio -->
+                <optgroup 
+                  v-if="standaloneServicesForBusiness.length > 0" 
+                  label="📋 Servicios registrados"
+                >
+                  <option 
+                    v-for="service in standaloneServicesForBusiness" 
+                    :key="service._id"
+                    :value="service._id"
+                    class="text-blue-700"
+                  >
+                    {{ service.name }} - ${{ service.price }} ({{ service.duration || '60' }} min)
                   </option>
                 </optgroup>
                 
-                <!-- Todos los servicios disponibles -->
-                <optgroup label="Todos los servicios">
-                  <option v-for="service in formData.services" :key="service._id" :value="service._id">
-                    {{ service.name }} - ${{ service.price }} ({{ service.duration }} min)
-                    <span v-if="service.providerId"> - {{ service.providerId.name }}</span>
-                    <span v-if="service.businessId"> - {{ service.businessId.name }}</span>
+                <!-- Opción para servicios del modelo Service sin negocio -->
+                <optgroup 
+                  v-if="standaloneServicesWithoutBusiness.length > 0 && newAppointment.businessId" 
+                  label="🌐 Otros servicios disponibles"
+                >
+                  <option 
+                    v-for="service in standaloneServicesWithoutBusiness" 
+                    :key="service._id"
+                    :value="service._id"
+                    class="text-gray-600"
+                  >
+                    {{ service.name }} - ${{ service.price }} 
+                    <span class="text-xs">({{ getServiceBusinessName(service) || 'Sin comercio' }})</span>
                   </option>
                 </optgroup>
               </select>
-              <p class="text-xs text-gray-500 mt-1">Servicio a realizar</p>
+              
+              <div class="mt-2">
+                <!-- Mensajes informativos -->
+                <div v-if="availableServicesForBusiness.length > 0" class="text-xs text-green-600 bg-green-50 p-2 rounded">
+                  ✅ {{ availableServicesForBusiness.length }} servicio(s) disponible(s)
+                  <span v-if="selectedBusinessEmbeddedServices.length > 0">
+                    ({{ selectedBusinessEmbeddedServices.length }} embebidos, 
+                    {{ standaloneServicesForBusiness.length }} registrados)
+                  </span>
+                </div>
+                
+                <div v-else-if="newAppointment.businessId && availableServicesForBusiness.length === 0" class="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                  ⚠️ No hay servicios disponibles para este comercio. Prueba:
+                  <ul class="mt-1 pl-4 list-disc">
+                    <li>Selecciona otro comercio</li>
+                    <li>Crea un servicio para este comercio</li>
+                    <li>Usa un servicio sin asignar a comercio</li>
+                  </ul>
+                </div>
+                
+                <div v-else class="text-xs text-gray-500">
+                  Selecciona un comercio para ver sus servicios específicos
+                </div>
+              </div>
             </div>
 
             <!-- Cuarta fila: Fecha y Hora -->
@@ -866,51 +885,74 @@
         </div>
 
         <div class="modal-modern-content mt-6">
-          <form @submit.prevent="rescheduleAppointment" class="space-y-4">
-            <!-- Fecha -->
-            <div>
-              <label class="block mb-2 font-medium text-gray-900">
-                Nueva Fecha *
-              </label>
-              <input
-                v-model="rescheduleData.date"
-                type="date"
-                :min="minDate"
-                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
-                required
-              />
+          <div class="space-y-6">
+            <!-- Información de la cita actual -->
+            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4">
+              <h3 class="font-medium text-gray-900 mb-2">Cita Actual</h3>
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span class="text-gray-500">Cliente:</span>
+                  <p class="font-medium">{{ appointmentToReschedule.userId?.name }} {{ appointmentToReschedule.userId?.lastname }}</p>
+                </div>
+                <div>
+                  <span class="text-gray-500">Mascota:</span>
+                  <p class="font-medium">{{ appointmentToReschedule.petId?.name }}</p>
+                </div>
+                <div>
+                  <span class="text-gray-500">Fecha actual:</span>
+                  <p class="font-medium">{{ formatDate(appointmentToReschedule.date) }}</p>
+                </div>
+                <div>
+                  <span class="text-gray-500">Hora actual:</span>
+                  <p class="font-medium">{{ appointmentToReschedule.time }}</p>
+                </div>
+              </div>
             </div>
 
-            <!-- Hora -->
-            <div>
-              <label class="block mb-2 font-medium text-gray-900">
-                Nueva Hora *
-              </label>
-              <select
-                v-model="rescheduleData.time"
-                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
-                required
-              >
-                <option value="">Selecciona una hora</option>
-                <option v-for="hour in availableHours" :key="hour" :value="hour">
-                  {{ hour }}
-                </option>
-              </select>
-            </div>
+            <!-- Nuevas fechas y hora -->
+            <div class="space-y-4">
+              <div>
+                <label class="block mb-2 font-medium text-gray-900">
+                  <span class="text-purple-600">📅</span> Nueva Fecha *
+                </label>
+                <input
+                  v-model="rescheduleData.date"
+                  type="date"
+                  :min="minDate"
+                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
+                  required
+                />
+              </div>
 
-            <!-- Razón -->
-            <div>
-              <label class="block mb-2 font-medium text-gray-900">
-                Razón de la reprogramación
-              </label>
-              <textarea
-                v-model="rescheduleData.reason"
-                rows="3"
-                placeholder="¿Por qué se reprograma la cita?..."
-                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 resize-none"
-              ></textarea>
+              <div>
+                <label class="block mb-2 font-medium text-gray-900">
+                  <span class="text-purple-600">⏰</span> Nueva Hora *
+                </label>
+                <select
+                  v-model="rescheduleData.time"
+                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200"
+                  required
+                >
+                  <option value="">Selecciona una hora</option>
+                  <option v-for="hour in availableHours" :key="hour" :value="hour">
+                    {{ hour }}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-900">
+                  <span class="text-purple-600">📝</span> Razón de Reprogramación
+                </label>
+                <textarea
+                  v-model="rescheduleData.reason"
+                  rows="3"
+                  placeholder="Motivo del cambio de fecha/hora..."
+                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 resize-none"
+                ></textarea>
+              </div>
             </div>
-          </form>
+          </div>
         </div>
 
         <div class="modal-modern-actions">
@@ -919,15 +961,15 @@
           </button>
           <button 
             @click="rescheduleAppointment"
-            class="btn-modal-primary-admin"
+            class="btn-modal-reschedule-admin"
             :disabled="!rescheduleData.date || !rescheduleData.time || processing"
           >
             <span v-if="!processing">
-              <span class="mr-2">🔄</span> Reprogramar
+              <span class="mr-2">🔄</span> Reprogramar Cita
             </span>
             <span v-else class="flex items-center gap-2">
               <span class="animate-spin">⟳</span>
-              Procesando...
+              Reprogramando...
             </span>
           </button>
         </div>
@@ -959,17 +1001,18 @@ export default {
       currentPage: 1,
       itemsPerPage: 10,
       
-      // Form Data
+      // Form Data - ESTRUCTURA CORREGIDA
       formData: {
         clients: [],
         providers: [],
-        businesses: [],
-        services: []
+        businesses: [],       // Negocios con servicios embebidos
+        services: [],         // Servicios del modelo Service (standalone)
+        allServices: []       // Todos los servicios combinados
       },
+      
+      // Datos para servicios
       clientPets: [],
       providerBusinesses: [],
-      businessServices: [],
-      providerServices: [],
       
       // Modales
       showDetailsModal: false,
@@ -978,13 +1021,13 @@ export default {
       selectedAppointment: null,
       appointmentToReschedule: null,
       
-      // Datos para nueva cita
+      // Datos para nueva cita - ESTRUCTURA MEJORADA
       newAppointment: {
         clientId: "",
         petId: "",
         providerId: "",
         businessId: "",
-        serviceId: "",
+        serviceId: "",        // Puede ser ID o objeto JSON para servicios embebidos
         date: "",
         time: "",
         notes: ""
@@ -1008,6 +1051,119 @@ export default {
   },
 
   computed: {
+    // COMERCIOS ============================================
+    // Todos los negocios disponibles
+    allBusinesses() {
+      return this.formData.businesses?.all || this.formData.businesses || [];
+    },
+    
+    // Negocios del proveedor seleccionado
+    filteredProviderBusinesses() {
+      if (!this.newAppointment.providerId) return [];
+      
+      return this.allBusinesses.filter(business => {
+        const providerId = this.getBusinessProviderId(business);
+        return providerId === this.newAppointment.providerId;
+      });
+    },
+    
+    // Negocio seleccionado
+    selectedBusiness() {
+      if (!this.newAppointment.businessId) return null;
+      return this.allBusinesses.find(b => b._id === this.newAppointment.businessId);
+    },
+    
+    // SERVICIOS ============================================
+    // Servicios embebidos del negocio seleccionado
+    selectedBusinessEmbeddedServices() {
+      if (!this.selectedBusiness) return [];
+      
+      // Formato 1: embeddedServices (nuevo)
+      if (this.selectedBusiness.embeddedServices && this.selectedBusiness.embeddedServices.length > 0) {
+        return this.selectedBusiness.embeddedServices.filter(s => s.isActive !== false);
+      }
+      
+      // Formato 2: services (antiguo)
+      if (this.selectedBusiness.services && this.selectedBusiness.services.length > 0) {
+        return this.selectedBusiness.services.map(service => ({
+          _id: service._id || `embedded_${this.selectedBusiness._id}_${service.name}`,
+          name: service.name,
+          description: service.description || '',
+          price: service.price || 0,
+          duration: service.duration || 60,
+          isActive: service.isActive !== false,
+          businessId: this.selectedBusiness._id,
+          businessName: this.selectedBusiness.name,
+          isEmbedded: true
+        })).filter(s => s.isActive !== false);
+      }
+      
+      return [];
+    },
+    
+    // Servicios del modelo Service para este negocio
+    standaloneServicesForBusiness() {
+      if (!this.newAppointment.businessId) return [];
+      
+      const allServices = this.formData.services?.all || this.formData.services || [];
+      
+      return allServices.filter(service => {
+        if (!service || !service.businessId) return false;
+        
+        let serviceBusinessId = null;
+        
+        // Formato 1: businessId es objeto
+        if (typeof service.businessId === 'object' && service.businessId._id) {
+          serviceBusinessId = service.businessId._id.toString();
+        }
+        // Formato 2: businessId es string
+        else if (typeof service.businessId === 'string') {
+          serviceBusinessId = service.businessId;
+        }
+        // Formato 3: business (antiguo)
+        else if (service.business && typeof service.business === 'object' && service.business._id) {
+          serviceBusinessId = service.business._id.toString();
+        }
+        else if (service.business && typeof service.business === 'string') {
+          serviceBusinessId = service.business;
+        }
+        
+        return serviceBusinessId === this.newAppointment.businessId && !service.isEmbedded;
+      });
+    },
+    
+    // Servicios del modelo Service sin negocio específico
+    standaloneServicesWithoutBusiness() {
+      const allServices = this.formData.services?.all || this.formData.services || [];
+      
+      return allServices.filter(service => {
+        if (!service) return false;
+        
+        // Verificar si tiene businessId
+        const hasBusinessId = (
+          (service.businessId && typeof service.businessId === 'object' && service.businessId._id) ||
+          (service.businessId && typeof service.businessId === 'string' && service.businessId.trim() !== '')
+        );
+        
+        // Verificar si tiene business (antiguo)
+        const hasBusiness = (
+          (service.business && typeof service.business === 'object' && service.business._id) ||
+          (service.business && typeof service.business === 'string' && service.business.trim() !== '')
+        );
+        
+        return !hasBusinessId && !hasBusiness && !service.isEmbedded;
+      });
+    },
+    
+    // Todos los servicios disponibles para el negocio seleccionado
+    availableServicesForBusiness() {
+      return [
+        ...this.selectedBusinessEmbeddedServices,
+        ...this.standaloneServicesForBusiness
+      ];
+    },
+    
+    // FILTROS Y PAGINACIÓN ================================
     filteredAppointments() {
       let filtered = this.appointments;
       
@@ -1189,7 +1345,7 @@ export default {
       this.loadAppointments();
     },
     
-    // ============ MÉTODOS DE DATOS ============
+    // ============ MÉTODOS DE DATOS CORREGIDOS ============
     async loadAppointments() {
       try {
         this.loading = true;
@@ -1203,22 +1359,19 @@ export default {
           console.log(`✅ ${this.appointments.length} citas cargadas para admin`);
         } else {
           this.errorMessage = response.data.message || "Error al cargar citas";
-          console.warn('⚠️ Respuesta inesperada:', response.data);
         }
         
       } catch (err) {
         console.error("❌ Error cargando citas:", err);
         
         if (err.response?.status === 403) {
-          this.errorMessage = "No tienes permisos de administrador para ver todas las citas.";
+          this.errorMessage = "No tienes permisos de administrador.";
         } else if (err.response?.status === 401) {
-          this.errorMessage = "Sesión expirada. Por favor, inicia sesión nuevamente.";
+          this.errorMessage = "Sesión expirada.";
           this.$router.push('/login');
           return;
         } else if (err.response?.status === 404) {
-          this.errorMessage = "Ruta no encontrada. Verifica la configuración del backend.";
-          // Opcional: cargar datos de ejemplo
-          // this.appointments = this.getMockAppointments();
+          this.errorMessage = "Ruta no encontrada.";
           return;
         } else {
           this.errorMessage = `Error al cargar citas: ${err.message || 'Error desconocido'}`;
@@ -1233,18 +1386,126 @@ export default {
     
     async loadFormData() {
       try {
-        const response = await api.get("/admin/appointments/form-data");
+        console.log('🔄 Cargando datos del formulario...');
+        // Usa el endpoint completo que incluye todos los servicios
+        const response = await api.get("/admin/appointments/complete-form-data");
+        
         if (response.data.success) {
           this.formData = response.data.formData;
-          console.log('✅ Datos del formulario cargados para admin');
-          console.log('📊 Negocios con provider:', this.formData.businesses.filter(b => b.provider).length);
+          console.log('✅ Datos completos cargados para admin');
+          
+          // DEBUG: Mostrar estructura
+          console.log('📊 ESTRUCTURA DE DATOS:');
+          console.log(`   👤 Clientes: ${this.formData.clients?.length || 0}`);
+          console.log(`   👨‍⚕️ Proveedores: ${this.formData.providers?.length || 0}`);
+          
+          const businessCount = this.formData.businesses?.all?.length || this.formData.businesses?.length || 0;
+          console.log(`   🏬 Negocios: ${businessCount}`);
+          
+          if (this.formData.services) {
+            console.log(`   ⚙️ Servicios totales: ${this.formData.services.all?.length || this.formData.services.length || 0}`);
+            console.log(`     📋 Standalone: ${this.formData.services.standaloneServices?.length || 0}`);
+            console.log(`     🔄 Embebidos: ${this.formData.services.embeddedServices?.length || 0}`);
+          }
+        } else {
+          console.error('❌ Error en respuesta del backend:', response.data.message);
+          // Fallback al endpoint simple
+          await this.loadFormDataFallback();
         }
       } catch (err) {
         console.error("❌ Error cargando datos del formulario:", err);
+        // Fallback al endpoint simple
+        await this.loadFormDataFallback();
+      }
+    },
+    
+    async loadFormDataFallback() {
+      try {
+        console.log('🔄 Usando fallback para cargar datos del formulario...');
+        const response = await api.get("/admin/appointments/form-data");
+        
+        if (response.data.success) {
+          this.formData = response.data.formData;
+          console.log('✅ Datos básicos cargados (fallback)');
+        }
+      } catch (err) {
+        console.error("❌ Error en fallback:", err);
         this.showTemporaryMessage("Error al cargar datos del formulario", 'error');
       }
     },
     
+    // ============ MÉTODOS AUXILIARES MEJORADOS ============
+    getBusinessProviderId(business) {
+      if (!business) return null;
+      
+      // Formato 1: provider como objeto
+      if (business.provider && typeof business.provider === 'object' && business.provider._id) {
+        return business.provider._id.toString();
+      }
+      
+      // Formato 2: provider como string
+      if (business.provider && typeof business.provider === 'string') {
+        return business.provider;
+      }
+      
+      // Formato 3: providerId
+      if (business.providerId) {
+        return business.providerId.toString();
+      }
+      
+      return null;
+    },
+    
+    getServiceBusinessName(service) {
+      if (!service) return '';
+      
+      // Formato 1: service.businessId como objeto
+      if (service.businessId && typeof service.businessId === 'object' && service.businessId.name) {
+        return service.businessId.name;
+      }
+      
+      // Formato 2: service.business como objeto
+      if (service.business && typeof service.business === 'object' && service.business.name) {
+        return service.business.name;
+      }
+      
+      // Formato 3: businessName directo
+      if (service.businessName) {
+        return service.businessName;
+      }
+      
+      // Buscar el negocio por ID
+      if (service.businessId) {
+        const businessId = typeof service.businessId === 'object' 
+          ? service.businessId._id 
+          : service.businessId;
+        
+        const business = this.allBusinesses.find(b => b._id === businessId);
+        return business ? business.name : '';
+      }
+      
+      return '';
+    },
+    
+    // ============ FILTRADO DE NEGOCIOS POR PROVEEDOR ============
+    filterBusinessesByProvider() {
+      if (!this.newAppointment.providerId) {
+        this.providerBusinesses = [];
+        this.newAppointment.businessId = "";
+        return;
+      }
+      
+      console.log('🔍 Filtrando negocios para proveedor:', this.newAppointment.providerId);
+      
+      this.providerBusinesses = this.allBusinesses.filter(business => {
+        const businessProviderId = this.getBusinessProviderId(business);
+        return businessProviderId === this.newAppointment.providerId;
+      });
+      
+      console.log(`📊 Encontrados ${this.providerBusinesses.length} negocios del proveedor`);
+    },
+    
+    // ============ CARGAR MASCOTAS DEL CLIENTE ============
     async loadClientPets() {
       if (!this.newAppointment.clientId) {
         this.clientPets = [];
@@ -1255,83 +1516,43 @@ export default {
         const response = await api.get(`/admin/appointments/clients/${this.newAppointment.clientId}/pets`);
         if (response.data.success) {
           this.clientPets = response.data.pets;
-          this.newAppointment.petId = ""; // Resetear selección
+          this.newAppointment.petId = "";
           console.log(`✅ ${this.clientPets.length} mascotas cargadas`);
         }
       } catch (err) {
-        console.error("❌ Error cargando mascotas del cliente:", err);
+        console.error("❌ Error cargando mascotas:", err);
         this.clientPets = [];
       }
     },
     
-    async loadProviderBusinesses() {
-      if (!this.newAppointment.providerId) {
-        this.providerBusinesses = [];
-        this.newAppointment.businessId = "";
-        this.businessServices = [];
-        this.providerServices = [];
-        return;
+    // ============ DEBUG DE SERVICIOS ============
+    debugServiceData() {
+      console.log('=== DEBUG: DATOS DE SERVICIOS ===');
+      console.log('Negocio seleccionado:', this.newAppointment.businessId);
+      console.log('Negocio objeto:', this.selectedBusiness);
+      
+      if (this.selectedBusiness) {
+        console.log('🏬 Nombre del negocio:', this.selectedBusiness.name);
+        console.log('🔄 Servicios embebidos:', this.selectedBusinessEmbeddedServices.length);
+        console.log('📋 Servicios standalone para este negocio:', this.standaloneServicesForBusiness.length);
+        console.log('🌐 Servicios sin negocio:', this.standaloneServicesWithoutBusiness.length);
       }
       
-      try {
-        console.log('🔍 Cargando negocios del proveedor:', this.newAppointment.providerId);
-        
-        // Cargar negocios del proveedor
-        const businessesResponse = await api.get(`/admin/appointments/providers/${this.newAppointment.providerId}/businesses`);
-        
-        // Cargar servicios del proveedor
-        const servicesResponse = await api.get(`/admin/appointments/providers/${this.newAppointment.providerId}/services`);
-        
-        if (businessesResponse.data.success) {
-          this.providerBusinesses = businessesResponse.data.businesses;
-          console.log(`✅ ${this.providerBusinesses.length} negocios del proveedor cargados`);
-        }
-        
-        if (servicesResponse.data.success) {
-          this.providerServices = servicesResponse.data.services;
-          console.log(`✅ ${this.providerServices.length} servicios del proveedor cargados`);
-        }
-        
-        // Resetear selecciones si no pertenecen al proveedor
-        if (this.newAppointment.businessId) {
-          const selectedBusiness = this.formData.businesses.find(
-            b => b._id === this.newAppointment.businessId
-          );
-          
-          if (selectedBusiness && selectedBusiness.provider?._id !== this.newAppointment.providerId) {
-            this.newAppointment.businessId = "";
-            this.businessServices = [];
-          }
-        }
-        
-      } catch (err) {
-        console.error("❌ Error cargando datos del proveedor:", err);
-        this.providerBusinesses = [];
-        this.providerServices = [];
-      }
-    },
-    
-    async loadBusinessServices() {
-      if (!this.newAppointment.businessId) {
-        this.businessServices = [];
-        this.newAppointment.serviceId = "";
-        return;
-      }
+      console.log('\n🔄 SERVICIOS EMBEBIDOS:');
+      this.selectedBusinessEmbeddedServices.forEach((service, i) => {
+        console.log(`${i + 1}. ${service.name} - $${service.price}`);
+        console.log(`   ID: ${service._id}`);
+        console.log(`   isEmbedded: ${service.isEmbedded}`);
+      });
       
-      try {
-        console.log('🔍 Cargando servicios del negocio:', this.newAppointment.businessId);
-        
-        const response = await api.get(`/admin/appointments/businesses/${this.newAppointment.businessId}/services`);
-        
-        if (response.data.success) {
-          this.businessServices = response.data.services;
-          console.log(`✅ ${this.businessServices.length} servicios del negocio cargados`);
-        }
-        
-      } catch (err) {
-        console.error("❌ Error cargando servicios del negocio:", err);
-        this.businessServices = [];
-      }
+      console.log('\n📋 SERVICIOS STANDALONE PARA ESTE NEGOCIO:');
+      this.standaloneServicesForBusiness.forEach((service, i) => {
+        console.log(`${i + 1}. ${service.name} - $${service.price}`);
+        console.log(`   ID: ${service._id}`);
+        console.log(`   businessId: ${service.businessId}`);
+      });
+      
+      console.log('\n🎯 TOTAL DISPONIBLES:', this.availableServicesForBusiness.length);
     },
     
     // ============ MODALES ============
@@ -1368,8 +1589,6 @@ export default {
       };
       this.clientPets = [];
       this.providerBusinesses = [];
-      this.businessServices = [];
-      this.providerServices = [];
     },
     
     showRescheduleModal(appointment) {
@@ -1413,9 +1632,7 @@ export default {
     
     // ============ ACCIONES ============
     async updateStatus(appointment, newStatus) {
-      if (!confirm(`¿Estás seguro de cambiar el estado a "${this.translateStatus(newStatus)}"?`)) {
-        return;
-      }
+      if (!confirm(`¿Cambiar estado a "${this.translateStatus(newStatus)}"?`)) return;
       
       try {
         this.processing = true;
@@ -1426,22 +1643,15 @@ export default {
         );
         
         if (response.data.success) {
-          // Actualizar la cita localmente
           const index = this.appointments.findIndex(a => a._id === appointment._id);
           if (index !== -1) {
             this.appointments[index].status = newStatus;
             this.appointments[index].updatedAt = new Date();
             
-            // Actualizar timestamps según el estado
-            if (newStatus === 'cancelada') {
-              this.appointments[index].cancelledAt = new Date();
-            } else if (newStatus === 'completada') {
-              this.appointments[index].completedAt = new Date();
-            } else if (newStatus === 'reprogramada') {
-              this.appointments[index].rescheduledAt = new Date();
-            }
+            if (newStatus === 'cancelada') this.appointments[index].cancelledAt = new Date();
+            if (newStatus === 'completada') this.appointments[index].completedAt = new Date();
+            if (newStatus === 'reprogramada') this.appointments[index].rescheduledAt = new Date();
             
-            // Actualizar en el modal de detalles si está abierto
             if (this.selectedAppointment && this.selectedAppointment._id === appointment._id) {
               Object.assign(this.selectedAppointment, this.appointments[index]);
             }
@@ -1458,15 +1668,59 @@ export default {
       }
     },
     
+    // ============ CREAR CITA CON SERVICIOS EMBEBIDOS ============
     async createAppointment() {
       try {
         this.processing = true;
         
-        console.log('📝 Enviando datos de nueva cita:', this.newAppointment);
+        console.log('📝 Preparando datos para nueva cita...');
+        
+        // Parsear serviceId si es un objeto JSON (para servicios embebidos)
+        let serviceData = {};
+        let finalServiceId = null;
+        let isEmbeddedService = false;
+        
+        if (this.newAppointment.serviceId && this.newAppointment.serviceId.startsWith('{')) {
+          // Es un servicio embebido (JSON stringified)
+          try {
+            const parsedService = JSON.parse(this.newAppointment.serviceId);
+            if (parsedService.isEmbedded && parsedService.serviceData) {
+              isEmbeddedService = true;
+              finalServiceId = null; // No hay ID de modelo Service
+              serviceData = {
+                serviceName: parsedService.serviceData.name,
+                servicePrice: parsedService.serviceData.price,
+                serviceDuration: parsedService.serviceData.duration || 60
+              };
+              console.log('✅ Usando servicio embebido:', serviceData.serviceName);
+            }
+          } catch (e) {
+            console.error('❌ Error parseando servicio embebido:', e);
+          }
+        } else {
+          // Es un ID de servicio del modelo Service
+          finalServiceId = this.newAppointment.serviceId;
+          console.log('✅ Usando servicio del modelo Service ID:', finalServiceId);
+        }
+        
+        // Preparar datos para enviar al backend
+        const appointmentData = {
+          clientId: this.newAppointment.clientId,
+          petId: this.newAppointment.petId,
+          providerId: this.newAppointment.providerId || null,
+          businessId: this.newAppointment.businessId || null,
+          serviceId: finalServiceId, // Puede ser null para servicios embebidos
+          date: this.newAppointment.date,
+          time: this.newAppointment.time,
+          notes: this.newAppointment.notes || '',
+          ...serviceData // Añadir serviceName, servicePrice si es embebido
+        };
+        
+        console.log('📤 Enviando datos al backend:', appointmentData);
         
         const response = await api.post(
           "/admin/appointments",
-          this.newAppointment
+          appointmentData
         );
         
         if (response.data.success) {
@@ -1478,7 +1732,7 @@ export default {
       } catch (err) {
         console.error("❌ Error creando cita:", err);
         
-        let errorMessage = "❌ Error al crear la cita. Por favor, verifica los datos.";
+        let errorMessage = "❌ Error al crear la cita.";
         if (err.response?.data?.message) {
           errorMessage = `❌ ${err.response.data.message}`;
         } else if (err.response?.data?.errors) {
@@ -1519,7 +1773,6 @@ export default {
     showTemporaryMessage(message, type = 'success') {
       console.log(`${type.toUpperCase()}: ${message}`);
       
-      // Remover alertas anteriores
       const existingAlerts = document.querySelectorAll('.temp-alert');
       existingAlerts.forEach(alert => alert.remove());
       
@@ -1838,7 +2091,7 @@ export default {
   box-shadow: 0 10px 20px rgba(168, 85, 247, 0.3) !important;
 }
 
-/* Estilos del modal (mantener de tu vista anterior) */
+/* Estilos del modal */
 .modal-overlay {
   position: fixed;
   top: 0;

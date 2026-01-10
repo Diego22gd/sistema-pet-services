@@ -732,8 +732,13 @@ businessSchema.virtual('activeServicesCount').get(function() {
   }
   return this.services.filter(service => service.isActive !== false).length;
 });
-// Virtual para obtener servicios activos
+
+// Virtual para obtener servicios activos - CORREGIDO
 businessSchema.virtual('activeServices').get(function() {
+  // CORRECCIÓN: Verificar si services existe y es un array
+  if (!this.services || !Array.isArray(this.services)) {
+    return []; // Retornar array vacío en lugar de undefined
+  }
   return this.services.filter(service => service.isActive !== false);
 });
 
@@ -869,6 +874,7 @@ businessSchema.query.active = function() {
 businessSchema.query.pendingApproval = function() {
   return this.where({ approved: false, status: 'pending', isDeleted: { $ne: true } });
 };
+
 // Método para incrementar vistas
 businessSchema.methods.incrementViews = function() {
   this.views = (this.views || 0) + 1;
