@@ -15,14 +15,11 @@
         <!-- Botón hamburguesa para móvil (derecha) -->
         <button 
           @click="toggleMobileMenu"
-          class="md:hidden text-white hover:text-emerald-100 transition-colors p-2 rounded-lg hover:bg-emerald-700 relative"
+          class="md:hidden text-white hover:text-emerald-100 transition-colors p-2 rounded-lg hover:bg-emerald-700"
           aria-label="Menú de navegación"
         >
-          <!-- Ícono hamburguesa/cruz -->
-          <div class="w-6 h-6 flex flex-col justify-center items-center">
-            <span class="text-2xl">{{ isMobileMenuOpen ? '✕' : '☰' }}</span>
-          </div>
-          <!-- Contador de notificaciones (opcional) -->
+          <span class="text-2xl">{{ isMobileMenuOpen ? '✕' : '☰' }}</span>
+          <!-- Contador de notificaciones -->
           <span v-if="hasNotifications" class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full animate-pulse"></span>
         </button>
 
@@ -101,7 +98,8 @@
       <!-- Menú móvil desplegable -->
       <div 
         v-if="isMobileMenuOpen"
-        class="md:hidden bg-emerald-700/95 backdrop-blur-sm rounded-lg mt-2 py-4 px-4 animate-slideDown shadow-xl border border-emerald-500/20"
+        class="md:hidden bg-emerald-700/95 backdrop-blur-sm rounded-lg mt-2 py-4 px-4 shadow-xl border border-emerald-500/20"
+        :class="menuAnimationClass"
       >
         <div class="space-y-2">
           <!-- COMERCIOS móvil -->
@@ -170,14 +168,14 @@
           <!-- Botón Cerrar Sesión móvil -->
           <button
             @click="logout"
-            class="w-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 group animate-pulse-once"
+            class="w-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 group"
           >
             <span>🚪</span>
             <span>Cerrar Sesión</span>
             <span class="opacity-0 group-hover:opacity-100 transition-opacity">👋</span>
           </button>
 
-          <!-- Información del usuario (opcional) -->
+          <!-- Información del usuario -->
           <div class="pt-3 border-t border-emerald-500/20">
             <div class="text-emerald-200 text-sm text-center">
               <p v-if="userEmail">📧 {{ userEmail }}</p>
@@ -196,24 +194,43 @@ export default {
   data() {
     return {
       isMobileMenuOpen: false,
-      hasNotifications: true, // Cambiar según lógica de notificaciones
-      userEmail: null
+      hasNotifications: true,
+      userEmail: null,
+      menuAnimationClass: ''
     }
   },
   methods: {
     toggleMobileMenu() {
       this.isMobileMenuOpen = !this.isMobileMenuOpen;
-      // Prevenir scroll cuando el menú está abierto
+      
       if (this.isMobileMenuOpen) {
+        // Abrir menú con animación
+        this.menuAnimationClass = 'animate-slideDown';
         document.body.style.overflow = 'hidden';
+        
+        // Agregar clase para prevenir scroll
+        document.body.classList.add('menu-open');
       } else {
-        document.body.style.overflow = '';
+        // Cerrar menú con animación
+        this.menuAnimationClass = 'animate-slideUp';
+        
+        setTimeout(() => {
+          this.menuAnimationClass = '';
+          document.body.style.overflow = '';
+          document.body.classList.remove('menu-open');
+        }, 300);
       }
     },
     
     closeMobileMenu() {
       this.isMobileMenuOpen = false;
-      document.body.style.overflow = '';
+      this.menuAnimationClass = 'animate-slideUp';
+      
+      setTimeout(() => {
+        this.menuAnimationClass = '';
+        document.body.style.overflow = '';
+        document.body.classList.remove('menu-open');
+      }, 300);
     },
     
     logout() {
@@ -251,12 +268,20 @@ export default {
       console.warn('⚠️ Usuario no autenticado');
     }
     
-    // Cerrar menú al hacer clic fuera (opcional)
+    // Cerrar menú al hacer clic fuera
     document.addEventListener('click', this.handleClickOutside);
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside);
     document.body.style.overflow = '';
+    document.body.classList.remove('menu-open');
+  },
+  watch: {
+    '$route.path'(newPath) {
+      console.log('🔄 Cambio de ruta:', newPath);
+      // Cerrar menú al cambiar de ruta
+      this.closeMobileMenu();
+    }
   },
   methods: {
     handleClickOutside(event) {
@@ -267,23 +292,14 @@ export default {
         this.closeMobileMenu();
       }
     }
-  },
-  watch: {
-    '$route.path'(newPath) {
-      console.log('🔄 Cambio de ruta:', newPath);
-      // Cerrar menú al cambiar de ruta
-      this.closeMobileMenu();
-    }
   }
 }
 </script>
 
 <style scoped>
-/* APLICAR LOS MISMOS ESTILOS DEL ADMIN */
-
 /* HEADER FIJADO */
 header {
-  background-color: #059669 !important; /* emerald-600 */
+  background-color: #059669 !important;
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -297,7 +313,7 @@ nav a:hover, nav button:hover {
   color: #d1fae5 !important; /* emerald-100 */
 }
 
-/* Botón de cerrar sesión con efecto hover */
+/* Botón de cerrar sesión */
 .bg-rose-600 {
   background-color: #dc2626; /* rose-600 */
 }
@@ -329,31 +345,51 @@ nav a:hover, nav button:hover {
 
 /* Animaciones para menú móvil */
 .animate-slideDown {
-  animation: slideDown 0.3s ease-out;
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out forwards;
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-20px) scale(0.95);
+    max-height: 0;
   }
   to {
     opacity: 1;
+    transform: translateY(0) scale(1);
+    max-height: 500px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    max-height: 500px;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    max-height: 0;
+  }
+}
+
+/* Animación de entrada para header */
+header {
+  transform: translateY(-100%);
+  animation: slideDownHeader 0.5s ease-out forwards;
+}
+
+@keyframes slideDownHeader {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
     transform: translateY(0);
-  }
-}
-
-/* Animación para botón de logout en móvil */
-.animate-pulse-once {
-  animation: pulseOnce 2s ease-in-out;
-}
-
-@keyframes pulseOnce {
-  0%, 100% {
-    box-shadow: 0 0 0 rgba(220, 38, 38, 0);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(220, 38, 38, 0.4);
   }
 }
 
@@ -386,43 +422,13 @@ nav a.bg-emerald-700::after {
   background-color: #d1fae5;
 }
 
-/* Animación de entrada para header */
-header {
-  transform: translateY(-100%);
-  animation: slideDownHeader 0.5s ease-out forwards;
-}
-
-@keyframes slideDownHeader {
-  from {
-    transform: translateY(-100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
 /* Efecto especial para el enlace de Comercios */
 nav a[href="/commerces"] {
   position: relative;
-  animation: subtleGlow 3s ease-in-out infinite;
 }
 
-@keyframes subtleGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
-  }
-  50% {
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-  }
-}
-
-/* Efecto de partículas para hover en Comercios */
-nav a[href="/commerces"]:hover::after {
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0.8) 0%, 
-    rgba(255,215,0,0.8) 50%, 
-    rgba(255,255,255,0.8) 100%);
-  height: 4px;
+nav a[href="/commerces"]:hover {
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
 /* Ajuste de espaciado para íconos */
@@ -464,21 +470,25 @@ nav button:hover {
   button.md\\:hidden {
     min-width: 44px;
     min-height: 44px;
+    position: relative;
   }
   
   /* Mejorar visibilidad del menú móvil */
   .md\\:hidden.bg-emerald-700\/95 {
-    background-color: rgba(5, 150, 105, 0.95);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    background-color: rgba(5, 150, 105, 0.98) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    margin-top: 0.5rem;
+    overflow: hidden;
+    max-height: 500px;
+    transition: all 0.3s ease;
   }
   
-  /* Prevenir scroll del body cuando el menú está abierto */
-  body.menu-open {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
+  /* Botón de notificación */
+  button.md\\:hidden span:last-child {
+    position: absolute;
+    top: -2px;
+    right: -2px;
   }
 }
 
@@ -500,26 +510,46 @@ nav button:hover {
 
 /* Mejoras para menú móvil */
 @media (max-width: 768px) {
-  /* Efecto de desenfoque detrás del menú */
-  .md\\:hidden.bg-emerald-700\/95 {
-    background-color: rgba(5, 150, 105, 0.98);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+  /* Animación mejorada */
+  .animate-slideDown {
+    animation: slideDownMobile 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
   
-  /* Animación de entrada del menú */
-  .animate-slideDown {
-    animation: slideDownMobile 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  .animate-slideUp {
+    animation: slideUpMobile 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
   
   @keyframes slideDownMobile {
     from {
       opacity: 0;
-      transform: translateY(-20px) scale(0.95);
+      transform: translateY(-10px);
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
     }
     to {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateY(0);
+      max-height: 500px;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+  }
+  
+  @keyframes slideUpMobile {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 500px;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-10px);
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
     }
   }
   
@@ -529,23 +559,53 @@ nav button:hover {
     min-height: 44px;
     padding: 0.75rem 1rem !important;
   }
-}
-
-/* Efecto de profundidad para elementos */
-nav a, nav button {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  
+  /* Prevenir scroll cuando el menú está abierto */
+  body.menu-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 /* Mejoras visuales para menú móvil */
 .md\\:hidden a {
   border-left: 3px solid transparent;
-  transition: border-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .md\\:hidden a:hover,
 .md\\:hidden a.bg-emerald-600 {
   border-left-color: #fbbf24;
   padding-left: calc(1rem - 3px);
+  background: linear-gradient(to right, rgba(251, 191, 36, 0.1), rgba(5, 150, 105, 0.6));
+}
+
+/* Efecto de profundidad */
+nav a, nav button {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Botón hamburguesa con animación */
+button.md\\:hidden span {
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+/* Estilos para cuando el menú está abierto */
+.is-mobile-menu-open {
+  background-color: rgba(5, 150, 105, 0.98) !important;
+}
+
+/* Asegurar que el z-index sea correcto */
+header {
+  z-index: 9999 !important;
+}
+
+.md\\:hidden.bg-emerald-700\/95 {
+  z-index: 10000 !important;
+  position: relative;
 }
 </style>
