@@ -13,7 +13,7 @@ import { connectDB } from "./src/config/db.js";
 // Importar middlewares de error
 import { notFound, errorHandler } from "./src/middlewares/errorMiddleware.js";
 
-// Importar rutas (tus imports actuales)
+// Importar rutas
 import userRoutes from "./src/routes/userRoutes.js";
 import serviceRoutes from "./src/routes/serviceRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
@@ -46,17 +46,19 @@ const app = express();
 
 // ============ MIDDLEWARES ============
 
-// 1. CORS configurado para producción
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:8080', 
-  'http://localhost:3000',
-  process.env.FRONTEND_URL // URL de tu frontend en producción
-].filter(Boolean);
+// 1. CORS - Configuración para producción y desarrollo
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? [
+      'https://sistema-pet-services.onrender.com',
+      'http://localhost:5173',
+      'http://localhost:8080',
+      'http://localhost:3000'
+    ]
+  : ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000'];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permite requests sin origin (como mobile apps o curl)
+    // Permitir requests sin origin (como mobile apps o curl)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) === -1) {
@@ -71,69 +73,60 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// 2. Parsers
+// 2. Parsers con límites para producción
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // 3. Servir archivos estáticos
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
-app.use(express.static(path.join(__dirname, 'public')));
+const uploadsPath = process.env.NODE_ENV === 'production'
+  ? '/data/uploads'  // En Render, usa el disco montado
+  : path.join(__dirname, 'public', 'uploads');
 
-// ============ SERVIR FRONTEND EN PRODUCCIÓN ============
-if (process.env.NODE_ENV === 'production') {
-  // Build path del frontend (ajusta según tu estructura)
-  const frontendPath = path.join(__dirname, '../frontend/dist');
-  
-  // Verificar si existe el build del frontend
-  if (fs.existsSync(frontendPath)) {
-    app.use(express.static(frontendPath));
-    
-    // Todas las rutas no-API sirven el index.html del frontend
-    app.get('*', (req, res, next) => {
-      if (!req.path.startsWith('/api')) {
-        res.sendFile(path.join(frontendPath, 'index.html'));
-      } else {
-        next();
-      }
-    });
-    console.log('✅ Frontend Vue.js configurado para producción');
-  } else {
-    console.log('⚠️  Frontend build no encontrado. Solo servirá API.');
-  }
+// Crear carpeta de uploads si no existe
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+  console.log(`📁 Carpeta de uploads creada: ${uploadsPath}`);
 }
+
+app.use('/uploads', express.static(uploadsPath));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ============ CREAR CARPETAS DE UPLOADS ============
 const createUploadsFolders = () => {
-  const folders = [
-    path.join(__dirname, 'public', 'uploads'),
-    path.join(__dirname, 'public', 'uploads', 'businesses'),
-    path.join(__dirname, 'public', 'uploads', 'users'),
-    path.join(__dirname, 'public', 'uploads', 'services'),
-    path.join(__dirname, 'public', 'uploads', 'pets')
-  ];
+  const baseFolders = ['businesses', 'users', 'services', 'pets'];
   
-  folders.forEach(folder => {
-    if (!fs.existsSync(folder)) {
-      fs.mkdirSync(folder, { recursive: true });
-      console.log(`📁 Carpeta creada: ${folder}`);
+  baseFolders.forEach(folder => {
+    const folderPath = path.join(uploadsPath, folder);
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
+      console.log(`📁 Subcarpeta creada: ${folderPath}`);
     }
   });
 };
 
 // ============ CONEXIÓN A LA BASE DE DATOS ============
-const startDB = async () => {
-  try {
-    await connectDB();
-    console.log('✅ MongoDB conectado correctamente');
-  } catch (error) {
-    console.error('❌ Error conectando a MongoDB:', error.message);
-    // No salir del proceso en producción, reintentar
-    if (process.env.NODE_ENV === 'production') {
-      console.log('🔄 Reintentando conexión en 5 segundos...');
-      setTimeout(startDB, 5000);
-    } else {
-      process.exit(1);
+const startDB = async (retries = 5, delay = 5000) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`🔄 Intento ${attempt}/${retries} de conexión a MongoDB...`);
+      await connectDB();
+      console.log('✅ MongoDB conectado correctamente');
+      return;
+    } catch (error) {
+      console.error(`❌ Intento ${attempt} fallado: ${error.message}`);
+      
+      if (attempt < retries) {
+        console.log(`⏳ Esperando ${delay/1000} segundos antes de reintentar...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        console.error('🚨 Todos los intentos de conexión fallaron');
+        if (process.env.NODE_ENV === 'production') {
+          console.log('⚠️  Continuando sin MongoDB (modo degradado)');
+        } else {
+          process.exit(1);
+        }
+      }
     }
   }
 };
@@ -169,39 +162,135 @@ app.use("/api/provider/reports", providerReportsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chatbot/admin", chatAdminRoutes);
 
-// Negocios
+// Negocios (businesses)
 app.use("/api/businesses", businessRoutes);
 
 // Upload de archivos
 app.use("/api/upload", uploadRoutes);
 
+// ============ SERVIR FRONTEND VUE.JS EN PRODUCCIÓN ============
+if (process.env.NODE_ENV === 'production') {
+  const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'dist');
+  
+  console.log('🔍 Buscando frontend en:', frontendBuildPath);
+  
+  if (fs.existsSync(frontendBuildPath)) {
+    console.log('✅ Frontend build encontrado');
+    
+    // Servir archivos estáticos del frontend
+    app.use(express.static(frontendBuildPath));
+    
+    // Ruta principal
+    app.get('/', (req, res) => {
+      res.sendFile(path.join(frontendBuildPath, 'index.html'));
+    });
+    
+    // Rutas específicas de Vue Router (según tu router.js)
+    const vueRoutes = [
+      '/home', '/login', '/services', '/profile', '/appointments',
+      '/mypets', '/commerces', '/admin', '/provider'
+    ];
+    
+    vueRoutes.forEach(route => {
+      app.get(route, (req, res) => {
+        res.sendFile(path.join(frontendBuildPath, 'index.html'));
+      });
+    });
+    
+    // Rutas con parámetros (admin/*, provider/*)
+    app.get('/admin/*', (req, res) => {
+      res.sendFile(path.join(frontendBuildPath, 'index.html'));
+    });
+    
+    app.get('/provider/*', (req, res) => {
+      res.sendFile(path.join(frontendBuildPath, 'index.html'));
+    });
+    
+    // Catch-all para Vue Router - USANDO PATRÓN CORRECTO
+    // Expresión regular que captura todo EXCEPTO rutas que comienzan con /api o /uploads
+    app.get(/^\/(?!api|uploads).*/, (req, res) => {
+      res.sendFile(path.join(frontendBuildPath, 'index.html'), (err) => {
+        if (err) {
+          console.error('Error sirviendo Vue app:', err);
+          res.status(404).json({
+            error: 'Página no encontrada',
+            message: 'La aplicación Vue.js no pudo cargar'
+          });
+        }
+      });
+    });
+    
+    console.log('🎯 Vue.js SPA configurado correctamente');
+    
+  } else {
+    console.warn('⚠️  Frontend build NO encontrado. Solo se servirá API.');
+    
+    // Ruta raíz muestra info de API
+    app.get('/', (req, res) => {
+      res.json({
+        app: 'Pet Services Backend API',
+        status: 'online',
+        environment: 'production',
+        frontend: 'not available - run: cd frontend && npm run build',
+        api: {
+          health: '/api/health',
+          users: '/api/users',
+          services: '/api/services',
+          businesses: '/api/businesses'
+        }
+      });
+    });
+  }
+}
+
 // ============ RUTAS DE PRUEBA Y DIAGNÓSTICO ============
 
 // Health check para Render
 app.get("/api/health", (req, res) => {
-  const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  const mongoStatus = mongoose.connection.readyState;
+  const statusText = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  }[mongoStatus] || 'unknown';
   
   res.json({ 
     status: 'OK', 
     message: 'API Pet Services funcionando 🐾',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    mongoDB: mongoStatus,
+    mongoDB: {
+      status: statusText,
+      readyState: mongoStatus,
+      host: mongoose.connection.host || 'not connected'
+    },
     nodeVersion: process.version,
-    memory: process.memoryUsage(),
-    uploadsPath: path.join(__dirname, 'public', 'uploads')
+    uploadsPath: uploadsPath,
+    frontend: process.env.NODE_ENV === 'production' ? 'integrated' : 'separate'
   });
 });
 
-// Ruta raíz
-app.get("/", (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    // Redirigir al frontend
-    res.redirect('/');
-  } else {
+// Test de uploads
+app.get("/api/uploads/test", (req, res) => {
+  res.json({ 
+    message: 'Ruta de uploads funcionando',
+    staticPath: '/uploads/',
+    physicalPath: uploadsPath,
+    exists: fs.existsSync(uploadsPath),
+    availableFolders: ['businesses', 'users', 'services', 'pets']
+  });
+});
+
+// Ruta raíz (solo en desarrollo, en producción maneja Vue)
+if (process.env.NODE_ENV !== 'production') {
+  app.get("/", (req, res) => {
     res.json({ 
       message: "API Pet Services funcionando 🐾",
       version: "1.0.0",
+      environment: "development",
+      frontend: "http://localhost:5173",
+      api: "http://localhost:4000/api",
       endpoints: {
         auth: "/api/auth",
         users: "/api/users",
@@ -211,16 +300,15 @@ app.get("/", (req, res) => {
         admin: "/api/admin",
         provider: "/api/provider",
         health: "/api/health"
-      },
-      docs: "Visita /api/health para verificar estado"
+      }
     });
-  }
-});
+  });
+}
 
 // ============ MANEJO DE ERRORES ============
 
-// Middleware para rutas no encontradas (404)
-app.use(notFound);
+// Middleware para rutas no encontradas (404) - solo para API
+app.use('/api/*', notFound);
 
 // Middleware global de manejo de errores
 app.use(errorHandler);
@@ -239,16 +327,27 @@ const startServer = async () => {
     
     // 3. Iniciar servidor
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-      console.log(`🌐 Entorno: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📁 Uploads: /uploads/`);
-      console.log(`🔧 Health check: /api/health`);
-      console.log(`🔗 MongoDB: ${mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado'}`);
-      
-      if (process.env.NODE_ENV === 'production') {
-        console.log(`✅ Modo producción activado`);
-        console.log(`🎯 Frontend integrado: Sí`);
-      }
+      console.log(`
+🚀 ===============================================
+   Pet Services Server
+   🐾 API + Vue.js Fullstack Application
+   ===============================================
+   
+✅ Servidor corriendo en puerto: ${PORT}
+🌐 Entorno: ${process.env.NODE_ENV || 'development'}
+📁 Uploads: ${uploadsPath}
+🔧 Health check: /api/health
+🔗 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Conectado' : '❌ Desconectado'}
+🎯 Frontend: ${process.env.NODE_ENV === 'production' ? '✅ Integrado (SPA)' : '🚀 En localhost:5173'}
+
+📌 URLs importantes:
+   • API: http://localhost:${PORT}/api
+   • Frontend: ${process.env.NODE_ENV === 'production' ? 'Integrado' : 'http://localhost:5173'}
+   • Health: http://localhost:${PORT}/api/health
+   
+🚀 ¡Servidor listo!
+===============================================
+      `);
     });
     
   } catch (error) {
@@ -258,13 +357,25 @@ const startServer = async () => {
 };
 
 // Manejo de errores no capturados
-process.on('unhandledRejection', (err) => {
-  console.error('❌ Error no manejado:', err);
+process.on('unhandledRejection', (err, promise) => {
+  console.error('❌ Error no manejado en Promise:', err);
+  console.error('Promise:', promise);
 });
 
 // Manejo de excepciones no capturadas
 process.on('uncaughtException', (err) => {
   console.error('❌ Excepción no capturada:', err);
+  console.error('Stack:', err.stack);
+  
+  // En producción, podemos intentar reiniciar de forma más controlada
+  if (process.env.NODE_ENV === 'production') {
+    console.log('⚠️  Reiniciando proceso en 5 segundos...');
+    setTimeout(() => {
+      process.exit(1);
+    }, 5000);
+  } else {
+    process.exit(1);
+  }
 });
 
 // Iniciar la aplicación
