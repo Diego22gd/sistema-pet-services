@@ -1,1014 +1,1059 @@
 <template>
   <ProviderLayout>
-    <!-- Chatbot Component -->
-    <Chatbot />
-    
-    <!-- Hero Section -->
-    <section class="relative bg-gradient-to-br from-blue-50 to-indigo-50 overflow-hidden">
-      <!-- Patrones decorativos -->
-      <div class="absolute inset-0 opacity-5">
-        <div class="absolute top-10 left-10 w-32 h-32 rounded-full bg-blue-300"></div>
-        <div class="absolute bottom-10 right-10 w-48 h-48 rounded-full bg-indigo-300"></div>
-        <div class="absolute top-1/2 left-1/4 w-16 h-16 rounded-full bg-blue-400"></div>
-      </div>
-
-      <div class="relative container mx-auto px-4 py-20 md:py-28">
-        <div class="text-center max-w-4xl mx-auto fade-up">
-          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg mb-8">
-            <span class="text-4xl">🔔</span>
-          </div>
-          <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Mis Notificaciones
-          </h1>
-          <p class="text-xl text-gray-700 mb-10 max-w-3xl mx-auto">
-            Mantente al día con todas las actividades y citas de tu negocio
-          </p>
+    <div class="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full pt-6">
+      <!-- Header con animación -->
+      <div class="fade-up" :class="{ show: animated }">
+        <div class="mb-8">
+          <h1 class="text-4xl font-bold text-gray-900 mb-2">Reportes del Negocio</h1>
+          <p class="text-gray-600 text-lg">Analiza el rendimiento y crecimiento de tu negocio con métricas detalladas</p>
         </div>
       </div>
-    </section>
 
-    <!-- Contenido principal -->
-    <section class="py-16 bg-white">
-      <div class="container mx-auto px-4">
-        <!-- Header con filtros -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-          <div>
-            <h2 class="text-3xl font-bold text-gray-900 mb-2">
-              Historial de Notificaciones
-            </h2>
-            <p class="text-gray-600">
-              {{ filteredNotifications.length }} notificaciones encontradas
-              <span v-if="filterType !== 'all'"> ({{ filterTypeLabel }})</span>
-            </p>
-          </div>
-          
-          <!-- Filtros y acciones -->
-          <div class="flex flex-wrap gap-4">
-            <!-- Filtro por tipo -->
-            <div class="relative">
-              <div class="flex items-center space-x-2 bg-white border border-gray-300 rounded-xl px-4 py-2">
-                <span class="text-gray-600">📊</span>
-                <select 
-                  v-model="filterType" 
-                  @change="applyFilters"
-                  class="bg-transparent border-none focus:ring-0 text-gray-900"
-                >
-                  <option value="all">Todas</option>
-                  <option value="unread">No leídas</option>
-                  <option value="appointment_created">Nuevas citas</option>
-                  <option value="appointment_cancelled">Cancelaciones</option>
-                  <option value="appointment_rescheduled">Reprogramaciones</option>
-                </select>
+      <!-- Filtros de fecha - Card Modern -->
+      <div class="fade-up card-modern mb-8" :class="{ show: animated }">
+        <div class="p-6">
+          <div class="flex flex-col lg:flex-row gap-6 items-center justify-between">
+            <div class="flex flex-col flex-1">
+              <h2 class="text-xl font-semibold text-gray-900">Filtrar por período</h2>
+              <p class="text-gray-500 mt-1 text-sm">Selecciona un rango de fechas para generar reportes personalizados</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4">
+              <div class="flex items-center gap-2">
+                <label class="text-sm font-medium text-gray-700 whitespace-nowrap">Desde:</label>
+                <input 
+                  type="date" 
+                  v-model="filters.startDate"
+                  class="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white shadow-sm"
+                />
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm font-medium text-gray-700 whitespace-nowrap">Hasta:</label>
+                <input 
+                  type="date" 
+                  v-model="filters.endDate"
+                  class="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white shadow-sm"
+                />
               </div>
             </div>
-            
-            <!-- Botón marcar todas como leídas -->
-            <button 
-              v-if="unreadCount > 0"
-              @click="markAllAsRead"
-              class="btn-modern-outline group"
-            >
-              <span>✅ Marcar todas leídas</span>
-            </button>
-            
-            <!-- Botón de reparación (solo desarrollo) -->
-            <button 
-              v-if="isDevelopment"
-              @click="repairCurrentSession"
-              class="btn-modern-outline bg-purple-50 text-purple-700 border-purple-300"
-            >
-              <span>🔧 Reparar Sesión</span>
-            </button>
           </div>
-        </div>
-
-        <!-- Estadísticas -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div class="card-modern p-4 text-center">
-            <div class="text-2xl font-bold text-gray-900">{{ notifications.length }}</div>
-            <div class="text-sm text-gray-600">Total</div>
-          </div>
-          <div class="card-modern p-4 text-center border-l-4 border-l-blue-500">
-            <div class="text-2xl font-bold text-blue-600">{{ unreadCount }}</div>
-            <div class="text-sm text-gray-600">No leídas</div>
-          </div>
-          <div class="card-modern p-4 text-center border-l-4 border-l-green-500">
-            <div class="text-2xl font-bold text-green-600">{{ stats.appointments }}</div>
-            <div class="text-sm text-gray-600">Nuevas citas</div>
-          </div>
-          <div class="card-modern p-4 text-center">
-            <div class="text-lg font-semibold text-gray-900">{{ lastUpdate }}</div>
-            <div class="text-sm text-gray-600">Última actualización</div>
-          </div>
-        </div>
-
-        <!-- Estado de carga -->
-        <div v-if="loading" class="text-center py-20">
-          <div class="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 border border-blue-200">
-            <span class="text-4xl text-blue-600 animate-pulse">📬</span>
-          </div>
-          <h3 class="text-2xl font-bold text-gray-900 mb-3">Cargando notificaciones</h3>
-          <p class="text-gray-700">Obteniendo tus notificaciones más recientes...</p>
-        </div>
-
-        <!-- Sin resultados -->
-        <div v-else-if="filteredNotifications.length === 0" class="text-center py-20">
-          <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-300">
-            <span class="text-4xl text-gray-400">📭</span>
-          </div>
-          <h3 class="text-2xl font-bold text-gray-900 mb-3">No hay notificaciones</h3>
-          <p class="text-gray-700 mb-8 max-w-md mx-auto">
-            {{ filterType !== 'all' ? 'No hay notificaciones con este filtro' : 'Cuando tengas nuevas actividades, aparecerán aquí' }}
-          </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              v-if="filterType !== 'all'"
-              @click="resetFilters"
-              class="btn-modern-outline"
-            >
-              <span>🔄 Ver todas las notificaciones</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Grid de notificaciones -->
-        <div v-else class="mb-12">
-          <!-- Filtros rápidos -->
-          <div class="mb-6 bg-white rounded-xl p-4 border border-gray-200">
-            <h3 class="font-bold text-gray-900 mb-3">📋 Filtros rápidos:</h3>
+          
+          <!-- Períodos rápidos -->
+          <div class="mt-6">
+            <p class="text-sm font-medium text-gray-700 mb-3">Períodos rápidos:</p>
             <div class="flex flex-wrap gap-2">
               <button 
-                v-for="filter in quickFilters"
-                :key="filter.value"
-                @click="applyQuickFilter(filter.value)"
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200"
+                v-for="period in quickPeriods"
+                :key="period.label"
+                @click="setQuickPeriod(period)"
+                :disabled="loading"
                 :class="[
-                  activeFilter === filter.value 
-                    ? filter.activeClass 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  'px-4 py-2 text-sm rounded-xl transition-all duration-200 font-medium',
+                  filters.quickPeriod === period.value 
+                    ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-500' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-transparent'
                 ]"
               >
-                <span>{{ filter.icon }}</span>
-                <span>{{ filter.label }}</span>
-                <span class="text-xs bg-white bg-opacity-50 px-2 py-1 rounded-full">
-                  {{ filter.count }}
-                </span>
+                {{ period.label }}
               </button>
             </div>
           </div>
 
-          <!-- Lista de notificaciones -->
-          <div class="space-y-4">
-            <div 
-              v-for="notification in paginatedNotifications" 
-              :key="notification._id"
-              class="card-modern group h-full flex flex-col hover-lift cursor-pointer"
-              :class="[
-                notification.read ? 'opacity-90' : 'border-l-4 border-l-blue-500 bg-blue-50/30',
-                notification.type === 'appointment_cancelled' ? 'border-red-100' : '',
-                notification.type === 'appointment_created' ? 'border-green-100' : ''
-              ]"
-              @click="handleNotificationClick(notification)"
+          <!-- Botones de acción -->
+          <div class="flex flex-wrap gap-3 mt-6">
+            <button 
+              @click="loadReports"
+              :disabled="loading"
+              class="btn-primary px-6 py-3 rounded-xl"
             >
-              <div class="card-modern-body p-6 flex-1 flex flex-col">
-                <!-- Header de la notificación -->
-                <div class="mb-4">
-                  <div class="flex justify-between items-start mb-3">
-                    <div class="flex items-center gap-3">
-                      <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
-                           :class="iconBg(notification.type)">
-                        <span class="text-2xl">{{ icon(notification.type) }}</span>
-                      </div>
-                      <div>
-                        <h3 class="card-title text-lg font-bold text-gray-900">
-                          {{ notification.title }}
-                          <span v-if="!notification.read" class="ml-2 text-xs font-normal text-blue-600">● Nuevo</span>
-                        </h3>
-                        <p class="text-sm text-gray-600">
-                          {{ formatTimeAgo(notification.createdAt) }}
-                        </p>
-                      </div>
-                    </div>
-                    <span class="badge-outline" :class="typeBadgeClass(notification.type)">
-                      {{ typeLabel(notification.type) }}
-                    </span>
-                  </div>
-                  
-                  <!-- Mensaje principal -->
-                  <p class="text-gray-700 mb-4 leading-relaxed">
-                    {{ notification.message }}
-                  </p>
-                </div>
-                
-                <!-- Metadatos -->
-                <div v-if="notification.metadata && Object.keys(notification.metadata).length > 0" 
-                     class="mb-4 space-y-3">
-                  <!-- Fecha de la cita -->
-                  <div v-if="notification.metadata.appointmentDate" class="flex items-center gap-2 text-gray-700">
-                    <span class="text-blue-500">📅</span>
-                    <span class="font-medium">
-                      {{ formatDate(notification.metadata.appointmentDate) }}
-                      <span v-if="notification.metadata.appointmentTime">
-                        a las {{ notification.metadata.appointmentTime }}
-                      </span>
-                    </span>
-                  </div>
-                  
-                  <!-- Servicio -->
-                  <div v-if="notification.metadata.serviceName" class="flex items-center gap-2 text-gray-700">
-                    <span class="text-green-500">⚙️</span>
-                    <span>{{ notification.metadata.serviceName }}</span>
-                  </div>
-                  
-                  <!-- Mascota -->
-                  <div v-if="notification.metadata.petName" class="flex items-center gap-2 text-gray-700">
-                    <span class="text-purple-500">🐾</span>
-                    <span>{{ notification.metadata.petName }}</span>
-                  </div>
-                  
-                  <!-- Cliente -->
-                  <div v-if="notification.metadata.userName" class="flex items-center gap-2 text-gray-700">
-                    <span class="text-amber-500">👤</span>
-                    <span>{{ notification.metadata.userName }}</span>
-                  </div>
-                  
-                  <!-- Razón -->
-                  <div v-if="notification.metadata.reason" class="mt-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                    <div class="flex items-center gap-2 mb-1">
-                      <span class="text-amber-500">📝</span>
-                      <span class="text-sm font-medium text-gray-900">Razón:</span>
-                    </div>
-                    <p class="text-xs text-gray-700">{{ notification.metadata.reason }}</p>
-                  </div>
-                </div>
-                
-                <!-- Información del usuario -->
-                <div v-if="notification.userId" class="mb-4 p-3 bg-gray-50 rounded-lg">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-                      <span class="text-sm font-semibold text-gray-700">
-                        {{ getUserInitials(notification.userId) }}
-                      </span>
-                    </div>
-                    <div>
-                      <p class="font-bold text-gray-900">{{ notification.userId?.name || 'Usuario' }}</p>
-                      <p class="text-xs text-gray-600">
-                        {{ notification.userId?.email || 'Correo no disponible' }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Botones de acción -->
-                <div class="card-actions justify-between items-center mt-auto pt-4 border-t border-gray-200">
-                  <div class="text-xs text-gray-500">
-                    {{ formatFullDate(notification.createdAt) }}
-                  </div>
-                  
-                  <div class="flex gap-2">
-                    <button 
-                      v-if="!notification.read"
-                      @click.stop="markAsRead(notification._id)"
-                      class="btn-modern-sm bg-blue-500 hover:bg-blue-600"
-                    >
-                      ✅ Marcar leída
-                    </button>
-                    
-                    <button 
-                      v-if="notification.appointmentId"
-                      @click.stop="goToAppointment(notification.appointmentId._id)"
-                      class="btn-modern-outline-sm"
-                    >
-                      📋 Ver cita
-                    </button>
-                  </div>
-                </div>
+              <span v-if="loading" class="flex items-center gap-2">
+                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                </svg>
+                <span>Procesando...</span>
+              </span>
+              <span v-else class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Generar Reporte</span>
+              </span>
+            </button>
+            
+            <button 
+              @click="resetFilters"
+              :disabled="loading"
+              class="btn-modal-ghost px-6 py-3 rounded-xl"
+            >
+              <span class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                <span>Limpiar Filtros</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjetas resumen con animaciones -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div 
+          v-for="(stat, index) in summaryCards"
+          :key="stat.title"
+          class="fade-up card-modern"
+          :class="{ show: animated }"
+          :style="{ animationDelay: `${index * 100}ms` }"
+        >
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">{{ stat.title }}</h3>
+              <div :class="stat.iconBg" class="w-12 h-12 rounded-2xl flex items-center justify-center">
+                <span :class="stat.iconColor" class="text-xl">{{ stat.icon }}</span>
               </div>
             </div>
+            <p :class="stat.valueColor" class="text-3xl font-bold mb-2">{{ stat.value }}</p>
+            <p class="text-sm text-gray-500">{{ stat.description }}</p>
           </div>
+        </div>
+      </div>
 
-          <!-- Paginación -->
-          <div v-if="totalPages > 1" class="mt-12">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div class="text-sm text-gray-600">
-                Mostrando {{ paginatedNotifications.length }} de {{ filteredNotifications.length }} notificaciones
+      <!-- Gráficos y métricas -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Gráfico principal -->
+        <div class="lg:col-span-2 fade-up card-modern" :class="{ show: animated }">
+          <div class="p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+              <h2 class="text-xl font-semibold text-gray-900">Evolución de Citas</h2>
+              <div class="flex gap-2">
+                <button 
+                  @click="setChartType('monthly')"
+                  :class="[
+                    'px-4 py-2 text-sm rounded-xl transition-all duration-200 font-medium',
+                    chartType === 'monthly' 
+                      ? 'bg-emerald-500 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ]"
+                >
+                  Mensual
+                </button>
+                <button 
+                  @click="setChartType('weekly')"
+                  :class="[
+                    'px-4 py-2 text-sm rounded-xl transition-all duration-200 font-medium',
+                    chartType === 'weekly' 
+                      ? 'bg-emerald-500 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ]"
+                >
+                  Semanal
+                </button>
+                <button 
+                  @click="setChartType('daily')"
+                  :class="[
+                    'px-4 py-2 text-sm rounded-xl transition-all duration-200 font-medium',
+                    chartType === 'daily' 
+                      ? 'bg-emerald-500 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ]"
+                >
+                  Diario
+                </button>
               </div>
-              
+            </div>
+            <div class="h-80">
+              <canvas id="appointmentsChart"></canvas>
+            </div>
+            
+            <!-- Leyenda del gráfico -->
+            <div class="flex flex-wrap gap-4 mt-6">
               <div class="flex items-center gap-2">
-                <button 
-                  @click="prevPage"
-                  :disabled="currentPage === 1"
-                  class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <span class="text-lg">◀</span>
-                </button>
-                
-                <div class="flex items-center gap-1">
-                  <button 
-                    v-for="page in visiblePages"
-                    :key="page"
-                    @click="changePage(page)"
-                    :class="[
-                      currentPage === page 
-                        ? 'bg-blue-600 text-white border-blue-600' 
-                        : 'text-gray-700 border-gray-300 hover:bg-gray-50'
-                    ]"
-                    class="w-10 h-10 flex items-center justify-center rounded-lg border transition-colors font-medium"
-                  >
-                    {{ page }}
-                  </button>
-                  
-                  <span v-if="hasEllipsis" class="px-2 text-gray-500">...</span>
+                <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                <span class="text-sm text-gray-600">Citas Completadas</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <span class="text-sm text-gray-600">Citas Canceladas</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                <span class="text-sm text-gray-600">Citas Pendientes</span>
+              </div>
+              <div class="flex items-center gap-2" v-if="chartType === 'monthly'">
+                <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span class="text-sm text-gray-600">Ingresos ($)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Métricas clave -->
+        <div class="fade-up card-modern" :class="{ show: animated }">
+          <div class="p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Métricas Clave</h2>
+            <div class="space-y-6">
+              <div 
+                v-for="metric in keyMetrics"
+                :key="metric.title"
+                class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors duration-200"
+              >
+                <div>
+                  <p class="text-sm text-gray-500">{{ metric.title }}</p>
+                  <p :class="metric.valueClass" class="text-2xl font-bold mt-1">{{ metric.value }}</p>
+                  <p v-if="metric.subtitle" class="text-xs text-gray-400 mt-1">{{ metric.subtitle }}</p>
                 </div>
-                
-                <button 
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <span class="text-lg">▶</span>
-                </button>
+                <div :class="metric.iconBg" class="w-14 h-14 rounded-2xl flex items-center justify-center">
+                  <span :class="metric.iconColor" class="text-2xl">{{ metric.icon }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- Sidebar de Configuración -->
-    <section class="py-8 bg-gray-50 border-t">
-      <div class="container mx-auto px-4">
-        <div class="max-w-4xl mx-auto">
-          <div class="bg-white rounded-2xl p-6 shadow-sm border">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">⚙️ Configuración de Notificaciones</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Notificaciones push -->
-              <div class="space-y-4">
-                <h4 class="font-semibold text-gray-900">🔔 Notificaciones en tiempo real</h4>
-                <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <span class="text-gray-700">Notificaciones push</span>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" v-model="pushNotifications" class="sr-only peer">
-                    <div class="w-12 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
+      <!-- Resumen detallado -->
+      <div class="fade-up card-modern mb-8" :class="{ show: animated }">
+        <div class="p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-6">Resumen Detallado</h2>
+          
+          <!-- Filtros aplicados -->
+          <div class="mb-6 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p class="font-medium text-emerald-800">📋 Filtros aplicados:</p>
+                <p class="text-sm text-emerald-600">
+                  {{ filters.startDate ? `Desde: ${formatDate(filters.startDate)}` : 'Desde: Todos' }} • 
+                  {{ filters.endDate ? `Hasta: ${formatDate(filters.endDate)}` : 'Hasta: Todos' }}
+                </p>
+              </div>
+              <div class="text-right">
+                <p class="text-2xl font-bold text-emerald-700">{{ stats.total || 0 }}</p>
+                <p class="text-sm text-emerald-600">Total de citas</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid de estadísticas -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="text-center p-4 bg-emerald-50 rounded-xl">
+              <p class="text-2xl font-bold text-emerald-700">{{ stats.completed || 0 }}</p>
+              <p class="text-sm text-emerald-600">Completadas</p>
+            </div>
+            <div class="text-center p-4 bg-red-50 rounded-xl">
+              <p class="text-2xl font-bold text-red-700">{{ stats.cancelled || 0 }}</p>
+              <p class="text-sm text-red-600">Canceladas</p>
+            </div>
+            <div class="text-center p-4 bg-amber-50 rounded-xl">
+              <p class="text-2xl font-bold text-amber-700">{{ stats.pending || 0 }}</p>
+              <p class="text-sm text-amber-600">Pendientes</p>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-xl">
+              <p class="text-2xl font-bold text-blue-700">{{ stats.confirmed || 0 }}</p>
+              <p class="text-sm text-blue-600">Confirmadas</p>
+            </div>
+            <div class="text-center p-4 bg-purple-50 rounded-xl">
+              <p class="text-2xl font-bold text-purple-700">{{ stats.reprogrammed || 0 }}</p>
+              <p class="text-sm text-purple-600">Reprogramadas</p>
+            </div>
+          </div>
+
+          <!-- Ingresos y potencial -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <span class="text-emerald-600">💰</span>
                 </div>
-                
-                <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <span class="text-gray-700">Sonidos de notificación</span>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" v-model="soundNotifications" class="sr-only peer">
-                    <div class="w-12 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
+                <div>
+                  <p class="font-medium text-gray-900">Ingresos Totales</p>
+                  <p class="text-2xl font-bold text-emerald-700">${{ formatCurrency(stats.revenue || 0) }}</p>
                 </div>
               </div>
+              <p class="text-sm text-emerald-600">Generados por citas completadas</p>
+            </div>
+            
+            <div class="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <span class="text-amber-600">📈</span>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900">Ingresos Potenciales</p>
+                  <p class="text-2xl font-bold text-amber-700">${{ formatCurrency(potentialRevenue) }}</p>
+                </div>
+              </div>
+              <p class="text-sm text-amber-600">De citas pendientes y confirmadas</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de citas (todas las citas) -->
+      <div class="fade-up card-modern mb-8" :class="{ show: animated }" v-if="appointments.length > 0">
+        <div class="p-6">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900">Todas las Citas</h2>
+              <p class="text-gray-600 text-sm">{{ appointments.length }} citas en el período seleccionado</p>
+            </div>
+            <div class="flex gap-2">
+              <button 
+                @click="showAllAppointments = !showAllAppointments"
+                class="btn-modern-outline"
+              >
+                <span>{{ showAllAppointments ? '👁️ Ocultar' : '👁️ Mostrar' }} Todas</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabla de citas -->
+          <div v-if="showAllAppointments" class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-gray-50">
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Fecha</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Cliente</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Servicio</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Estado</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Precio</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr 
+                  v-for="appointment in appointments.slice(0, 20)" 
+                  :key="appointment._id"
+                  class="hover:bg-gray-50 transition-colors duration-150"
+                >
+                  <td class="px-4 py-3 text-sm text-gray-900">
+                    {{ formatDate(appointment.date) }} {{ appointment.time }}
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-900">
+                    <div v-if="appointment.userId && appointment.userId.name">
+                      {{ appointment.userId.name }} {{ appointment.userId.lastname }}
+                    </div>
+                    <div v-else class="text-gray-400">Cliente no disponible</div>
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-900">
+                    {{ appointment.serviceName || appointment.serviceId?.name || 'Servicio' }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span 
+                      :class="getStatusClass(appointment.status)"
+                      class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                    >
+                      {{ translateStatus(appointment.status) }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                    ${{ appointment.servicePrice || 0 }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-if="appointments.length > 20" class="text-center py-4 text-gray-500 text-sm">
+              Mostrando 20 de {{ appointments.length }} citas. Usa los filtros para ver más.
+            </div>
+          </div>
+          <div v-else class="text-center py-8 text-gray-500">
+            <p>Haz clic en "Mostrar Todas" para ver todas las citas del período</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exportar reportes -->
+      <div class="fade-up card-modern mb-4" :class="{ show: animated }">
+        <div class="p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
+            <div class="flex-1">
+              <h2 class="text-xl font-semibold text-gray-900 mb-2">Exportar Reportes</h2>
+              <p class="text-gray-500">Descarga un reporte detallado de las citas en el período seleccionado</p>
               
-              <!-- Notificaciones por email -->
-              <div class="space-y-4">
-                <h4 class="font-semibold text-gray-900">📧 Notificaciones por correo</h4>
-                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <span class="text-gray-700">Nuevas citas</span>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" v-model="emailNewAppointments" class="sr-only peer">
-                    <div class="w-12 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                  </label>
-                </div>
-                
-                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <span class="text-gray-700">Cancelaciones</span>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" v-model="emailCancellations" class="sr-only peer">
-                    <div class="w-12 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                  </label>
+              <!-- Resumen del período -->
+              <div v-if="hasData" class="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <span class="text-emerald-600">📋</span>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-emerald-700">
+                      {{ appointments.length }} citas encontradas
+                    </p>
+                    <p class="text-xs text-emerald-600">
+                      Período: {{ formatDate(filters.startDate) || 'Inicio' }} al {{ formatDate(filters.endDate) || 'Fin' }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div class="mt-6 pt-6 border-t border-gray-200">
-              <div class="flex flex-col sm:flex-row gap-4 justify-end">
-                <button @click="resetSettings" class="btn-modal-ghost">
-                  Restablecer
-                </button>
-                <button @click="saveSettings" class="btn-modal-primary">
-                  💾 Guardar configuración
-                </button>
-              </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button 
+                @click="exportReport('json')"
+                :disabled="loading || !hasData"
+                class="btn-modal-complete px-6 py-3 rounded-xl flex items-center gap-2"
+              >
+                <span>📊</span>
+                <span>Exportar JSON</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- Toast notifications -->
-    <div v-if="showToast" 
-         class="fixed bottom-6 right-6 animate-slide-up z-50">
-      <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4 rounded-xl shadow-2xl max-w-sm">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center"
-               :class="toastMessage.type === 'error' ? 'bg-red-500' : 'bg-green-500'">
-            <span class="text-xl">{{ toastMessage.type === 'error' ? '❌' : '✅' }}</span>
+      <!-- Modal de carga -->
+      <div v-if="showLoadingModal" class="modal-overlay">
+        <div class="modal-modern-box max-w-md">
+          <div class="modal-modern-header">
+            <div class="flex items-center gap-4">
+              <div class="avatar-modern-lg">
+                <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                  <span class="text-emerald-600 text-2xl">📈</span>
+                </div>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-900">{{ loadingTitle }}</h3>
+                <p class="text-gray-500">{{ loadingMessage }}</p>
+              </div>
+            </div>
           </div>
-          <div class="flex-1">
-            <p class="font-semibold">{{ toastMessage.title }}</p>
-            <p class="text-sm text-blue-100">{{ toastMessage.text }}</p>
+          
+          <div class="modal-section">
+            <div class="text-center py-8">
+              <div class="animate-spin w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p class="text-gray-600">{{ loadingProgress }}</p>
+              <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4">
+                <div class="bg-emerald-600 h-2.5 rounded-full transition-all duration-300" :style="{ width: progressWidth }"></div>
+              </div>
+            </div>
           </div>
-          <button @click="showToast = false" class="ml-4 text-blue-200 hover:text-white">
-            <span class="text-xl">✕</span>
-          </button>
         </div>
       </div>
     </div>
+    <Chatbot />
   </ProviderLayout>
 </template>
 
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
 import Chatbot from "@/components/Chatbot.vue";
+import { onMounted, ref, computed, reactive } from "vue";
+import Chart from "chart.js/auto";
 import api from "@/api/api";
-import { useUserStore } from "@/stores/userStore";
 
 export default {
-  name: "ProviderNotifications",
+  name: "ProviderReports",
   components: { ProviderLayout, Chatbot },
 
   setup() {
-    const userStore = useUserStore();
-    return { userStore };
-  },
+    const stats = reactive({
+      completed: 0,
+      cancelled: 0,
+      pending: 0,
+      revenue: 0,
+      total: 0,
+      confirmed: 0,
+      reprogrammed: 0
+    });
 
-  data() {
-    return {
-      notifications: [],
-      filteredNotifications: [],
-      loading: true,
-      unreadCount: 0,
-      filterType: 'all',
-      activeFilter: 'all',
-      currentPage: 1,
-      itemsPerPage: 10,
-      totalPages: 1,
-      
-      // Estadísticas
-      stats: {
-        appointments: 0,
-        cancellations: 0,
-        reschedules: 0
-      },
-      
-      // Configuración
-      pushNotifications: true,
-      soundNotifications: true,
-      emailNewAppointments: true,
-      emailCancellations: true,
-      
-      // UI States
-      showToast: false,
-      toastMessage: { 
-        title: '', 
-        text: '', 
-        type: 'success' 
-      },
-      lastUpdate: 'Hace unos segundos',
-      
-      // Debug
-      isDevelopment: process.env.NODE_ENV === 'development'
-    };
-  },
+    const appointments = ref([]);
+    const loading = ref(false);
+    const animated = ref(false);
+    const chartInstance = ref(null);
+    const chartType = ref('monthly');
+    const showLoadingModal = ref(false);
+    const loadingTitle = ref('Generando Reporte');
+    const loadingMessage = ref('Procesando los datos, por favor espera...');
+    const loadingProgress = ref('Cargando datos...');
+    const exportProgress = ref(0);
+    const showAllAppointments = ref(false);
+    const chartData = reactive({
+      monthly: {},
+      weekly: {},
+      daily: {}
+    });
 
-  computed: {
-    quickFilters() {
-      return [
-        {
-          value: 'all',
-          label: 'Todas',
-          icon: '📬',
-          activeClass: 'bg-blue-100 text-blue-800 border border-blue-300',
-          count: this.notifications.length
-        },
-        {
-          value: 'unread',
-          label: 'No leídas',
-          icon: '🔔',
-          activeClass: 'bg-red-100 text-red-800 border border-red-300',
-          count: this.unreadCount
-        },
-        {
-          value: 'appointment_created',
-          label: 'Nuevas citas',
-          icon: '📅',
-          activeClass: 'bg-green-100 text-green-800 border border-green-300',
-          count: this.stats.appointments
-        },
-        {
-          value: 'appointment_cancelled',
-          label: 'Cancelaciones',
-          icon: '❌',
-          activeClass: 'bg-rose-100 text-rose-800 border border-rose-300',
-          count: this.stats.cancellations
-        },
-        {
-          value: 'appointment_rescheduled',
-          label: 'Reprogramaciones',
-          icon: '🔄',
-          activeClass: 'bg-amber-100 text-amber-800 border border-amber-300',
-          count: this.stats.reschedules
+    const filters = reactive({
+      startDate: '',
+      endDate: '',
+      quickPeriod: 'thisMonth'
+    });
+
+    const quickPeriods = [
+      { label: 'Hoy', value: 'today' },
+      { label: 'Esta Semana', value: 'thisWeek' },
+      { label: 'Este Mes', value: 'thisMonth' },
+      { label: 'Mes Pasado', value: 'lastMonth' },
+      { label: 'Últimos 30 Días', value: 'last30Days' },
+      { label: 'Este Año', value: 'thisYear' }
+    ];
+
+    // Datos computados
+    const hasData = computed(() => {
+      return appointments.value.length > 0 && stats.total > 0;
+    });
+
+    const progressWidth = computed(() => {
+      return `${exportProgress.value}%`;
+    });
+
+    const potentialRevenue = computed(() => {
+      let potential = 0;
+      appointments.value.forEach(appt => {
+        if (['pendiente', 'confirmada', 'reprogramada'].includes(appt.status)) {
+          potential += appt.servicePrice || 0;
         }
-      ];
-    },
-    
-    paginatedNotifications() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredNotifications.slice(start, end);
-    },
-    
-    visiblePages() {
-      const pages = [];
-      const total = this.totalPages;
-      const current = this.currentPage;
-      const delta = 2;
-      
-      for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
-        pages.push(i);
+      });
+      return potential;
+    });
+
+    const summaryCards = computed(() => [
+      {
+        title: 'Citas Atendidas',
+        value: stats.completed,
+        icon: '✅',
+        iconBg: 'bg-emerald-100',
+        iconColor: 'text-emerald-600',
+        valueColor: 'text-emerald-700',
+        description: 'Total completadas en el período'
+      },
+      {
+        title: 'Canceladas',
+        value: stats.cancelled,
+        icon: '❌',
+        iconBg: 'bg-red-100',
+        iconColor: 'text-red-600',
+        valueColor: 'text-red-700',
+        description: 'Total canceladas en el período'
+      },
+      {
+        title: 'Pendientes',
+        value: stats.pending,
+        icon: '⏳',
+        iconBg: 'bg-amber-100',
+        iconColor: 'text-amber-600',
+        valueColor: 'text-amber-700',
+        description: 'Por confirmar en el período'
+      },
+      {
+        title: 'Ingresos Totales',
+        value: `$${formatCurrency(stats.revenue)}`,
+        icon: '💰',
+        iconBg: 'bg-blue-100',
+        iconColor: 'text-blue-600',
+        valueColor: 'text-blue-700',
+        description: 'Ingresos brutos en el período'
       }
-      
-      if (current - delta > 2) {
-        pages.unshift('...');
+    ]);
+
+    const keyMetrics = computed(() => [
+      {
+        title: 'Tasa de Finalización',
+        value: `${calculateCompletionRate()}%`,
+        subtitle: `${stats.completed} de ${stats.completed + stats.cancelled}`,
+        icon: '📈',
+        iconBg: 'bg-emerald-100',
+        iconColor: 'text-emerald-600',
+        valueClass: 'text-emerald-700'
+      },
+      {
+        title: 'Citas Promedio/Día',
+        value: calculateAverageDailyAppointments(),
+        subtitle: `${stats.total} citas en ${calculateDaysInPeriod()} días`,
+        icon: '📅',
+        iconBg: 'bg-blue-100',
+        iconColor: 'text-blue-600',
+        valueClass: 'text-blue-700'
+      },
+      {
+        title: 'Ingreso Promedio/Cita',
+        value: `$${calculateAverageRevenuePerAppointment()}`,
+        subtitle: `Total: $${formatCurrency(stats.revenue)}`,
+        icon: '💵',
+        iconBg: 'bg-purple-100',
+        iconColor: 'text-purple-600',
+        valueClass: 'text-purple-700'
       }
-      if (current + delta < total - 1) {
-        pages.push('...');
+    ]);
+
+    // Funciones
+    const formatDate = (dateString) => {
+      if (!dateString) return 'N/A';
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-VE', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      } catch (error) {
+        return 'Fecha inválida';
       }
-      
-      pages.unshift(1);
-      if (total > 1) {
-        pages.push(total);
-      }
-      
-      return pages.filter((page, index, array) => array.indexOf(page) === index);
-    },
-    
-    hasEllipsis() {
-      return this.visiblePages.includes('...');
-    },
-    
-    filterTypeLabel() {
-      const labels = {
-        'all': 'Todas',
-        'unread': 'No leídas',
-        'appointment_created': 'Nuevas citas',
-        'appointment_cancelled': 'Cancelaciones',
-        'appointment_rescheduled': 'Reprogramaciones'
+    };
+
+    const formatCurrency = (amount) => {
+      return new Intl.NumberFormat('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount || 0);
+    };
+
+    const translateStatus = (status) => {
+      const translations = {
+        'pendiente': 'Pendiente',
+        'confirmada': 'Confirmada',
+        'cancelada': 'Cancelada',
+        'completada': 'Completada',
+        'reprogramada': 'Reprogramada'
       };
-      return labels[this.filterType] || this.filterType;
-    }
-  },
+      return translations[status] || status;
+    };
 
-  async created() {
-    await this.autoRepairSession();
-    await this.loadNotifications();
-    this.startAutoRefresh();
-  },
+    const getStatusClass = (status) => {
+      const classes = {
+        'pendiente': 'bg-yellow-100 text-yellow-800',
+        'confirmada': 'bg-blue-100 text-blue-800',
+        'cancelada': 'bg-red-100 text-red-800',
+        'completada': 'bg-green-100 text-green-800',
+        'reprogramada': 'bg-purple-100 text-purple-800'
+      };
+      return classes[status] || 'bg-gray-100 text-gray-800';
+    };
 
-  beforeDestroy() {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-    }
-  },
+    const calculateCompletionRate = () => {
+      const totalWithStatus = stats.completed + stats.cancelled;
+      return totalWithStatus > 0 ? Math.round((stats.completed / totalWithStatus) * 100) : 0;
+    };
 
-  methods: {
-    // 🔧 Reparar sesión actual automáticamente
-    async autoRepairSession() {
-      console.log('🔄 Verificando y reparando sesión...');
+    const calculateDaysInPeriod = () => {
+      if (!filters.startDate || !filters.endDate) return 30;
       
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.log('ℹ️ No hay token en localStorage');
-        return;
+      const start = new Date(filters.startDate);
+      const end = new Date(filters.endDate);
+      const diffTime = Math.abs(end - start);
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    };
+
+    const calculateAverageDailyAppointments = () => {
+      const days = calculateDaysInPeriod();
+      return days > 0 ? (stats.total / days).toFixed(1) : '0.0';
+    };
+
+    const calculateAverageRevenuePerAppointment = () => {
+      return stats.completed > 0 ? (stats.revenue / stats.completed).toFixed(2) : '0.00';
+    };
+
+    const setQuickPeriod = (period) => {
+      filters.quickPeriod = period.value;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      switch(period.value) {
+        case 'today':
+          filters.startDate = today.toISOString().split('T')[0];
+          filters.endDate = today.toISOString().split('T')[0];
+          break;
+          
+        case 'thisWeek':
+          const startOfWeek = new Date(today);
+          startOfWeek.setDate(today.getDate() - today.getDay() + 1);
+          filters.startDate = startOfWeek.toISOString().split('T')[0];
+          filters.endDate = today.toISOString().split('T')[0];
+          break;
+          
+        case 'thisMonth':
+          const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+          filters.startDate = startOfMonth.toISOString().split('T')[0];
+          filters.endDate = today.toISOString().split('T')[0];
+          break;
+          
+        case 'lastMonth':
+          const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+          filters.startDate = lastMonth.toISOString().split('T')[0];
+          filters.endDate = endOfLastMonth.toISOString().split('T')[0];
+          break;
+          
+        case 'last30Days':
+          const last30Days = new Date(today);
+          last30Days.setDate(today.getDate() - 30);
+          filters.startDate = last30Days.toISOString().split('T')[0];
+          filters.endDate = today.toISOString().split('T')[0];
+          break;
+          
+        case 'thisYear':
+          const startOfYear = new Date(today.getFullYear(), 0, 1);
+          filters.startDate = startOfYear.toISOString().split('T')[0];
+          filters.endDate = today.toISOString().split('T')[0];
+          break;
       }
       
-      const hasUserId = localStorage.getItem('userId');
-      const hasUserRole = localStorage.getItem('userRole');
-      
-      if (!hasUserId || !hasUserRole) {
-        console.log('⚠️ Faltan datos en localStorage, reparando...');
+      loadReports();
+    };
+
+    const loadReports = async () => {
+      loading.value = true;
+      try {
+        // Parámetros para la API
+        const params = {};
+        if (filters.startDate) params.startDate = filters.startDate;
+        if (filters.endDate) params.endDate = filters.endDate;
+
+        console.log('📊 Cargando reportes con filtros:', params);
         
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          try {
-            const user = JSON.parse(userStr);
-            localStorage.setItem('userId', user._id || user.id);
-            localStorage.setItem('userRole', user.role);
-            localStorage.setItem('userName', user.name || '');
-            localStorage.setItem('userEmail', user.email || '');
-            
-            console.log('✅ Datos reparados desde objeto user:', {
-              userId: user._id,
-              userRole: user.role
-            });
-            
-            this.showToastMessage('Sesión reparada', 'Datos de usuario restaurados', 'success');
-          } catch (error) {
-            console.error('❌ Error parseando usuario:', error);
+        // Cargar reportes
+        const { data } = await api.get("/provider/reports", { params });
+        
+        console.log('✅ Datos recibidos del servidor:', data);
+        
+        if (data.success) {
+          // Guardar todas las citas
+          appointments.value = data.appointments || [];
+          
+          // Actualizar estadísticas
+          Object.assign(stats, data.stats || {});
+          
+          // Guardar datos de gráficos
+          chartData.monthly = data.chart?.monthly || {};
+          chartData.weekly = data.chart?.weekly || {};
+          chartData.daily = data.chart?.daily || {};
+          
+          // Actualizar métricas adicionales
+          if (data.metrics) {
+            stats.completionRate = data.metrics.completionRate;
+            stats.avgDailyAppointments = data.metrics.avgDailyAppointments;
+            stats.avgRevenuePerAppointment = data.metrics.avgRevenuePerAppointment;
+          }
+          
+          console.log(`📈 Estadísticas: ${stats.total} citas, $${stats.revenue} ingresos`);
+          console.log(`📊 ${appointments.value.length} citas cargadas para reportes`);
+          
+          // Inicializar gráfico
+          if (appointments.value.length > 0) {
+            initializeChart();
+          } else {
+            destroyChart();
           }
         } else {
-          console.log('⚠️ No hay objeto user en localStorage');
+          console.error("Error en la respuesta del servidor:", data.message);
         }
-      } else {
-        console.log('✅ Datos de sesión verificados correctamente');
+
+      } catch (error) {
+        console.error("❌ Error cargando reportes:", error);
+        
+        // Mostrar mensaje de error
+        if (error.response?.status === 404) {
+          console.error("Ruta no encontrada. Verifica que el backend esté corriendo.");
+        } else if (error.response?.status === 401) {
+          console.error("No autorizado. Tu sesión puede haber expirado.");
+        } else if (error.response?.status === 500) {
+          console.error("Error interno del servidor.");
+        }
+        
+        // Datos de ejemplo para desarrollo
+        appointments.value = [];
+        resetStats();
+      } finally {
+        loading.value = false;
       }
-    },
-    
-    // 🔧 Botón manual para reparar sesión
-    async repairCurrentSession() {
-      console.log('🔧 Reparando sesión manualmente...');
+    };
+
+    const initializeChart = () => {
+      // Destruir gráfico anterior
+      destroyChart();
+
+      const ctx = document.getElementById("appointmentsChart");
+      if (!ctx) return;
+
+      let data;
+      let chartLabels;
       
-      const token = localStorage.getItem('token');
-      if (!token) {
-        this.showToastMessage('Error', 'No hay token disponible', 'error');
+      switch(chartType.value) {
+        case 'monthly':
+          data = chartData.monthly;
+          chartLabels = data?.labels || ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+          break;
+        case 'weekly':
+          data = chartData.weekly;
+          chartLabels = data?.labels || Array(8).fill().map((_, i) => `Sem ${i + 1}`);
+          break;
+        case 'daily':
+          data = chartData.daily;
+          chartLabels = data?.labels || Array(30).fill().map((_, i) => `Día ${i + 1}`);
+          break;
+      }
+
+      const datasets = [];
+      
+      if (data?.completed) {
+        datasets.push({
+          label: "Citas Completadas",
+          data: data.completed,
+          borderColor: "#10b981",
+          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: "#10b981"
+        });
+      }
+      
+      if (data?.cancelled) {
+        datasets.push({
+          label: "Citas Canceladas",
+          data: data.cancelled,
+          borderColor: "#ef4444",
+          backgroundColor: "rgba(239, 68, 68, 0.1)",
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: "#ef4444"
+        });
+      }
+      
+      if (data?.pending) {
+        datasets.push({
+          label: "Citas Pendientes",
+          data: data.pending,
+          borderColor: "#f59e0b",
+          backgroundColor: "rgba(245, 158, 11, 0.1)",
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: "#f59e0b"
+        });
+      }
+      
+      if (chartType.value === 'monthly' && data?.revenue) {
+        datasets.push({
+          label: "Ingresos ($)",
+          data: data.revenue,
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: "#3b82f6",
+          yAxisID: 'y1'
+        });
+      }
+
+      chartInstance.value = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: chartLabels,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              display: true,
+              position: 'top'
+            },
+            tooltip: {
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              titleColor: '#1f2937',
+              bodyColor: '#4b5563',
+              borderColor: '#e5e7eb',
+              borderWidth: 1,
+              cornerRadius: 8,
+              padding: 12,
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: "rgba(0, 0, 0, 0.05)",
+                drawBorder: false
+              },
+              ticks: {
+                color: '#6b7280'
+              },
+              title: {
+                display: true,
+                text: 'Número de Citas'
+              }
+            },
+            y1: chartType.value === 'monthly' ? {
+              position: 'right',
+              beginAtZero: true,
+              grid: {
+                drawOnChartArea: false
+              },
+              ticks: {
+                color: '#3b82f6',
+                callback: function(value) {
+                  return '$' + value.toLocaleString();
+                }
+              },
+              title: {
+                display: true,
+                text: 'Ingresos ($)',
+                color: '#3b82f6'
+              }
+            } : undefined,
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: '#6b7280'
+              }
+            }
+          }
+        }
+      });
+    };
+
+    const destroyChart = () => {
+      if (chartInstance.value) {
+        chartInstance.value.destroy();
+        chartInstance.value = null;
+      }
+    };
+
+    const setChartType = (type) => {
+      chartType.value = type;
+      if (appointments.value.length > 0) {
+        initializeChart();
+      }
+    };
+
+    const exportReport = async (format) => {
+      if (!hasData.value) {
+        alert('No hay datos para exportar. Aplica filtros primero.');
         return;
       }
-      
+
+      showLoadingModal.value = true;
+      loadingTitle.value = 'Exportando Reporte';
+      loadingMessage.value = 'Preparando archivo para descarga...';
+      exportProgress.value = 0;
+
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const userId = payload.id || payload.userId || payload._id;
-        const userRole = payload.role;
-        
-        localStorage.setItem('userId', userId);
-        localStorage.setItem('userRole', userRole);
-        
-        console.log('✅ Datos del token guardados:', { userId, userRole });
-        
-        try {
-          const response = await api.get('/users/me');
-          if (response.data.success) {
-            const user = response.data.user;
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('userName', user.name || '');
-            localStorage.setItem('userEmail', user.email || '');
-            
-            console.log('✅ Datos completos obtenidos del servidor:', user.name);
+        // Simular progreso
+        const progressInterval = setInterval(() => {
+          if (exportProgress.value < 90) {
+            exportProgress.value += 10;
+            loadingProgress.value = `Generando ${format.toUpperCase()}... ${exportProgress.value}%`;
           }
-        } catch (error) {
-          console.log('ℹ️ No se pudieron obtener datos completos:', error.message);
-        }
+        }, 200);
+
+        const params = {
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+          format: format
+        };
+
+        const response = await api.get("/provider/reports/export", { 
+          params,
+          responseType: 'blob'
+        });
+
+        clearInterval(progressInterval);
+        exportProgress.value = 100;
+        loadingProgress.value = 'Descargando archivo...';
+
+        // Crear descarga
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        const fileName = `reporte-citas-${filters.startDate || 'inicio'}-al-${filters.endDate || 'fin'}.${format}`;
         
-        this.showToastMessage('Sesión reparada', 'Datos restaurados correctamente', 'success');
-        
+        link.href = url;
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        // Esperar un momento antes de cerrar el modal
         setTimeout(() => {
-          this.loadNotifications();
-        }, 1000);
-        
+          showLoadingModal.value = false;
+          exportProgress.value = 0;
+        }, 500);
+
       } catch (error) {
-        console.error('❌ Error reparando sesión:', error);
-        this.showToastMessage('Error', 'No se pudo reparar la sesión', 'error');
+        console.error("❌ Error exportando reporte:", error);
+        alert("Error al exportar el reporte. Por favor, intenta nuevamente.");
+        showLoadingModal.value = false;
       }
-    },
-    
-    async loadNotifications() {
-      try {
-        this.loading = true;
-        
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.error('❌ No hay token de autenticación');
-          this.showToastMessage('Error', 'No estás autenticado. Por favor, inicia sesión.', 'error');
-          this.$router.push('/provider/login');
-          return;
-        }
-        
-        const userRole = localStorage.getItem('userRole');
-        if (!userRole || userRole !== 'provider') {
-          console.warn('⚠️ Usuario no es proveedor, rol:', userRole);
-          this.showToastMessage(
-            'Acceso restringido', 
-            'Solo los proveedores pueden acceder a las notificaciones',
-            'error'
-          );
-          
-          setTimeout(() => {
-            if (userRole === 'admin') {
-              this.$router.push('/admin/dashboard');
-            } else if (userRole === 'client') {
-              this.$router.push('/client/dashboard');
-            } else {
-              this.$router.push('/login');
-            }
-          }, 2000);
-          return;
-        }
-        
-        console.log('🔄 Cargando notificaciones para proveedor...');
-        
-        // PRIMERO INTENTAR CON EL ENDPOINT /me
-        try {
-          console.log('🔍 Intentando endpoint /notifications/me...');
-          const response = await api.get('/notifications/me');
-          
-          console.log('✅ Respuesta del servidor:', response.data);
-          
-          if (response.data.success) {
-            this.processNotifications(response.data);
-          } else {
-            throw new Error('Respuesta no exitosa del servidor');
-          }
-          
-        } catch (meError) {
-          console.log('❌ Endpoint /me falló, probando alternativa...');
-          
-          // SI /me FALLA, PROBAR CON EL ID DIRECTAMENTE
-          try {
-            const userId = localStorage.getItem('userId');
-            if (!userId) {
-              throw new Error('No hay userId disponible');
-            }
-            
-            console.log(`🔍 Intentando endpoint /notifications/provider/${userId}...`);
-            const response = await api.get(`/notifications/provider/${userId}`);
-            
-            if (response.data.success) {
-              this.processNotifications(response.data);
-            } else {
-              throw new Error('Endpoint alternativo también falló');
-            }
-            
-          } catch (altError) {
-            console.error('❌ Ambos endpoints fallaron:', altError);
-            this.showToastMessage(
-              'Error', 
-              'No se pudieron cargar las notificaciones. Intenta recargar la página.',
-              'error'
-            );
-          }
-        }
-        
-      } catch (error) {
-        console.error('❌ Error general cargando notificaciones:', error);
-        this.showToastMessage('Error', 'Ocurrió un error inesperado', 'error');
-      } finally {
-        this.loading = false;
-      }
-    },
-    
-    processNotifications(responseData) {
-      this.notifications = responseData.notifications.map(notif => ({
-        ...notif,
-        date: this.formatTimeAgo(notif.createdAt)
-      }));
-      
-      this.unreadCount = this.notifications.filter(n => !n.read).length;
-      this.calculateStats();
-      this.applyFilters();
-      this.updateLastUpdate();
-      
-      console.log(`✅ ${this.notifications.length} notificaciones cargadas`);
-      console.log(`🔔 ${this.unreadCount} no leídas`);
-      
-      this.showToastMessage('Listo', 'Notificaciones cargadas correctamente', 'success');
-    },
-    
-    calculateStats() {
-      this.stats = {
-        appointments: this.notifications.filter(n => n.type === 'appointment_created').length,
-        cancellations: this.notifications.filter(n => n.type === 'appointment_cancelled').length,
-        reschedules: this.notifications.filter(n => n.type === 'appointment_rescheduled').length
-      };
-    },
-    
-    applyFilters() {
-      let filtered = this.notifications;
-      
-      if (this.filterType === 'unread') {
-        filtered = filtered.filter(n => !n.read);
-      } else if (this.filterType !== 'all') {
-        filtered = filtered.filter(n => n.type === this.filterType);
-      }
-      
-      this.filteredNotifications = filtered;
-      this.currentPage = 1;
-      this.totalPages = Math.ceil(this.filteredNotifications.length / this.itemsPerPage);
-      this.activeFilter = this.filterType;
-    },
-    
-    applyQuickFilter(filterValue) {
-      this.filterType = filterValue;
-      this.applyFilters();
-    },
-    
-    resetFilters() {
-      this.filterType = 'all';
-      this.applyFilters();
-    },
-    
-    async markAsRead(id) {
-      try {
-        await api.put(`/notifications/${id}/read`);
-        
-        const notif = this.notifications.find(n => n._id === id);
-        if (notif) {
-          notif.read = true;
-          this.unreadCount = Math.max(0, this.unreadCount - 1);
-          this.calculateStats();
-        }
-        
-        this.showToastMessage('¡Listo!', 'Notificación marcada como leída', 'success');
-        
-      } catch (error) {
-        console.error("Error marcando como leída:", error);
-        this.showToastMessage('Error', 'No se pudo marcar como leída', 'error');
-      }
-    },
-    
-    async markAllAsRead() {
-      try {
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-          this.showToastMessage('Error', 'No se pudo identificar el usuario', 'error');
-          return;
-        }
-        
-        await api.put(`/notifications/provider/${userId}/read-all`);
-        
-        this.notifications.forEach(notif => notif.read = true);
-        this.unreadCount = 0;
-        this.calculateStats();
-        
-        this.showToastMessage('¡Perfecto!', 'Todas las notificaciones marcadas como leídas', 'success');
-        
-      } catch (error) {
-        console.error("Error marcando todas como leídas:", error);
-        this.showToastMessage('Error', 'No se pudieron marcar todas como leídas', 'error');
-      }
-    },
-    
-    handleNotificationClick(notification) {
-      if (!notification.read) {
-        this.markAsRead(notification._id);
-      }
-      
-      if (notification.appointmentId && notification.appointmentId._id) {
-        this.goToAppointment(notification.appointmentId._id);
-      }
-    },
-    
-    goToAppointment(appointmentId) {
-      this.$router.push(`/provider/appointments?highlight=${appointmentId}`);
-    },
-    
-    async saveSettings() {
-      try {
-        // Simular guardado de configuración
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        this.showToastMessage('Configuración guardada', 'Tus preferencias han sido actualizadas', 'success');
-      } catch (error) {
-        console.error("Error guardando configuración:", error);
-        this.showToastMessage('Error', 'No se pudo guardar la configuración', 'error');
-      }
-    },
-    
-    resetSettings() {
-      this.pushNotifications = true;
-      this.soundNotifications = true;
-      this.emailNewAppointments = true;
-      this.emailCancellations = true;
-      this.showToastMessage('Configuración restablecida', 'Se han cargado los valores por defecto', 'success');
-    },
-    
-    showToastMessage(title, text, type = 'success') {
-      this.toastMessage = { title, text, type };
-      this.showToast = true;
+    };
+
+    const resetFilters = () => {
+      filters.startDate = '';
+      filters.endDate = '';
+      filters.quickPeriod = '';
+      appointments.value = [];
+      resetStats();
+      destroyChart();
+      showAllAppointments.value = false;
+    };
+
+    const resetStats = () => {
+      stats.completed = 0;
+      stats.cancelled = 0;
+      stats.pending = 0;
+      stats.revenue = 0;
+      stats.total = 0;
+      stats.confirmed = 0;
+      stats.reprogrammed = 0;
+    };
+
+    // Animaciones iniciales
+    onMounted(() => {
       setTimeout(() => {
-        this.showToast = false;
-      }, 4000);
-    },
-    
-    updateLastUpdate() {
-      this.lastUpdate = this.formatTimeAgo(new Date());
-    },
-    
-    startAutoRefresh() {
-      this.refreshInterval = setInterval(async () => {
-        if (this.unreadCount > 0) {
-          console.log('🔄 Actualizando notificaciones automáticamente...');
-          await this.loadNotifications();
-        }
-      }, 30000);
-    },
-    
-    // Paginación
-    changePage(page) {
-      if (page === '...') return;
-      this.currentPage = page;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-    
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    },
-    
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    },
-    
-    // Formateadores
-    formatTimeAgo(date) {
-      const now = new Date();
-      const notificationDate = new Date(date);
-      const diffMs = now - notificationDate;
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
-      
-      if (diffMins < 1) return 'Hace unos segundos';
-      if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
-      if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
-      if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
-      
-      return notificationDate.toLocaleDateString('es-ES', {
-        day: 'numeric',
-        month: 'short'
-      });
-    },
-    
-    formatFullDate(date) {
-      return new Date(date).toLocaleDateString('es-ES', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    },
-    
-    formatDate(dateStr) {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('es-ES', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      });
-    },
-    
-    getUserInitials(user) {
-      if (!user?.name) return 'U';
-      return user.name.split(' ').map(n => n[0]).join('').toUpperCase();
-    },
-    
-    // Iconos y estilos
-    icon(type) {
-      const icons = {
-        'appointment_created': '📅',
-        'appointment_cancelled': '❌',
-        'appointment_rescheduled': '🔄',
-        'appointment_updated': '✏️',
-        'system': '⚙️'
-      };
-      return icons[type] || '🔔';
-    },
-    
-    iconBg(type) {
-      const bgColors = {
-        'appointment_created': 'bg-green-100 text-green-600',
-        'appointment_cancelled': 'bg-red-100 text-red-600',
-        'appointment_rescheduled': 'bg-yellow-100 text-yellow-600',
-        'appointment_updated': 'bg-blue-100 text-blue-600',
-        'system': 'bg-gray-100 text-gray-600'
-      };
-      return bgColors[type] || 'bg-gray-100 text-gray-600';
-    },
-    
-    typeBadgeClass(type) {
-      const classes = {
-        'appointment_created': 'bg-green-100 text-green-800',
-        'appointment_cancelled': 'bg-red-100 text-red-800',
-        'appointment_rescheduled': 'bg-yellow-100 text-yellow-800',
-        'appointment_updated': 'bg-blue-100 text-blue-800',
-        'system': 'bg-gray-100 text-gray-800'
-      };
-      return classes[type] || 'bg-gray-100 text-gray-800';
-    },
-    
-    typeLabel(type) {
-      const labels = {
-        'appointment_created': 'Nueva cita',
-        'appointment_cancelled': 'Cancelación',
-        'appointment_rescheduled': 'Reprogramación',
-        'appointment_updated': 'Actualización',
-        'system': 'Sistema'
-      };
-      return labels[type] || 'Notificación';
-    }
+        animated.value = true;
+      }, 100);
+
+      // Cargar reportes del mes actual por defecto
+      setQuickPeriod(quickPeriods[2]); // "Este Mes"
+    });
+
+    return { 
+      stats, 
+      appointments,
+      filters,
+      quickPeriods,
+      loading,
+      animated,
+      chartType,
+      hasData,
+      summaryCards,
+      keyMetrics,
+      potentialRevenue,
+      showLoadingModal,
+      loadingTitle,
+      loadingMessage,
+      loadingProgress,
+      exportProgress,
+      progressWidth,
+      showAllAppointments,
+      formatCurrency,
+      formatDate,
+      translateStatus,
+      getStatusClass,
+      calculateCompletionRate,
+      calculateAverageDailyAppointments,
+      calculateAverageRevenuePerAppointment,
+      setQuickPeriod,
+      loadReports,
+      resetFilters,
+      setChartType,
+      exportReport
+    };
   }
 };
 </script>
 
 <style scoped>
-/* Reutiliza los mismos estilos que UserAppointments.vue */
+/* Reutiliza todos los estilos de la vista de notificaciones */
 .fade-up {
   opacity: 0;
   transform: translateY(30px);
@@ -1039,11 +1084,11 @@ export default {
 }
 
 .card-modern:hover {
-  border-color: #3b82f6;
+  border-color: #10b981;
   box-shadow: 
     0 20px 40px rgba(0, 0, 0, 0.1),
-    0 0 0 1px #3b82f6,
-    0 0 20px rgba(59, 130, 246, 0.1);
+    0 0 0 1px #10b981,
+    0 0 20px rgba(16, 185, 129, 0.1);
 }
 
 .card-modern-body {
@@ -1062,12 +1107,12 @@ export default {
 
 .badge-outline {
   background: white;
-  color: #3b82f6;
+  color: #10b981;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-weight: 600;
   font-size: 0.75rem;
-  border: 1px solid #3b82f6;
+  border: 1px solid #10b981;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
@@ -1080,9 +1125,37 @@ export default {
   border: 1px solid #99f6e4;
 }
 
+.btn-primary {
+  background: linear-gradient(135deg, #10b981, #0d9488);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+  cursor: pointer;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 15px 35px rgba(16, 185, 129, 0.4),
+    0 0 0 2px rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #0d9488, #10b981);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .btn-modern-outline {
   background: transparent;
-  color: #3b82f6;
+  color: #10b981;
   padding: 0.75rem 1.5rem;
   border-radius: 10px;
   font-weight: 600;
@@ -1090,48 +1163,49 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 2px solid #3b82f6;
+  border: 2px solid #10b981;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .btn-modern-outline:hover:not(:disabled) {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(16, 185, 129, 0.1);
   transform: translateY(-2px);
 }
 
-.btn-modern-outline-sm {
+.btn-modal-ghost {
   background: transparent;
-  color: #3b82f6;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid #3b82f6;
+  color: #6b7280;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.btn-modern-outline-sm:hover {
-  background: rgba(59, 130, 246, 0.1);
+.btn-modal-ghost:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #10b981;
 }
 
-.btn-modern-sm {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.btn-modal-complete {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0.75rem 1.5rem !important;
+  background-color: #10b981 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
 }
 
-.btn-modern-sm:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+.btn-modal-complete:hover:not(:disabled) {
+  background-color: #0d9488 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3) !important;
 }
 
 .modal-overlay {
@@ -1155,6 +1229,24 @@ export default {
   to { opacity: 1; }
 }
 
+.modal-modern-box {
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px #10b981,
+    0 0 40px rgba(16, 185, 129, 0.1);
+  position: relative;
+  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 100%;
+  width: 100%;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -1166,44 +1258,18 @@ export default {
   }
 }
 
-.btn-modal-primary {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.modal-modern-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.btn-modal-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+.avatar-modern-lg {
+  flex-shrink: 0;
 }
 
-.btn-modal-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-modal-ghost {
-  background: transparent;
-  color: #6b7280;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 600;
-  border: 1px solid #e5e7eb;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-modal-ghost:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #3b82f6;
+.modal-section {
+  margin-bottom: 2rem;
 }
 
 .animate-pulse {
@@ -1212,10 +1278,6 @@ export default {
 
 .animate-spin {
   animation: spin 1s linear infinite;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
 }
 
 @keyframes pulse {
@@ -1228,20 +1290,10 @@ export default {
   to { transform: rotate(360deg); }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (max-width: 768px) {
-  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
-    grid-template-columns: 1fr;
+  .modal-modern-box {
+    padding: 1rem;
+    max-height: 80vh;
   }
   
   .text-5xl {
@@ -1252,28 +1304,43 @@ export default {
     font-size: 3rem;
   }
   
-  .flex-wrap {
-    justify-content: center;
+  .grid.grid-cols-12 {
+    grid-template-columns: 1fr;
   }
   
-  .btn-modern-outline,
-  .btn-modern-sm {
-    width: 100%;
-    justify-content: center;
+  .col-span-2,
+  .col-span-3 {
+    grid-column: span 1;
   }
 }
 
-/* Estilos para el toggle switch */
-input:checked ~ .peer-checked\:bg-blue-600 {
-  background-color: #2563eb;
+/* Estilos para la tabla */
+table {
+  min-width: 800px;
 }
 
-input:checked ~ .peer-checked\:bg-green-600 {
-  background-color: #059669;
+thead {
+  background-color: #f8fafc;
 }
 
-input:checked ~ .peer-checked\:after\:translate-x-full:after {
-  transform: translateX(100%);
+th {
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+td, th {
+  padding: 0.75rem 1rem;
+}
+
+tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+tbody tr:hover {
+  background-color: #f9fafb;
 }
 
 /* Scroll personalizado */
@@ -1293,46 +1360,5 @@ input:checked ~ .peer-checked\:after\:translate-x-full:after {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
-}
-
-/* Estilos para hover y focus */
-button:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* Transiciones suaves */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
-}
-
-/* Gradientes y sombras */
-.shadow-sm {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.shadow-lg {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Border radius personalizados */
-.rounded-3xl {
-  border-radius: 1.5rem;
-}
-
-/* Estilos para estados */
-.hover\:scale-105:hover {
-  transform: scale(1.05);
-}
-
-.active\:scale-95:active {
-  transform: scale(0.95);
-}
-
-/* Z-index para toast */
-.z-50 {
-  z-index: 50;
 }
 </style>

@@ -26,6 +26,7 @@ import adminUsersRoutes from "./src/routes/adminUsersRoutes.js";
 import providerProfileRoutes from "./src/routes/providerProfileRoutes.js";
 import providerAppointmentsRoutes from "./src/routes/providerAppointmentsRoutes.js";
 import providerServicesRoutes from "./src/routes/providerServicesRoutes.js";
+import providerReportsRoutes from "./src/routes/providerReportsRoutes.js";
 import petRoutes from "./src/routes/petRoutes.js";
 import clientServiceRoutes from "./src/routes/clientServiceRoutes.js";
 import appointmentsRoutes from "./src/routes/appointmentRoutes.js";
@@ -117,6 +118,8 @@ app.use("/api/client/services", clientServiceRoutes);
 app.use("/api/pets", petRoutes);
 app.use("/api/appointments", appointmentsRoutes);
 app.use("/api/providers", providerRoutes);
+app.use("/api/provider/reports", providerReportsRoutes);
+
 // Solo esto
 
 // Chat

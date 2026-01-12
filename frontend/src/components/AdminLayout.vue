@@ -223,11 +223,7 @@ export default {
           icon: '📅'
         },
         
-        {
-          to: '/admin/reports',
-          label: 'Reportes',
-          icon: '📈'
-        },
+        
         {
           to: '/admin/settings',
           label: 'Configuración',

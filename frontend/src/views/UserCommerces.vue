@@ -1,4 +1,4 @@
-<template>
+vamos a hacer mejoras de estilos a las siguientes vistas y que sean mas responsive que se vean acorde a un telefono <template>
   <Layout>
     <!-- Chatbot Component -->
     <Chatbot />
@@ -149,12 +149,12 @@
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   @error="handleBusinessImageError"
                 />
-                
-                <!-- Badges -->
                 <div class="absolute top-4 right-4 flex flex-col gap-2">
                   <div v-if="business.featured" class="badge-primary bg-gradient-to-r from-amber-500 to-yellow-500">
                     ⭐ Destacado
                   </div>
+                <!-- Badges -->
+                
                   <div v-if="business.isOpenNow" class="badge-primary bg-gradient-to-r from-emerald-500 to-green-500">
                     🔥 Abierto ahora
                   </div>
@@ -189,8 +189,7 @@
                       <span class="text-amber-500 text-lg">⭐</span>
                       <span class="ml-1 font-bold">{{ business.rating || 'N/A' }}</span>
                     </div>
-                    <span class="text-gray-400">•</span>
-                    <span class="text-gray-600">{{ business.views || 0 }} vistas</span>
+                    
                   </div>
                 </div>
                 
