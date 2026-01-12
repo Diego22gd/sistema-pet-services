@@ -752,6 +752,7 @@ header {
   
   .btn-primary {
     width: 100%;
+    margin-right: 20px;
     justify-content: center;
   }
   
