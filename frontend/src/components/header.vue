@@ -15,14 +15,14 @@
         <!-- Botón hamburguesa para móvil -->
         <button 
           @click="toggleMobileMenu"
-          class="md:hidden text-white hover:text-emerald-100 transition-colors p-2 rounded-lg hover:bg-emerald-700 relative z-50"
+          class="md:hidden text-white hover:text-emerald-100 transition-colors p-2 rounded-lg hover:bg-emerald-700"
           aria-label="Menú de navegación"
         >
           <span class="text-2xl">{{ isMobileMenuOpen ? '✕' : '☰' }}</span>
         </button>
 
         <!-- Navegación para desktop -->
-        <nav class="hidden md:flex items-center space-x-4">
+        <nav class="hidden md:flex items-center space-x-2">
           <!-- COMERCIOS -->
           <router-link 
             to="/commerces"
@@ -92,98 +92,90 @@
         </nav>
       </div>
 
-      <!-- Menú móvil desplegable -->
+      <!-- Menú móvil desplegable (ESTILO CORREGIDO) -->
       <div 
-        v-show="isMobileMenuOpen"
-        class="md:hidden fixed inset-0 top-16 bg-black/50 backdrop-blur-sm z-40"
-        @click="closeMobileMenu"
+        v-if="isMobileMenuOpen"
+        class="md:hidden bg-emerald-700/95 backdrop-blur-sm rounded-lg mt-2 py-4 px-4 animate-slideDown shadow-xl border border-emerald-500/20"
       >
-        <div 
-          class="absolute top-0 right-0 h-full w-3/4 max-w-sm bg-emerald-700 shadow-xl transform transition-transform duration-300"
-          :class="isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'"
-          @click.stop
-        >
-          <div class="py-4 px-4 h-full overflow-y-auto">
-            <div class="space-y-2">
-              <!-- COMERCIOS móvil -->
-              <router-link 
-                to="/commerces"
-                @click="closeMobileMenu"
-                class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group relative"
-                :class="{
-                  'bg-emerald-600': $route.path === '/commerces' || $route.path.startsWith('/commerces')
-                }"
-              >
-                <span class="text-xl">🏬</span>
-                <span class="flex-1">Comercios</span>
-                <span class="w-3 h-3 bg-amber-400 rounded-full animate-pulse" 
-                      v-if="!($route.path === '/commerces' || $route.path.startsWith('/commerces'))">
-                </span>
-                <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-              </router-link>
+        <div class="space-y-2">
+          <!-- COMERCIOS móvil -->
+          <router-link 
+            to="/commerces"
+            @click="closeMobileMenu"
+            class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group border-l-4 border-amber-400 pl-3"
+            :class="{
+              'bg-emerald-600': $route.path === '/commerces' || $route.path.startsWith('/commerces')
+            }"
+          >
+            <span class="text-xl">🏬</span>
+            <span class="flex-1 font-semibold">Comercios</span>
+            <span class="text-amber-300">⭐</span>
+            <span class="w-3 h-3 bg-amber-400 rounded-full animate-pulse" 
+                  v-if="!($route.path === '/commerces' || $route.path.startsWith('/commerces'))">
+            </span>
+            <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+          </router-link>
 
-              <!-- Citas móvil -->
-              <router-link 
-                to="/appointments"
-                @click="closeMobileMenu"
-                class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group"
-                :class="{
-                  'bg-emerald-600': $route.path === '/appointments' || $route.path.startsWith('/appointments')
-                }"
-              >
-                <span class="text-xl">📅</span>
-                <span class="flex-1">Citas</span>
-                <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-              </router-link>
+          <!-- Citas móvil -->
+          <router-link 
+            to="/appointments"
+            @click="closeMobileMenu"
+            class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group"
+            :class="{
+              'bg-emerald-600': $route.path === '/appointments' || $route.path.startsWith('/appointments')
+            }"
+          >
+            <span class="text-xl">📅</span>
+            <span class="flex-1">Citas</span>
+            <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+          </router-link>
 
-              <!-- Mascotas móvil -->
-              <router-link 
-                to="/MyPets"
-                @click="closeMobileMenu"
-                class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group"
-                :class="{
-                  'bg-emerald-600': $route.path === '/MyPets' || $route.path.startsWith('/MyPets')
-                }"
-              >
-                <span class="text-xl">🐾</span>
-                <span class="flex-1">Mascotas</span>
-                <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-              </router-link>
+          <!-- Mascotas móvil -->
+          <router-link 
+            to="/MyPets"
+            @click="closeMobileMenu"
+            class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group"
+            :class="{
+              'bg-emerald-600': $route.path === '/MyPets' || $route.path.startsWith('/MyPets')
+            }"
+          >
+            <span class="text-xl">🐾</span>
+            <span class="flex-1">Mascotas</span>
+            <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+          </router-link>
 
-              <!-- Perfil móvil -->
-              <router-link 
-                to="/profile"
-                @click="closeMobileMenu"
-                class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group"
-                :class="{
-                  'bg-emerald-600': $route.path === '/profile' || $route.path.startsWith('/profile')
-                }"
-              >
-                <span class="text-xl">👤</span>
-                <span class="flex-1">Perfil</span>
-                <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-              </router-link>
+          <!-- Perfil móvil -->
+          <router-link 
+            to="/profile"
+            @click="closeMobileMenu"
+            class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group"
+            :class="{
+              'bg-emerald-600': $route.path === '/profile' || $route.path.startsWith('/profile')
+            }"
+          >
+            <span class="text-xl">👤</span>
+            <span class="flex-1">Perfil</span>
+            <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+          </router-link>
 
-              <!-- Separador móvil -->
-              <div class="border-t border-emerald-500/30 my-3"></div>
+          <!-- Separador móvil -->
+          <div class="border-t border-emerald-500/30 my-3"></div>
 
-              <!-- Botón Cerrar Sesión móvil -->
-              <button
-                @click="logout"
-                class="w-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 group"
-              >
-                <span>🚪</span>
-                <span>Cerrar Sesión</span>
-                <span class="opacity-0 group-hover:opacity-100 transition-opacity">👋</span>
-              </button>
+          <!-- Botón Cerrar Sesión móvil -->
+          <button
+            @click="logout"
+            class="w-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 group"
+          >
+            <span>Cerrar Sesión</span>
+            <span>🚪</span>
+            <span class="opacity-0 group-hover:opacity-100 transition-opacity">👋</span>
+          </button>
 
-              <!-- Información del usuario -->
-              <div class="pt-3 border-t border-emerald-500/20">
-                <div class="text-emerald-200 text-sm text-center">
-                  <p v-if="userEmail">📧 {{ userEmail }}</p>
-                  <p class="text-xs text-emerald-300/70 mt-1">Panel de usuario</p>
-                </div>
-              </div>
+          <!-- Información del usuario -->
+          <div class="pt-3 border-t border-emerald-500/20">
+            <div class="text-emerald-200 text-sm text-center">
+              <p v-if="userEmail">📧 {{ userEmail }}</p>
+              <p class="text-xs text-emerald-300/70 mt-1">Panel de usuario</p>
             </div>
           </div>
         </div>
@@ -241,7 +233,7 @@ export default {
     
     handleClickOutside(event) {
       const header = this.$el;
-      const mobileMenu = header.querySelector('.md\\:hidden.fixed');
+      const mobileMenu = header.querySelector('.md\\:hidden.bg-emerald-700\\/95');
       const hamburgerButton = header.querySelector('button.md\\:hidden');
       
       if (mobileMenu && hamburgerButton) {
@@ -380,33 +372,27 @@ header {
   }
 }
 
-/* Efecto especial para el enlace de Comercios */
-nav a[href="/commerces"] {
-  position: relative;
+/* Animaciones para menú móvil */
+.animate-slideDown {
+  animation: slideDownMenu 0.3s ease-out;
 }
 
-nav a[href="/commerces"]::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: -5px;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 6px;
-  background-color: #fbbf24;
-  border-radius: 50%;
-  animation: pulseCommercesDot 1.5s infinite;
-}
-
-@keyframes pulseCommercesDot {
-  0%, 100% {
+@keyframes slideDownMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
     opacity: 1;
-    transform: translateY(-50%) scale(1);
+    transform: translateY(0) scale(1);
   }
-  50% {
-    opacity: 0.5;
-    transform: translateY(-50%) scale(1.2);
-  }
+}
+
+/* Efecto especial para el enlace de Comercios */
+.border-l-4.border-amber-400 {
+  border-left-color: #fbbf24 !important;
+  border-left-width: 4px;
+  background: linear-gradient(to right, rgba(251, 191, 36, 0.1), transparent);
 }
 
 /* Efecto para enlaces activos */
@@ -453,24 +439,17 @@ nav a.router-link-active {
     display: none;
   }
   
-  /* Scroll horizontal en navegación móvil */
-  nav {
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
+  /* Mejorar visibilidad del menú móvil */
+  .md\\:hidden.bg-emerald-700\/95 {
+    background-color: rgba(5, 150, 105, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
   
-  nav::-webkit-scrollbar {
-    height: 4px;
-  }
-  
-  nav::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-  }
-  
-  nav::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
+  /* Botón hamburguesa táctil */
+  button.md\\:hidden {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
@@ -509,22 +488,6 @@ nav a span:first-child {
 /* Separadores más visibles */
 .w-px {
   background-color: rgba(255, 255, 255, 0.4);
-}
-
-/* Estilo para el link de comercios en móvil */
-@media (max-width: 480px) {
-  nav a[href="/commerces"] {
-    animation: highlightCommerces 3s ease-in-out infinite;
-  }
-  
-  @keyframes highlightCommerces {
-    0%, 100% {
-      background-color: transparent;
-    }
-    50% {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-  }
 }
 
 /* Mejoras de accesibilidad */
@@ -593,24 +556,6 @@ nav a, nav button {
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Animaciones para menú móvil */
-.md\\:hidden.fixed {
-  transition: opacity 0.3s ease;
-}
-
-.md\\:hidden.fixed .absolute {
-  transition: transform 0.3s ease;
-}
-
-/* Estilo para el botón hamburguesa en móvil */
-button.md\\:hidden {
-  min-width: 44px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Prevenir scroll cuando el menú está abierto */
 body.menu-open {
   overflow: hidden !important;
@@ -619,13 +564,7 @@ body.menu-open {
   height: 100%;
 }
 
-/* Mejoras visuales para menú móvil */
-.md\\:hidden.fixed .absolute {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
-}
-
+/* Mejoras visuales para elementos del menú móvil */
 .md\\:hidden a {
   border-left: 3px solid transparent;
   transition: all 0.3s ease;
@@ -636,5 +575,36 @@ body.menu-open {
   border-left-color: #fbbf24;
   padding-left: calc(1rem - 3px);
   background: linear-gradient(to right, rgba(251, 191, 36, 0.1), rgba(5, 150, 105, 0.6));
+}
+
+/* Efecto de overlay para el menú móvil */
+@media (max-width: 768px) {
+  .md\\:hidden.bg-emerald-700\/95 {
+    position: relative;
+    z-index: 50;
+  }
+  
+  .md\\:hidden.bg-emerald-700\/95::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    z-index: -1;
+  }
+}
+
+/* Mejoras para enlaces con flechas */
+.group:hover .group-hover\\:opacity-100 {
+  opacity: 1;
+}
+
+/* Efecto de profundidad */
+nav a, nav button {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 </style>
