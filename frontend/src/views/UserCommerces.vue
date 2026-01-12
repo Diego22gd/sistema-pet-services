@@ -1,5 +1,7 @@
 <template>
+  <Layout>
   <div class="bg-white min-h-screen">
+  
     <!-- Chatbot Component -->
     <Chatbot />
     
@@ -720,6 +722,7 @@
       </div>
     </div>
   </div>
+ </Layout>
 </template>
 
 <script>
