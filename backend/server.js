@@ -24,7 +24,7 @@ import adminReportRoutes from "./src/routes/adminReportRoutes.js";
 import adminServiceRoutes from "./src/routes/adminServiceRoutes.js";
 import adminUsersRoutes from "./src/routes/adminUsersRoutes.js";
 import providerProfileRoutes from "./src/routes/providerProfileRoutes.js";
-import providerAppointmentsRoutes from "./src/routes/providerAppointments.routes.js";
+import providerAppointmentsRoutes from "./src/routes/providerAppointmentsRoutes.js";
 import providerServicesRoutes from "./src/routes/providerServicesRoutes.js";
 import providerReportsRoutes from "./src/routes/providerReportsRoutes.js";
 import petRoutes from "./src/routes/petRoutes.js";
