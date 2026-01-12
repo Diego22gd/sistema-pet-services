@@ -1,21 +1,30 @@
 <template>
   <div class="bg-white min-h-screen flex flex-col">
-    <!-- Header verde sólido con navegación lateral -->
+    <!-- Header verde sólido con menú hamburguesa -->
     <header class="fixed top-0 left-0 right-0 w-full z-50 bg-emerald-600 shadow-lg">
-      <div class="container mx-auto px-6">
+      <div class="container mx-auto px-4 md:px-6">
         <div class="flex justify-between items-center py-4">
-          <!-- Logo moderno -->
+          <!-- Logo a la izquierda -->
           <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-              <span class="text-2xl text-emerald-600">🐾</span>
+            <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+              <span class="text-xl md:text-2xl text-emerald-600">🐾</span>
             </div>
-            <div class="text-2xl font-bold text-white">
+            <div class="text-lg md:text-2xl font-bold text-white">
               PetServices
             </div>
           </div>
 
-          <!-- Navegación LATERAL siempre visible -->
-          <nav class="flex items-center space-x-4">
+          <!-- Botón hamburguesa para móvil -->
+          <button 
+            @click="toggleMobileMenu"
+            class="md:hidden text-white hover:text-emerald-100 transition-colors p-2 rounded-lg hover:bg-emerald-700"
+            aria-label="Menú de navegación"
+          >
+            <span class="text-2xl">{{ isMobileMenuOpen ? '✕' : '☰' }}</span>
+          </button>
+
+          <!-- Navegación para desktop -->
+          <nav class="hidden md:flex items-center space-x-4">
             <!-- Comercios - Hace scroll a la sección -->
             <a 
               href="#comercios-destacados"
@@ -37,11 +46,60 @@
             <!-- Login -->
             <router-link 
               to="/login" 
-              class="bg-emerald-600 text-emerald-600 px-6 py-2.5 rounded-lg font-semibold hover:shadow-lg hover:shadow-white/25 hover:scale-105 transition-all duration-300 group"
+              class="bg-white text-emerald-600 px-6 py-2.5 rounded-lg font-semibold hover:shadow-lg hover:shadow-white/25 hover:scale-105 transition-all duration-300 group"
             >
               <span class="group-hover:translate-x-1 transition-transform duration-300">Iniciar Sesión</span>
             </router-link>
           </nav>
+        </div>
+
+        <!-- Menú móvil desplegable -->
+        <div 
+          v-if="isMobileMenuOpen"
+          class="md:hidden bg-emerald-700/95 backdrop-blur-sm rounded-lg mt-2 py-4 px-4 animate-slideDown shadow-xl border border-emerald-500/20"
+        >
+          <div class="space-y-2">
+            <!-- Comercios móvil -->
+            <a 
+              href="#comercios-destacados"
+              @click.prevent="() => {
+                scrollToSection('comercios-destacados');
+                closeMobileMenu();
+              }"
+              class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group"
+            >
+              <span class="text-xl">🏬</span>
+              <span class="flex-1">Comercios</span>
+              <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">↓</span>
+            </a>
+            
+            <!-- Servicios móvil -->
+            <a 
+              href="#servicios-completos"
+              @click.prevent="() => {
+                scrollToSection('servicios-completos');
+                closeMobileMenu();
+              }"
+              class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group"
+            >
+              <span class="text-xl">✨</span>
+              <span class="flex-1">Servicios</span>
+              <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">↓</span>
+            </a>
+
+            <!-- Separador móvil -->
+            <div class="border-t border-emerald-500/30 my-3"></div>
+
+            <!-- Login móvil -->
+            <router-link 
+              to="/login" 
+              @click="closeMobileMenu"
+              class="block bg-white text-emerald-600 px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 group w-full text-center"
+            >
+              <span>Iniciar Sesión</span>
+              <span class="group-hover:translate-x-1 transition-transform duration-300">→</span>
+            </router-link>
+          </div>
         </div>
       </div>
     </header>
@@ -75,11 +133,11 @@
                 Servicios veterinarios premium disponibles 24/7. Encuentra los mejores cuidadores para tu compañero en nuestra comunidad de servicios.
               </p>
               <div class="flex flex-col sm:flex-row gap-4">
-                <router-link to="/services" class="btn-primary text-lg px-8 py-4 text-center font-semibold group">
+                <router-link to="/login" class="btn-primary text-lg px-8 py-4 text-center font-semibold group">
                   <span class="group-hover:translate-x-2 transition-transform duration-300">Explorar Servicios</span>
                   <span class="ml-2 group-hover:rotate-90 transition-transform duration-300">→</span>
                 </router-link>
-                <router-link to="/register" class="btn-secondary text-lg px-8 py-4 text-center font-semibold group">
+                <router-link to="/login" class="btn-secondary text-lg px-8 py-4 text-center font-semibold group">
                   <span class="group-hover:scale-110 transition-transform duration-300">Crear Cuenta</span>
                 </router-link>
               </div>
@@ -425,10 +483,10 @@
 
           <!-- Botón Ver Todos -->
           <div class="text-center mt-12">
-            <button class="btn-modern-outline-lg group">
+            <router-link to="/login" class="btn-modern-outline-lg group inline-flex items-center">
               <span>Ver todos los comercios</span>
               <span class="ml-2 group-hover:translate-x-2 transition-transform duration-300">→</span>
-            </button>
+            </router-link>
           </div>
         </div>
       </section>
@@ -606,7 +664,7 @@
 
           <!-- Botón Ver Todos los Servicios -->
           <div class="text-center mt-12">
-            <router-link to="/services" class="btn-modern-outline-lg group inline-flex items-center">
+            <router-link to="/login" class="btn-modern-outline-lg group inline-flex items-center">
               <span>Explorar todos los servicios</span>
               <span class="ml-2 group-hover:translate-x-2 transition-transform duration-300">→</span>
             </router-link>
@@ -759,558 +817,489 @@
             </div>
           </div>
           
-          <div class="text-center mt-12 fade-up">
-            <p class="text-gray-700 mb-6">¿Tienes otra pregunta?</p>
-            <button class="btn-primary text-lg px-8 py-4 font-semibold group">
-              <span>Contactar con soporte</span>
-              <span class="ml-2 group-hover:rotate-45 transition-transform duration-300">📧</span>
-            </button>
-          </div>
+          <!-- Se eliminó el botón de Contactar con soporte -->
         </div>
       </section>
 
-      <!-- Se eliminó la sección CTA "¿Listo para cuidar de tu mascota?" -->
+      <!-- MODALES PARA CADA COMERCIO -->
+      <!-- Modal AnimalCare -->
+      <dialog id="modal_animalcare" class="modal-modern" @click.self="closeModal">
+        <div class="modal-modern-box" @click.stop>
+          <div class="modal-modern-header flex justify-between items-start">
+            <div class="flex items-start gap-4">
+              <div class="avatar-modern-lg">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                  <span class="text-3xl">🐕</span>
+                </div>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900">AnimalCare</h2>
+                <div class="flex items-center gap-2 mt-2">
+                  <div class="badge-outline">🏥 VETERINARIA</div>
+                  <div class="badge-rating">⭐ 4.8</div>
+                </div>
+              </div>
+            </div>
+            <button @click="closeModal" class="btn-modal-close">
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-modern-content mt-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <!-- Columna izquierda: Información -->
+              <div>
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📍</span> Ubicación
+                  </h3>
+                  <p class="text-gray-700">Centro Comercial Los Pinos, Calle Principal 123</p>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>⏰</span> Horarios
+                  </h3>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="time-card-modern">
+                      <p class="font-bold text-gray-900">Lunes - Viernes</p>
+                      <p class="text-emerald-600">9:00 AM - 8:00 PM</p>
+                    </div>
+                    <div class="time-card-modern">
+                      <p class="font-bold text-gray-900">Sábados</p>
+                      <p class="text-emerald-600">10:00 AM - 6:00 PM</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📞</span> Contacto
+                  </h3>
+                  <div class="space-y-2">
+                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 123-4567</span></p>
+                    <p class="text-gray-700">📧 Email: <span class="font-bold">info@animalcare.com</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columna derecha: Servicios y precios -->
+              <div>
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>🩺</span> Servicios y Precios
+                  </h3>
+                  <div class="space-y-4">
+                    <div v-for="(service, index) in businesses[0].pricing" :key="index" 
+                         class="border border-gray-200 rounded-xl p-4 hover:border-emerald-300 transition-colors">
+                      <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
+                        <span class="text-xl font-bold text-emerald-600">{{ service.price }}</span>
+                      </div>
+                      <p class="text-sm text-gray-600">{{ service.description }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>🔧</span> Especialidades
+                  </h3>
+                  <div class="flex flex-wrap gap-2">
+                    <span v-for="(service, index) in businesses[0].services" :key="index" 
+                          class="badge-tag">
+                      {{ service }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-section">
+              <h3 class="modal-section-title">
+                <span>📝</span> Descripción Completa
+              </h3>
+              <p class="text-gray-700 leading-relaxed">
+                {{ businesses[0].fullDescription }}
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-modern-actions">
+            <button @click="closeModal" class="btn-modal-ghost">
+              Cerrar
+            </button>
+            <router-link 
+              to="/login" 
+              class="btn-modal-primary group"
+              @click="closeModal"
+            >
+              <span>Registrarse / Iniciar sesión para reservar</span>
+              <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+            </router-link>
+          </div>
+        </div>
+      </dialog>
+
+      <!-- Modal Paws & Beauty -->
+      <dialog id="modal_pawsbeauty" class="modal-modern" @click.self="closeModal">
+        <div class="modal-modern-box" @click.stop>
+          <div class="modal-modern-header flex justify-between items-start">
+            <div class="flex items-start gap-4">
+              <div class="avatar-modern-lg">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-400 flex items-center justify-center">
+                  <span class="text-3xl">✂️</span>
+                </div>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900">Paws & Beauty</h2>
+                <div class="flex items-center gap-2 mt-2">
+                  <div class="badge-outline">✂️ PELUQUERÍA</div>
+                  <div class="badge-rating">⭐ 4.9</div>
+                </div>
+              </div>
+            </div>
+            <button @click="closeModal" class="btn-modal-close">
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-modern-content mt-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📍</span> Ubicación
+                  </h3>
+                  <p class="text-gray-700">Calle Principal #123, Centro</p>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>⏰</span> Horarios
+                  </h3>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="time-card-modern">
+                      <p class="font-bold text-gray-900">Martes - Domingo</p>
+                      <p class="text-teal-600">10:00 AM - 7:00 PM</p>
+                    </div>
+                    <div class="time-card-modern">
+                      <p class="font-bold text-gray-900">Lunes</p>
+                      <p class="text-gray-500">Cerrado</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📞</span> Contacto
+                  </h3>
+                  <div class="space-y-2">
+                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 987-6543</span></p>
+                    <p class="text-gray-700">📧 Email: <span class="font-bold">contact@pawsbeauty.com</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>💈</span> Servicios y Precios
+                  </h3>
+                  <div class="space-y-4">
+                    <div v-for="(service, index) in businesses[1].pricing" :key="index" 
+                         class="border border-gray-200 rounded-xl p-4 hover:border-teal-300 transition-colors">
+                      <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
+                        <span class="text-xl font-bold text-teal-600">{{ service.price }}</span>
+                      </div>
+                      <p class="text-sm text-gray-600">{{ service.description }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>✨</span> Especialidades
+                  </h3>
+                  <div class="flex flex-wrap gap-2">
+                    <span v-for="(service, index) in businesses[1].services" :key="index" 
+                          class="badge-tag">
+                      {{ service }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-section">
+              <h3 class="modal-section-title">
+                <span>📝</span> Descripción Completa
+              </h3>
+              <p class="text-gray-700 leading-relaxed">
+                {{ businesses[1].fullDescription }}
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-modern-actions">
+            <button @click="closeModal" class="btn-modal-ghost">
+              Cerrar
+            </button>
+            <router-link 
+              to="/login" 
+              class="btn-modal-primary group"
+              @click="closeModal"
+            >
+              <span>Registrarse / Iniciar sesión para reservar</span>
+              <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+            </router-link>
+          </div>
+        </div>
+      </dialog>
+
+      <!-- Modal Happy Tails -->
+      <dialog id="modal_happytails" class="modal-modern" @click.self="closeModal">
+        <div class="modal-modern-box" @click.stop>
+          <div class="modal-modern-header flex justify-between items-start">
+            <div class="flex items-start gap-4">
+              <div class="avatar-modern-lg">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center">
+                  <span class="text-3xl">🏠</span>
+                </div>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900">Happy Tails</h2>
+                <div class="flex items-center gap-2 mt-2">
+                  <div class="badge-outline">🏠 GUARDERÍA</div>
+                  <div class="badge-rating">⭐ 4.7</div>
+                </div>
+              </div>
+            </div>
+            <button @click="closeModal" class="btn-modal-close">
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-modern-content mt-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📍</span> Ubicación
+                  </h3>
+                  <p class="text-gray-700">Zona Residencial Norte, Av. Las Flores 456</p>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>⏰</span> Horarios
+                  </h3>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="time-card-modern">
+                      <p class="font-bold text-gray-900">Lunes - Domingo</p>
+                      <p class="text-purple-600">7:00 AM - 9:00 PM</p>
+                    </div>
+                    <div class="time-card-modern">
+                      <p class="font-bold text-gray-900">Emergencias</p>
+                      <p class="text-purple-600">24/7</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📞</span> Contacto
+                  </h3>
+                  <div class="space-y-2">
+                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 456-7890</span></p>
+                    <p class="text-gray-700">📧 Email: <span class="font-bold">reservas@happytails.com</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>🏠</span> Servicios y Precios
+                  </h3>
+                  <div class="space-y-4">
+                    <div v-for="(service, index) in businesses[2].pricing" :key="index" 
+                         class="border border-gray-200 rounded-xl p-4 hover:border-purple-300 transition-colors">
+                      <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
+                        <span class="text-xl font-bold text-purple-600">{{ service.price }}</span>
+                      </div>
+                      <p class="text-sm text-gray-600">{{ service.description }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>🎯</span> Especialidades
+                  </h3>
+                  <div class="flex flex-wrap gap-2">
+                    <span v-for="(service, index) in businesses[2].services" :key="index" 
+                          class="badge-tag">
+                      {{ service }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-section">
+              <h3 class="modal-section-title">
+                <span>📝</span> Descripción Completa
+              </h3>
+              <p class="text-gray-700 leading-relaxed">
+                {{ businesses[2].fullDescription }}
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-modern-actions">
+            <button @click="closeModal" class="btn-modal-ghost">
+              Cerrar
+            </button>
+            <router-link 
+              to="/login" 
+              class="btn-modal-primary group"
+              @click="closeModal"
+            >
+              <span>Registrarse / Iniciar sesión para reservar</span>
+              <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+            </router-link>
+          </div>
+        </div>
+      </dialog>
+
+      <!-- Modal Traumavet -->
+      <dialog id="modal_traumavet" class="modal-modern" @click.self="closeModal">
+        <div class="modal-modern-box" @click.stop>
+          <div class="modal-modern-header flex justify-between items-start">
+            <div class="flex items-start gap-4">
+              <div class="avatar-modern-lg">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+                  <span class="text-3xl">🏥</span>
+                </div>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900">Traumavet</h2>
+                <div class="flex items-center gap-2 mt-2">
+                  <div class="badge-outline">🏥 TRAUMATOLOGÍA</div>
+                  <div class="badge-rating">⭐ 4.9</div>
+                </div>
+              </div>
+            </div>
+            <button @click="closeModal" class="btn-modal-close">
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-modern-content mt-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📍</span> Ubicación
+                  </h3>
+                  <p class="text-gray-700">Av. Principal #456, Edificio Médico 3</p>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>⏰</span> Horarios
+                  </h3>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="time-card-modern">
+                      <p class="font-bold text-gray-900">Lunes - Sábado</p>
+                      <p class="text-blue-600">8:00 AM - 6:00 PM</p>
+                    </div>
+                    <div class="time-card-modern">
+                      <p class="font-bold text-gray-900">Emergencias</p>
+                      <p class="text-blue-600">24/7</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📞</span> Contacto
+                  </h3>
+                  <div class="space-y-2">
+                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 234-5678</span></p>
+                    <p class="text-gray-700">📧 Email: <span class="font-bold">urgencias@traumavet.com</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>🦴</span> Servicios y Precios
+                  </h3>
+                  <div class="space-y-4">
+                    <div v-for="(service, index) in businesses[3].pricing" :key="index" 
+                         class="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
+                      <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
+                        <span class="text-xl font-bold text-blue-600">{{ service.price }}</span>
+                      </div>
+                      <p class="text-sm text-gray-600">{{ service.description }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>🎯</span> Especialidades
+                  </h3>
+                  <div class="flex flex-wrap gap-2">
+                    <span v-for="(service, index) in businesses[3].services" :key="index" 
+                          class="badge-tag">
+                      {{ service }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-section">
+              <h3 class="modal-section-title">
+                <span>📝</span> Descripción Completa
+              </h3>
+              <p class="text-gray-700 leading-relaxed">
+                {{ businesses[3].fullDescription }}
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-modern-actions">
+            <button @click="closeModal" class="btn-modal-ghost">
+              Cerrar
+            </button>
+            <router-link 
+              to="/login" 
+              class="btn-modal-primary group"
+              @click="closeModal"
+            >
+              <span>Registrarse / Iniciar sesión para reservar</span>
+              <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+            </router-link>
+          </div>
+        </div>
+      </dialog>
     </main>
 
-    <!-- MODALES PARA CADA COMERCIO -->
-    <!-- Modal AnimalCare -->
-    <dialog id="modal_animalcare" class="modal-modern" @click.self="closeModal">
-      <div class="modal-modern-box" @click.stop>
-        <div class="modal-modern-header flex justify-between items-start">
-          <div class="flex items-start gap-4">
-            <div class="avatar-modern-lg">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
-                <span class="text-3xl">🐕</span>
-              </div>
-            </div>
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900">AnimalCare</h2>
-              <div class="flex items-center gap-2 mt-2">
-                <div class="badge-outline">🏥 VETERINARIA</div>
-                <div class="badge-rating">⭐ 4.8</div>
-              </div>
-            </div>
-          </div>
-          <button @click="closeModal" class="btn-modal-close">
-            ✕
-          </button>
-        </div>
-
-        <div class="modal-modern-content mt-6">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Columna izquierda: Información -->
-            <div>
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📍</span> Ubicación
-                </h3>
-                <p class="text-gray-700">Centro Comercial Los Pinos, Calle Principal 123</p>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>⏰</span> Horarios
-                </h3>
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="time-card-modern">
-                    <p class="font-bold text-gray-900">Lunes - Viernes</p>
-                    <p class="text-emerald-600">9:00 AM - 8:00 PM</p>
-                  </div>
-                  <div class="time-card-modern">
-                    <p class="font-bold text-gray-900">Sábados</p>
-                    <p class="text-emerald-600">10:00 AM - 6:00 PM</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📞</span> Contacto
-                </h3>
-                <div class="space-y-2">
-                  <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 123-4567</span></p>
-                  <p class="text-gray-700">📧 Email: <span class="font-bold">info@animalcare.com</span></p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Columna derecha: Servicios y precios -->
-            <div>
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>🩺</span> Servicios y Precios
-                </h3>
-                <div class="space-y-4">
-                  <div v-for="(service, index) in businesses[0].pricing" :key="index" 
-                       class="border border-gray-200 rounded-xl p-4 hover:border-emerald-300 transition-colors">
-                    <div class="flex justify-between items-center mb-2">
-                      <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
-                      <span class="text-xl font-bold text-emerald-600">{{ service.price }}</span>
-                    </div>
-                    <p class="text-sm text-gray-600">{{ service.description }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>🔧</span> Especialidades
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                  <span v-for="(service, index) in businesses[0].services" :key="index" 
-                        class="badge-tag">
-                    {{ service }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-section">
-            <h3 class="modal-section-title">
-              <span>📝</span> Descripción Completa
-            </h3>
-            <p class="text-gray-700 leading-relaxed">
-              {{ businesses[0].fullDescription }}
-            </p>
-          </div>
-        </div>
-
-        <div class="modal-modern-actions">
-          <button @click="closeModal" class="btn-modal-ghost">
-            Cerrar
-          </button>
-          <router-link 
-            to="/login" 
-            class="btn-modal-primary group"
-            @click="closeModal"
-          >
-            <span>Registrarse / Iniciar sesión para reservar</span>
-            <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
-          </router-link>
-        </div>
-      </div>
-    </dialog>
-
-    <!-- Modal Paws & Beauty -->
-    <dialog id="modal_pawsbeauty" class="modal-modern" @click.self="closeModal">
-      <div class="modal-modern-box" @click.stop>
-        <div class="modal-modern-header flex justify-between items-start">
-          <div class="flex items-start gap-4">
-            <div class="avatar-modern-lg">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-400 flex items-center justify-center">
-                <span class="text-3xl">✂️</span>
-              </div>
-            </div>
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900">Paws & Beauty</h2>
-              <div class="flex items-center gap-2 mt-2">
-                <div class="badge-outline">✂️ PELUQUERÍA</div>
-                <div class="badge-rating">⭐ 4.9</div>
-              </div>
-            </div>
-          </div>
-          <button @click="closeModal" class="btn-modal-close">
-            ✕
-          </button>
-        </div>
-
-        <div class="modal-modern-content mt-6">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📍</span> Ubicación
-                </h3>
-                <p class="text-gray-700">Calle Principal #123, Centro</p>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>⏰</span> Horarios
-                </h3>
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="time-card-modern">
-                    <p class="font-bold text-gray-900">Martes - Domingo</p>
-                    <p class="text-teal-600">10:00 AM - 7:00 PM</p>
-                  </div>
-                  <div class="time-card-modern">
-                    <p class="font-bold text-gray-900">Lunes</p>
-                    <p class="text-gray-500">Cerrado</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📞</span> Contacto
-                </h3>
-                <div class="space-y-2">
-                  <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 987-6543</span></p>
-                  <p class="text-gray-700">📧 Email: <span class="font-bold">contact@pawsbeauty.com</span></p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>💈</span> Servicios y Precios
-                </h3>
-                <div class="space-y-4">
-                  <div v-for="(service, index) in businesses[1].pricing" :key="index" 
-                       class="border border-gray-200 rounded-xl p-4 hover:border-teal-300 transition-colors">
-                    <div class="flex justify-between items-center mb-2">
-                      <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
-                      <span class="text-xl font-bold text-teal-600">{{ service.price }}</span>
-                    </div>
-                    <p class="text-sm text-gray-600">{{ service.description }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>✨</span> Especialidades
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                  <span v-for="(service, index) in businesses[1].services" :key="index" 
-                        class="badge-tag">
-                    {{ service }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-section">
-            <h3 class="modal-section-title">
-              <span>📝</span> Descripción Completa
-            </h3>
-            <p class="text-gray-700 leading-relaxed">
-              {{ businesses[1].fullDescription }}
-            </p>
-          </div>
-        </div>
-
-        <div class="modal-modern-actions">
-          <button @click="closeModal" class="btn-modal-ghost">
-            Cerrar
-          </button>
-          <router-link 
-            to="/login" 
-            class="btn-modal-primary group"
-            @click="closeModal"
-          >
-            <span>Registrarse / Iniciar sesión para reservar</span>
-            <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
-          </router-link>
-        </div>
-      </div>
-    </dialog>
-
-    <!-- Modal Happy Tails -->
-    <dialog id="modal_happytails" class="modal-modern" @click.self="closeModal">
-      <div class="modal-modern-box" @click.stop>
-        <div class="modal-modern-header flex justify-between items-start">
-          <div class="flex items-start gap-4">
-            <div class="avatar-modern-lg">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center">
-                <span class="text-3xl">🏠</span>
-              </div>
-            </div>
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900">Happy Tails</h2>
-              <div class="flex items-center gap-2 mt-2">
-                <div class="badge-outline">🏠 GUARDERÍA</div>
-                <div class="badge-rating">⭐ 4.7</div>
-              </div>
-            </div>
-          </div>
-          <button @click="closeModal" class="btn-modal-close">
-            ✕
-          </button>
-        </div>
-
-        <div class="modal-modern-content mt-6">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📍</span> Ubicación
-                </h3>
-                <p class="text-gray-700">Zona Residencial Norte, Av. Las Flores 456</p>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>⏰</span> Horarios
-                </h3>
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="time-card-modern">
-                    <p class="font-bold text-gray-900">Lunes - Domingo</p>
-                    <p class="text-purple-600">7:00 AM - 9:00 PM</p>
-                  </div>
-                  <div class="time-card-modern">
-                    <p class="font-bold text-gray-900">Emergencias</p>
-                    <p class="text-purple-600">24/7</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📞</span> Contacto
-                </h3>
-                <div class="space-y-2">
-                  <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 456-7890</span></p>
-                  <p class="text-gray-700">📧 Email: <span class="font-bold">reservas@happytails.com</span></p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>🏠</span> Servicios y Precios
-                </h3>
-                <div class="space-y-4">
-                  <div v-for="(service, index) in businesses[2].pricing" :key="index" 
-                       class="border border-gray-200 rounded-xl p-4 hover:border-purple-300 transition-colors">
-                    <div class="flex justify-between items-center mb-2">
-                      <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
-                      <span class="text-xl font-bold text-purple-600">{{ service.price }}</span>
-                    </div>
-                    <p class="text-sm text-gray-600">{{ service.description }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>🎯</span> Especialidades
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                  <span v-for="(service, index) in businesses[2].services" :key="index" 
-                        class="badge-tag">
-                    {{ service }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-section">
-            <h3 class="modal-section-title">
-              <span>📝</span> Descripción Completa
-            </h3>
-            <p class="text-gray-700 leading-relaxed">
-              {{ businesses[2].fullDescription }}
-            </p>
-          </div>
-        </div>
-
-        <div class="modal-modern-actions">
-          <button @click="closeModal" class="btn-modal-ghost">
-            Cerrar
-          </button>
-          <router-link 
-            to="/login" 
-            class="btn-modal-primary group"
-            @click="closeModal"
-          >
-            <span>Registrarse / Iniciar sesión para reservar</span>
-            <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
-          </router-link>
-        </div>
-      </div>
-    </dialog>
-
-    <!-- Modal Traumavet -->
-    <dialog id="modal_traumavet" class="modal-modern" @click.self="closeModal">
-      <div class="modal-modern-box" @click.stop>
-        <div class="modal-modern-header flex justify-between items-start">
-          <div class="flex items-start gap-4">
-            <div class="avatar-modern-lg">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                <span class="text-3xl">🏥</span>
-              </div>
-            </div>
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900">Traumavet</h2>
-              <div class="flex items-center gap-2 mt-2">
-                <div class="badge-outline">🏥 TRAUMATOLOGÍA</div>
-                <div class="badge-rating">⭐ 4.9</div>
-              </div>
-            </div>
-          </div>
-          <button @click="closeModal" class="btn-modal-close">
-            ✕
-          </button>
-        </div>
-
-        <div class="modal-modern-content mt-6">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📍</span> Ubicación
-                </h3>
-                <p class="text-gray-700">Av. Principal #456, Edificio Médico 3</p>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>⏰</span> Horarios
-                </h3>
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="time-card-modern">
-                    <p class="font-bold text-gray-900">Lunes - Sábado</p>
-                    <p class="text-blue-600">8:00 AM - 6:00 PM</p>
-                  </div>
-                  <div class="time-card-modern">
-                    <p class="font-bold text-gray-900">Emergencias</p>
-                    <p class="text-blue-600">24/7</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📞</span> Contacto
-                </h3>
-                <div class="space-y-2">
-                  <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 234-5678</span></p>
-                  <p class="text-gray-700">📧 Email: <span class="font-bold">urgencias@traumavet.com</span></p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>🦴</span> Servicios y Precios
-                </h3>
-                <div class="space-y-4">
-                  <div v-for="(service, index) in businesses[3].pricing" :key="index" 
-                       class="border border-gray-200 rounded-xl p-4 hover:border-blue-300 transition-colors">
-                    <div class="flex justify-between items-center mb-2">
-                      <h4 class="font-bold text-gray-900">{{ service.service }}</h4>
-                      <span class="text-xl font-bold text-blue-600">{{ service.price }}</span>
-                    </div>
-                    <p class="text-sm text-gray-600">{{ service.description }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>🎯</span> Especialidades
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                  <span v-for="(service, index) in businesses[3].services" :key="index" 
-                        class="badge-tag">
-                    {{ service }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-section">
-            <h3 class="modal-section-title">
-              <span>📝</span> Descripción Completa
-            </h3>
-            <p class="text-gray-700 leading-relaxed">
-              {{ businesses[3].fullDescription }}
-            </p>
-          </div>
-        </div>
-
-        <div class="modal-modern-actions">
-          <button @click="closeModal" class="btn-modal-ghost">
-            Cerrar
-          </button>
-          <router-link 
-            to="/login" 
-            class="btn-modal-primary group"
-            @click="closeModal"
-          >
-            <span>Registrarse / Iniciar sesión para reservar</span>
-            <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
-          </router-link>
-        </div>
-      </div>
-    </dialog>
-
-    <!-- Footer Moderno Verde -->
-    <footer class="bg-emerald-600 text-white py-12 mt-auto">
-      <div class="container mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div class="flex items-center space-x-3 mb-4">
-              <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center">
-                <span class="text-xl text-emerald-600">🐾</span>
-              </div>
-              <div class="text-2xl font-bold text-white">
-                PetServices
-              </div>
-            </div>
-            <p class="text-emerald-100 mb-6">Cuidando de tus mascotas desde 2023 con servicios de calidad y profesionales verificados.</p>
-            <div class="flex space-x-4">
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">🌐</span>
-              </a>
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">📱</span>
-              </a>
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">📷</span>
-              </a>
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">📹</span>
-              </a>
-            </div>
-          </div>
-          
-          <div>
-            <h3 class="font-bold text-lg text-white mb-4">Servicios</h3>
-            <ul class="space-y-3">
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Veterinaria</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Peluquería</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Guardería</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Entrenamiento</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Paseadores</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 class="font-bold text-lg text-white mb-4">Empresa</h3>
-            <ul class="space-y-3">
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Sobre nosotros</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Trabaja con nosotros</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Para negocios</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Blog</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Prensa</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 class="font-bold text-lg text-white mb-4">Soporte</h3>
-            <ul class="space-y-3">
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Centro de ayuda</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Contacto</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Política de privacidad</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Términos de servicio</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Cookies</a></li>
-            </ul>
-          </div>
-        </div>
-        
-        <div class="border-t border-emerald-500 mt-8 pt-8 text-center text-emerald-100">
-          <p class="mb-2">© 2025 PetServices. Todos los derechos reservados.</p>
-          <p class="text-sm">Creado con ❤️ para mascotas felices</p>
-        </div>
+    <!-- Footer Simple -->
+    <footer class="bg-neutral-light text-neutral-medium py-6 text-center mt-auto shadow-inner">
+      <div class="container mx-auto px-6">
+        <p class="text-base md:text-lg">© 2025 PetServices - Todos los derechos reservados</p>
+        <p class="text-sm mt-2 text-neutral-medium/80">
+          Cuidando de tus mascotas desde 2023
+        </p>
       </div>
     </footer>
   </div>
@@ -1322,6 +1311,7 @@ export default {
 
   data() {
     return {
+      isMobileMenuOpen: false,
       businesses: [
         {
           id: 'animalcare',
@@ -1404,6 +1394,21 @@ export default {
   },
 
   methods: {
+    toggleMobileMenu() {
+      this.isMobileMenuOpen = !this.isMobileMenuOpen;
+      // Prevenir scroll cuando el menú está abierto
+      if (this.isMobileMenuOpen) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    },
+    
+    closeMobileMenu() {
+      this.isMobileMenuOpen = false;
+      document.body.style.overflow = '';
+    },
+
     openModal(modalId) {
       const modal = document.getElementById(`modal_${modalId}`)
       if (modal) {
@@ -1452,6 +1457,11 @@ export default {
 
     cards.forEach((card) => observer.observe(card));
   },
+
+  beforeUnmount() {
+    // Asegurarse de restaurar el scroll
+    document.body.style.overflow = '';
+  }
 };
 </script>
 
@@ -1465,6 +1475,41 @@ html {
 #comercios-destacados,
 #servicios-completos {
   scroll-margin-top: 80px; /* Espacio para el header fijo */
+}
+
+/* ===== HEADER CON MENÚ HAMBURGUESA ===== */
+header {
+  background-color: #059669 !important; /* emerald-600 */
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Animaciones para menú móvil */
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== FOOTER SIMPLE ===== */
+.bg-neutral-light {
+  background-color: #f5f5f5;
+}
+
+.text-neutral-medium {
+  color: #737373;
+}
+
+.shadow-inner {
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
 }
 
 /* ===== ANIMACIONES ===== */
@@ -1487,24 +1532,6 @@ html {
   transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
 .fade-up.show { opacity: 1; transform: translateY(0); }
-
-/* ===== HEADER Y FOOTER FIJOS ===== */
-header {
-  background-color: #059669 !important; /* emerald-600 */
-}
-
-footer {
-  background-color: #059669 !important; /* emerald-600 */
-}
-
-/* Asegurar que los textos sean visibles */
-nav a {
-  color: white !important;
-}
-
-footer .text-emerald-100 {
-  color: #d1fae5 !important; /* emerald-100 */
-}
 
 /* ===== NUEVA SECCIÓN: SERVICIOS CON IMÁGENES COMPLETAS ===== */
 
@@ -1648,28 +1675,6 @@ footer .text-emerald-100 {
   background: linear-gradient(135deg, #0d9488, #10b981);
 }
 
-.btn-primary-white {
-  background: white;
-  color: #10b981;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
-}
-
-.btn-primary-white:hover {
-  transform: translateY(-3px);
-  box-shadow: 
-    0 15px 35px rgba(255, 255, 255, 0.3),
-    0 0 0 2px rgba(255, 255, 255, 0.2);
-  background: #f0fdfa;
-}
-
 .btn-secondary {
   background: transparent;
   color: #10b981;
@@ -1687,25 +1692,6 @@ footer .text-emerald-100 {
   background: rgba(16, 185, 129, 0.1);
   transform: translateY(-3px);
   box-shadow: 0 10px 25px rgba(16, 185, 129, 0.1);
-}
-
-.btn-secondary-white {
-  background: transparent;
-  color: white;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid white;
-  transition: all 0.3s ease;
-}
-
-.btn-secondary-white:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.1);
 }
 
 .btn-modern-sm {
@@ -1791,16 +1777,6 @@ footer .text-emerald-100 {
 
 .avatar-modern-lg {
   flex-shrink: 0;
-}
-
-.badge-modal {
-  background: #f0fdfa;
-  color: #10b981;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  border: 1px solid #a7f3d0;
 }
 
 .badge-rating {
@@ -1892,25 +1868,6 @@ footer .text-emerald-100 {
   box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
 }
 
-.btn-modal-outline {
-  background: transparent;
-  color: #10b981;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 2px solid #10b981;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-modal-outline:hover {
-  background: rgba(16, 185, 129, 0.1);
-  transform: translateY(-2px);
-}
-
 .btn-modal-ghost {
   background: transparent;
   color: #6b7280;
@@ -1959,24 +1916,6 @@ footer .text-emerald-100 {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* ===== SOCIAL ICONS ===== */
-.social-icon-modern {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-
-.social-icon-modern:hover {
-  transform: translateY(-3px) scale(1.1);
-  border-color: currentColor;
-}
-
 /* ===== UTILIDADES ===== */
 .line-clamp-2 {
   display: -webkit-box;
@@ -1985,26 +1924,24 @@ footer .text-emerald-100 {
   overflow: hidden;
 }
 
-.modal-modern-backdrop {
-  cursor: pointer;
-}
-
-/* Efectos de brillo en hover */
-.card-modern:hover .avatar-modern > div {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-}
-
 /* Responsive */
 @media (max-width: 768px) {
-  nav {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 0.5rem;
+  /* Ajustar padding del main para header móvil */
+  main {
+    padding-top: 5rem;
   }
   
-  nav a {
-    margin: 0.25rem 0.5rem;
-    font-size: 0.875rem;
+  /* Botón hamburguesa más táctil */
+  button.md\\:hidden {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  /* Mejorar visibilidad del menú móvil */
+  .md\\:hidden.bg-emerald-700\/95 {
+    background-color: rgba(5, 150, 105, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
   
   .modal-modern-box {
@@ -2018,16 +1955,13 @@ footer .text-emerald-100 {
   }
   
   .btn-modal-primary,
-  .btn-modal-outline,
   .btn-modal-ghost {
     width: 100%;
     justify-content: center;
   }
   
   .btn-primary,
-  .btn-secondary,
-  .btn-primary-white,
-  .btn-secondary-white {
+  .btn-secondary {
     width: 100%;
     justify-content: center;
   }
@@ -2057,5 +1991,43 @@ footer .text-emerald-100 {
 /* Asegurar altura fija para las imágenes de servicios */
 .service-card-full {
   height: 300px;
+}
+
+/* Prevenir scroll cuando el menú está abierto */
+@media (max-width: 768px) {
+  body.menu-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* Mejoras para enlaces con flechas */
+.group:hover .group-hover\\:opacity-100 {
+  opacity: 1;
+}
+
+/* Mejoras de accesibilidad */
+nav a:focus-visible,
+button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Efecto de overlay para el menú móvil */
+@media (max-width: 768px) {
+  .md\\:hidden.bg-emerald-700\/95::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    z-index: -1;
+  }
 }
 </style>

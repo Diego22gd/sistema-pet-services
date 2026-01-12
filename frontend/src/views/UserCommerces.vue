@@ -1,8 +1,9 @@
-vamos a hacer mejoras de estilos a las siguientes vistas y que sean mas responsive que se vean acorde a un telefono <template>
-  <Layout>
+<template>
+  <div class="bg-white min-h-screen">
     <!-- Chatbot Component -->
     <Chatbot />
     
+    <!-- Header (se mantiene igual) -->
     <!-- Hero Section -->
     <section class="relative bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden">
       <!-- Patrones decorativos -->
@@ -718,18 +719,17 @@ vamos a hacer mejoras de estilos a las siguientes vistas y que sean mas responsi
         </div>
       </div>
     </div>
-  </Layout>
+  </div>
 </template>
 
 <script>
-import Layout from "@/components/Layout.vue";
 import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
 import { useUserStore } from "@/stores/userStore";
 
 export default {
   name: "UserCommerces",
-  components: { Layout, Chatbot },
+  components: { Chatbot },
   
   setup() {
     const userStore = useUserStore();
@@ -1387,17 +1387,17 @@ export default {
         // Crear la cita
         const res = await api.post("/appointments", reservationData);
         
-        // Mostrar mensaje de éxito
-        alert(`✅ Cita reservada exitosamente!\n\nTu cita para "${this.selectedService.name}" ha sido agendada para el ${this.formatDate(this.reservationDate)} a las ${this.reservationTime}.\n\nSerás redirigido al historial de citas.`);
+        // Mostrar mensaje de éxito (MODIFICADO: No redirige a citas)
+        this.showSuccessMessage(
+          `✅ Cita reservada exitosamente!\n\n` +
+          `Tu cita para "${this.selectedService.name}" ha sido agendada para el ${this.formatDate(this.reservationDate)} a las ${this.reservationTime}.\n\n` +
+          `El precio total es: $${this.selectedService.price}\n` +
+          `Podrás ver los detalles de tu cita en tu historial de citas.`
+        );
         
-        // Cerrar modales
+        // Cerrar modales sin redirigir
         this.closeReservationModal();
         this.closeDetailModal();
-        
-        // Redirigir al historial de citas después de 2 segundos
-        setTimeout(() => {
-          this.$router.push('/appointments/history');
-        }, 2000);
         
       } catch (err) {
         console.error("❌ Error creando la cita:", err);
@@ -1415,7 +1415,7 @@ export default {
           errorMessage = `❌ ${err.response.data.message}`;
         }
         
-        alert(errorMessage);
+        this.showErrorMessage(errorMessage);
       } finally {
         this.reserving = false;
       }
@@ -1431,22 +1431,36 @@ export default {
       });
     },
     
+    showSuccessMessage(message) {
+      // Mostrar alerta de éxito
+      alert(message);
+      
+      // También puedes usar un toast más elegante si lo prefieres
+      this.showTemporaryMessage('✅ Cita creada exitosamente', 'success');
+    },
+    
+    showErrorMessage(message) {
+      alert(message);
+    },
+    
     showTemporaryMessage(message, type = 'success') {
-      // Para desarrollo, solo usamos console.log
       console.log(`${type.toUpperCase()}: ${message}`);
       
-      // En producción podrías usar un sistema de notificaciones
-      if (type === 'success') {
-        // Mostrar mensaje temporal (puedes implementar un toast)
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'fixed top-4 right-4 bg-emerald-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-        alertDiv.textContent = message;
-        document.body.appendChild(alertDiv);
-        
+      // Implementación básica de toast
+      const toast = document.createElement('div');
+      toast.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 ${
+        type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+      }`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
         setTimeout(() => {
-          document.body.removeChild(alertDiv);
-        }, 3000);
-      }
+          document.body.removeChild(toast);
+        }, 300);
+      }, 3000);
     }
   }
 };
