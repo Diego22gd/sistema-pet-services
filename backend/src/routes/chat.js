@@ -1,4 +1,3 @@
-// routes/chat.js
 import express from "express";
 import { protect } from "../middlewares/authMiddleware.js";
 import User from "../models/User.js";
@@ -8,245 +7,217 @@ import Appointment from "../models/Appointment.js";
 
 const router = express.Router();
 
-// -----------------------------------------
-// 🔥 CONFIGURACIÓN GEMINI
-// -----------------------------------------
-const GEMINI_API_KEY = "AIzaSyCnIqF1IP6Loh8YqBDJq-I08ulrec6_OPY";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+// ============================================
+// 🔧 CONFIGURACIÓN GEMINI PARA PRODUCCIÓN
+// ============================================
 
-console.log("🔑 Inicializando ChatBot con Google Gemini...");
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.DEEPSEEK_API_KEY;
 
-// -----------------------------------------
-// SYSTEM PROMPT MEJORADO POR ROL
-// -----------------------------------------
-function getSystemPrompt(role) {
-  const basePrompt = `Eres PetBot, un asistente virtual especializado en servicios de mascotas.
-
-CONTEXTO DE LA APLICACIÓN:
-- Plataforma: PetServices - aplicación web de servicios para mascotas
-- Servicios: veterinaria, peluquería, paseos, guardería, entrenamiento, spa, vacunación
-
-INSTRUCCIONES GENERALES:
-1. Responde en español de Venezuela, de manera amable y cercana
-2. Usa emojis relevantes para hacer la conversación más amigable
-3. Sé conciso pero útil - máximo 150 palabras por respuesta
-4. Si tienes datos específicos del usuario, úsalos para personalizar tu respuesta
-5. Si no tienes información, sé honesto y ofrece alternativas
-6. Mantén un tono profesional pero accesible
-7. Fomenta la interacción preguntando si necesita más ayuda
-
-NO INVENTES información. Si no sabes algo, di "No tengo esa información específica" y ofrece ayudar con otras cosas.`;
-
-  const roleSpecificPrompts = {
-    client: `
-FUNCIONALIDADES PARA CLIENTES:
-- Ver y gestionar mascotas registradas
-- Consultar citas agendadas
-- Ver servicios disponibles
-- Agendar nuevas citas
-- Información de precios y emergencias
-
-El cliente puede preguntar sobre:
-• "Mis mascotas" - ver sus mascotas registradas
-• "Mis citas" - consultar citas agendadas  
-• "Servicios disponibles" - ver catálogo de servicios
-• "Agendar cita" - proceso para reservar
-• "Precios" - información de costos
-• "Emergencias" - protocolos de urgencia`,
-
-    provider: `
-FUNCIONALIDADES PARA PROVEEDORES:
-- Gestionar agenda y citas del día
-- Ver citas pendientes y confirmadas
-- Consultar historial de servicios
-- Gestionar servicios ofrecidos
-- Ver estadísticas de negocio
-
-El proveedor puede preguntar sobre:
-• "Citas hoy" - agenda del día actual
-• "Mis servicios" - servicios que ofrece
-• "Citas pendientes" - citas por confirmar
-• "Estadísticas" - métricas de negocio
-• "Ingresos" - información financiera`,
-
-    admin: `
-FUNCIONALIDADES PARA ADMINISTRADORES:
-- Gestionar usuarios del sistema
-- Aprobar/rechazar proveedores
-- Ver todas las citas del sistema
-- Gestionar servicios globalmente
-- Reportes y estadísticas generales
-- Monitoreo del sistema
-
-El administrador puede preguntar sobre:
-• "Proveedores pendientes" - solicitudes por aprobar
-• "Usuarios registrados" - lista de todos los usuarios
-• "Todas las citas" - citas del sistema completo
-• "Reportes" - estadísticas generales
-• "Servicios del sistema" - gestión global de servicios`
-  };
-
-  return basePrompt + (roleSpecificPrompts[role] || roleSpecificPrompts.client);
+if (!GEMINI_API_KEY) {
+  console.warn("⚠️  ADVERTENCIA: No se encontró API Key para Gemini. El chatbot usará respuestas predefinidas.");
+} else {
+  console.log("✅ ChatBot Gemini configurado para producción");
 }
 
-// -----------------------------------------
-// Helper: Gemini API call
-// -----------------------------------------
-async function askPetBot(userMessage, context = "", role = "client") {
-  if (!GEMINI_API_KEY) {
-    return "🔐 **Configuración requerida**: API Key de Gemini no configurada.";
-  }
+// Usar modelo gratuito y rápido para producción
+const GEMINI_MODEL = process.env.NODE_ENV === 'production' ? 'gemini-1.5-flash' : 'gemini-1.5-flash';
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
-  if (!userMessage || typeof userMessage !== 'string') {
-    return "Por favor, envía un mensaje válido.";
+// ============================================
+// 🚀 FUNCIÓN OPTIMIZADA PARA LLAMAR A GEMINI
+// ============================================
+
+async function callGeminiAPI(prompt, role = "client") {
+  // Si no hay API key, usar respuestas predefinidas inmediatamente
+  if (!GEMINI_API_KEY) {
+    console.log("📝 Usando respuestas predefinidas (sin API Key)");
+    return getFallbackResponse("general", role);
   }
 
   try {
-    const systemPrompt = getSystemPrompt(role);
-    const fullPrompt = context ? 
-      `${systemPrompt}\n\n--- CONTEXTO ACTUAL ---\n${context}\n\n--- PREGUNTA DEL USUARIO ---\n${userMessage}` : 
-      `${systemPrompt}\n\n--- PREGUNTA DEL USUARIO ---\n${userMessage}`;
-
-    console.log(`🔗 Enviando solicitud a Gemini API para rol: ${role}`);
+    console.log(`🤖 Llamando a Gemini (${GEMINI_MODEL})...`);
     
-    const requestBody = {
-      contents: [
-        {
-          parts: [
-            {
-              text: fullPrompt
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 1024,
-      }
-    };
-
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout en producción
 
     const response = await fetch(GEMINI_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Accept": "application/json"
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.95,
+          topK: 40,
+          maxOutputTokens: 512, // Reducido para producción
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH", 
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
+      }),
       signal: controller.signal
     });
 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      return `❌ **Error de API** (${response.status}): Por favor, intenta más tarde.`;
+      const errorText = await response.text();
+      console.error(`❌ Gemini API error ${response.status}:`, errorText.substring(0, 200));
+      
+      // Fallback específico por código de error
+      if (response.status === 429) {
+        return "⚠️ **El servicio está muy ocupado en este momento.** Por favor, intenta de nuevo en unos minutos. Mientras tanto, puedo ayudarte con información básica del sistema.";
+      }
+      
+      if (response.status === 403) {
+        return "🔐 **Error de autenticación.** El chatbot necesita configuración adicional. Por favor, contacta al administrador del sistema.";
+      }
+      
+      throw new Error(`API error ${response.status}`);
     }
 
     const data = await response.json();
-
-    // Validación de respuesta
+    
+    // Validar estructura de respuesta
     if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      console.warn("⚠️  Respuesta inesperada de Gemini:", JSON.stringify(data).substring(0, 200));
       return getFallbackResponse("general", role);
     }
-
+    
     const responseText = data.candidates[0].content.parts[0].text.trim();
-    return responseText || getFallbackResponse("general", role);
-
+    
+    // Limpiar respuesta (remover markdown excesivo)
+    const cleanResponse = responseText
+      .replace(/\*\*\*/g, '**')  // Simplificar markdown
+      .replace(/#{3,}/g, '')     // Remover encabezados muy grandes
+      .trim();
+    
+    return cleanResponse || getFallbackResponse("general", role);
+    
   } catch (error) {
-    console.error("❌ Error en askPetBot:", error.message);
+    console.error("❌ Error en callGeminiAPI:", error.name, error.message);
+    
+    // Respuestas específicas por tipo de error
+    if (error.name === 'AbortError') {
+      return "⏰ **Se agotó el tiempo de espera.** El servicio está respondiendo lentamente. Por favor, reformula tu pregunta o intenta más tarde.";
+    }
+    
+    if (error.message.includes('network') || error.message.includes('fetch')) {
+      return "🌐 **Problema de conexión.** No puedo contactar el servicio de IA en este momento. Usaré respuestas predefinidas.";
+    }
+    
     return getFallbackResponse("general", role);
   }
 }
 
-// -----------------------------------------
-// Helper: Respuestas de fallback POR ROL
-// -----------------------------------------
+// ============================================
+// 📝 SYSTEM PROMPT OPTIMIZADO PARA PRODUCCIÓN
+// ============================================
+
+function getSystemPrompt(role) {
+  const basePrompt = `Eres PetBot, el asistente virtual oficial de PetServices. Responde en español de manera clara, concisa y útil.
+
+INSTRUCCIONES CRÍTICAS:
+1. Límite de 2-3 oraciones por respuesta
+2. No uses markdown complejo, solo **negritas** para énfasis
+3. Siempre sé honesto si no sabes algo
+4. Mantén un tono profesional pero amigable
+5. NO inventes funciones que no existen
+6. Si preguntan por precios específicos, di "Los precios varían según el servicio"
+
+CONTEXTO DE PETSERVICES:
+• Sistema de gestión para servicios de mascotas
+• Clientes pueden registrar mascotas y agendar citas
+• Proveedores ofrecen servicios como veterinaria, peluquería, etc.
+• Administradores gestionan el sistema completo
+
+RESPONDE COMO: ${role === 'admin' ? 'Administrador del sistema' : role === 'provider' ? 'Proveedor de servicios' : 'Asistente para dueños de mascotas'}`;
+
+  return basePrompt;
+}
+
+// ============================================
+// 🛡️ RESPUESTAS PREDEFINIDAS (FALLBACK)
+// ============================================
+
 function getFallbackResponse(intent = "general", role = "client") {
   const responses = {
     client: {
-      general: `¡Hola! Soy PetBot, tu asistente virtual para servicios de mascotas. 🐾
+      general: `¡Hola! Soy PetBot, tu asistente de PetServices. 🐾
 
-Como **cliente**, puedo ayudarte con:
-• 📅 Tus citas agendadas
-• 🐕 Tus mascotas registradas  
-• 🛎️ Servicios disponibles
-• 💰 Información de precios
-• 🏥 Emergencias veterinarias
+Puedo ayudarte con:
+• Ver tus mascotas registradas
+• Consultar tus citas agendadas  
+• Información de servicios disponibles
+• Agendar nuevas citas
 
-¿En qué puedo asistirte hoy?`,
+¿En qué te puedo asistir?`,
 
-      list_services: `🛎️ **Servicios Disponibles para Clientes**
+      list_services: `🛎️ **Servicios Disponibles**
 
-Tenemos una amplia variedad de servicios para tus mascotas:
+En PetServices ofrecemos:
+• 🏥 **Veterinaria**: Consultas, vacunas, emergencias
+• ✂️ **Estética**: Baño, corte, spa para mascotas
+• 🎯 **Entrenamiento**: Adiestramiento básico
+• 🏠 **Cuidado**: Guardería, paseos, visitas
 
-**🏥 Servicios Médicos**
-• Consulta veterinaria • Vacunación • Urgencias 24/7
+¿Te interesa alguno en particular?`,
 
-**✂️ Estética y Cuidado**  
-• Baño y peluquería • Corte de uñas • Spa mascota
+      get_user_pets: `🐾 **Tus Mascotas**
 
-**🎯 Entrenamiento**
-• Adiestramiento básico • Corrección de conducta
+Puedes ver y gestionar todas tus mascotas registradas desde la sección "Mis Mascotas" en tu perfil.
 
-**🏠 Cuidado Diario**
-• Guardería • Paseos • Visitas a domicilio
-
-¿Te interesa agendar alguno de estos servicios? 😊`
+¿Necesitas ayuda para registrar una nueva mascota?`
     },
 
     provider: {
-      general: `¡Hola! Soy PetBot, tu asistente para la gestión de servicios. 💼
+      general: `¡Hola! Soy PetBot, tu asistente para proveedores. 💼
 
-Como **proveedor**, puedo ayudarte con:
-• 📊 Citas de hoy y agenda
-• 🛎️ Tus servicios ofrecidos
-• 📈 Estadísticas de negocio
-• 👥 Gestión de clientes
-• 💰 Información de ingresos
+Te ayudo con:
+• Tu agenda y citas del día
+• Gestión de servicios ofrecidos
+• Estadísticas de tu negocio
+• Información de clientes
 
-¿En qué área necesitas ayuda?`,
+¿Qué necesitas gestionar hoy?`,
 
-      list_services: `🛎️ **Tus Servicios como Proveedor**
+      provider_today_appointments: `📅 **Citas de Hoy**
 
-Puedes gestionar los servicios que ofreces a través del panel de proveedor.
+Puedes ver todas tus citas programadas para hoy en el panel de proveedor, sección "Agenda".
 
-**Funcionalidades disponibles:**
-• Agregar nuevos servicios
-• Editar servicios existentes
-• Gestionar disponibilidad
-• Actualizar precios y descripciones
-• Ver rendimiento de servicios
-
-¿Necesitas ayuda con la gestión de algún servicio específico?`
+¿Necesitas ayuda para gestionar una cita específica?`
     },
 
     admin: {
-      general: `¡Hola! Soy PetBot, tu asistente administrativo. 👨‍💼
+      general: `¡Hola! Soy PetBot, asistente administrativo. 👨‍💼
 
-Como **administrador**, puedo ayudarte con:
-• 👥 Gestión de usuarios y proveedores
-• 📋 Aprobación de solicitudes
-• 📊 Reportes del sistema
-• 🛎️ Gestión global de servicios
-• ⚙️ Monitoreo de la plataforma
+Áreas que puedo gestionar:
+• Usuarios y proveedores del sistema
+• Aprobación de solicitudes pendientes
+• Reportes y estadísticas globales
+• Monitoreo del sistema
 
-¿Qué área del sistema necesitas gestionar?`,
-
-      list_services: `🛎️ **Gestión Global de Servicios**
-
-Como administrador, puedes gestionar todos los servicios del sistema:
-
-**Funcionalidades disponibles:**
-• Ver todos los servicios activos
-• Aprobar/rechazar nuevos servicios
-• Gestionar categorías
-• Monitorear rendimiento
-• Reportes de servicios más populares
-
-¿Necesitas revisar algún aspecto específico de los servicios?`
+¿Qué área administrativa necesitas revisar?`
     }
   };
 
@@ -254,104 +225,112 @@ Como administrador, puedes gestionar todos los servicios del sistema:
   return roleResponses[intent] || roleResponses.general;
 }
 
-// -----------------------------------------
-// Helper: Generar respuestas con datos reales POR ROL
-// -----------------------------------------
+// ============================================
+// 📊 FUNCIONES CON DATOS REALES
+// ============================================
+
 async function generateResponseWithData(intent, user, userMessage = "") {
   const { name, role, _id: userId } = user;
   
-  // Respuestas específicas por rol
-  switch (role) {
-    case "provider":
-      return await generateProviderResponse(intent, user, userMessage);
-    
-    case "admin":
-      return await generateAdminResponse(intent, user, userMessage);
-    
-    default: // client
-      return await generateClientResponse(intent, user, userMessage);
+  try {
+    switch (role) {
+      case "provider":
+        return await generateProviderResponse(intent, user);
+      
+      case "admin":
+        return await generateAdminResponse(intent, user);
+      
+      default: // client
+        return await generateClientResponse(intent, user);
+    }
+  } catch (error) {
+    console.error(`❌ Error en generateResponseWithData (${role}/${intent}):`, error.message);
+    return getFallbackResponse(intent, role);
   }
 }
 
-// -----------------------------------------
-// Helper: Respuestas para CLIENTES
-// -----------------------------------------
-async function generateClientResponse(intent, user, userMessage) {
+async function generateClientResponse(intent, user) {
   const { name, _id: userId } = user;
   
   switch (intent) {
     case "list_services": {
-      const services = await Service.find({ status: "approved" })
-        .sort({ name: 1 })
-        .limit(15)
-        .lean();
+      try {
+        const services = await Service.find({ status: "approved" })
+          .select('name description price providerName')
+          .limit(8)
+          .lean();
 
-      if (services.length === 0) {
-        return `🛎️ Hola ${name}, actualmente no hay servicios disponibles.\n\nPor favor, intenta más tarde. 📞`;
+        if (services.length === 0) {
+          return `Actualmente no hay servicios disponibles. Revisa más tarde o contacta a soporte.`;
+        }
+
+        let response = `Encontré ${services.length} servicios disponibles:\n\n`;
+        
+        services.forEach((service, index) => {
+          response += `${index + 1}. **${service.name}**\n`;
+          if (service.description) response += `   ${service.description.substring(0, 60)}...\n`;
+          response += `\n`;
+        });
+
+        response += `\n¿Te interesa más información de algún servicio?`;
+        return response;
+      } catch (error) {
+        return getFallbackResponse("list_services", "client");
       }
-
-      let servicesText = `🛎️ **SERVICIOS DISPONIBLES** (${services.length})\n\n`;
-      
-      services.forEach((service, index) => {
-        servicesText += `${index + 1}. **${service.name}**\n`;
-        servicesText += `   📝 ${service.description || 'Servicio profesional'}\n`;
-        servicesText += `   💰 ${service.price || 'Consultar precio'}\n`;
-        servicesText += `   🏢 ${service.providerName || 'Proveedor certificado'}\n\n`;
-      });
-
-      servicesText += `¿Te interesa agendar alguno de estos servicios ${name}? 😊`;
-      return servicesText;
     }
 
     case "get_user_appointments": {
-      const appointments = await Appointment.find({ userId })
-        .populate("petId")
-        .populate("serviceId")
-        .populate("providerId")
-        .sort({ date: 1, time: 1 })
-        .limit(8)
-        .lean();
+      try {
+        const appointments = await Appointment.find({ userId })
+          .populate("petId", "name")
+          .populate("serviceId", "name")
+          .limit(5)
+          .sort({ date: -1 })
+          .lean();
 
-      if (appointments.length === 0) {
-        return `📅 Hola ${name}, no tienes citas agendadas.\n\n¿Te gustaría agendar una nueva cita? 🐕`;
-      }
+        if (appointments.length === 0) {
+          return `No tienes citas agendadas. ¿Te gustaría agendar una nueva?`;
+        }
 
-      let appointmentsText = `📅 **TUS PRÓXIMAS CITAS** (${appointments.length})\n\n`;
-      
-      appointments.forEach((appt, index) => {
-        const date = appt.date ? new Date(appt.date).toLocaleDateString('es-VE') : "Fecha por definir";
+        let response = `Tus últimas ${appointments.length} citas:\n\n`;
         
-        appointmentsText += `${index + 1}. **${appt.serviceId?.name || 'Servicio'}**\n`;
-        appointmentsText += `   🐾 Mascota: ${appt.petId?.name || 'No especificada'}\n`;
-        appointmentsText += `   📅 ${date} 🕒 ${appt.time || 'Por confirmar'}\n`;
-        appointmentsText += `   👨‍💼 ${appt.providerId?.businessName || appt.providerId?.name || 'Proveedor'}\n`;
-        appointmentsText += `   📊 ${getStatusEmoji(appt.status)} ${appt.status}\n\n`;
-      });
+        appointments.forEach((appt, index) => {
+          response += `${index + 1}. **${appt.serviceId?.name || 'Servicio'}**\n`;
+          response += `   Mascota: ${appt.petId?.name || 'No especificada'}\n`;
+          response += `   Fecha: ${appt.date ? new Date(appt.date).toLocaleDateString('es-VE') : 'Por confirmar'}\n`;
+          response += `   Estado: ${appt.status}\n\n`;
+        });
 
-      return appointmentsText;
+        return response;
+      } catch (error) {
+        return `No pude cargar tus citas en este momento. Revisa en tu panel de usuario.`;
+      }
     }
 
     case "get_user_pets": {
-      const pets = await Pet.find({ owner: userId })
-        .sort({ name: 1 })
-        .lean();
+      try {
+        const pets = await Pet.find({ owner: userId })
+          .select('name type breed age')
+          .limit(5)
+          .lean();
 
-      if (pets.length === 0) {
-        return `🐾 Hola ${name}, no tienes mascotas registradas.\n\nRegistra tu primera mascota para comenzar! 📝`;
+        if (pets.length === 0) {
+          return `No tienes mascotas registradas. ¡Registra tu primera mascota desde tu perfil!`;
+        }
+
+        let response = `Tus ${pets.length} mascotas registradas:\n\n`;
+        
+        pets.forEach((pet, index) => {
+          response += `${index + 1}. **${pet.name}**\n`;
+          response += `   Tipo: ${pet.type || 'No especificado'}\n`;
+          if (pet.breed) response += `   Raza: ${pet.breed}\n`;
+          response += `\n`;
+        });
+
+        return response;
+      } catch (error) {
+        return `No pude cargar la información de tus mascotas. Intenta desde tu perfil.`;
       }
-
-      let petsText = `🐾 **TUS MASCOTAS** (${pets.length})\n\n`;
-      
-      pets.forEach((pet, index) => {
-        petsText += `${index + 1}. **${pet.name}**\n`;
-        petsText += `   🐕 ${pet.type || 'Tipo no especificado'}\n`;
-        if (pet.breed) petsText += `   🧬 ${pet.breed}\n`;
-        if (pet.age) petsText += `   📅 ${pet.age} años\n`;
-        petsText += `\n`;
-      });
-
-      petsText += "¿Necesitas gestionar alguna de tus mascotas? 😊";
-      return petsText;
     }
 
     default:
@@ -359,87 +338,41 @@ async function generateClientResponse(intent, user, userMessage) {
   }
 }
 
-// -----------------------------------------
-// Helper: Respuestas para PROVEEDORES
-// -----------------------------------------
-async function generateProviderResponse(intent, user, userMessage) {
+async function generateProviderResponse(intent, user) {
   const { name, _id: userId } = user;
   
   switch (intent) {
     case "provider_today_appointments": {
-      const today = new Date().toISOString().split('T')[0];
-      const appointments = await Appointment.find({
-        providerId: userId,
-        date: today
-      })
-        .populate("userId", "name")
-        .populate("petId")
-        .populate("serviceId")
-        .sort({ time: 1 })
-        .lean();
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const appointments = await Appointment.find({
+          providerId: userId,
+          date: today,
+          status: { $in: ['pending', 'confirmed'] }
+        })
+          .populate("userId", "name")
+          .populate("petId", "name")
+          .populate("serviceId", "name")
+          .limit(10)
+          .lean();
 
-      if (appointments.length === 0) {
-        return `📊 Hola ${name}, no tienes citas agendadas para hoy (${today}).\n\n¡Es un buen día para promocionar tus servicios! 🎯`;
-      }
+        if (appointments.length === 0) {
+          return `No tienes citas agendadas para hoy. ¡Es buen momento para promocionar tus servicios!`;
+        }
 
-      let appointmentsText = `📊 **TUS CITAS DE HOY** (${appointments.length})\n\n`;
-      
-      appointments.forEach((appt, index) => {
-        appointmentsText += `${index + 1}. **${appt.serviceId?.name || 'Servicio'}**\n`;
-        appointmentsText += `   🐾 ${appt.petId?.name || 'Mascota'}\n`;
-        appointmentsText += `   🕒 ${appt.time || 'Hora por confirmar'}\n`;
-        appointmentsText += `   👤 ${appt.userId?.name || 'Cliente'}\n`;
-        appointmentsText += `   📊 ${getStatusEmoji(appt.status)} ${appt.status}\n\n`;
-      });
-
-      appointmentsText += `¡Que tengas un productivo día ${name}! 💼`;
-      return appointmentsText;
-    }
-
-    case "list_services": {
-      const services = await Service.find({ providerId: userId })
-        .sort({ name: 1 })
-        .lean();
-
-      if (services.length === 0) {
-        return `🛎️ Hola ${name}, no tienes servicios registrados.\n\nPuedes agregar servicios desde tu panel de proveedor. 📝`;
-      }
-
-      let servicesText = `🛎️ **TUS SERVICIOS** (${services.length})\n\n`;
-      
-      services.forEach((service, index) => {
-        servicesText += `${index + 1}. **${service.name}**\n`;
-        servicesText += `   📝 ${service.description || 'Sin descripción'}\n`;
-        servicesText += `   💰 ${service.price || 'Consultar'}\n`;
-        servicesText += `   📊 ${getStatusEmoji(service.status)} ${service.status}\n\n`;
-      });
-
-      servicesText += `¿Necesitas gestionar alguno de tus servicios? 🔧`;
-      return servicesText;
-    }
-
-    case "provider_my_services": {
-      const services = await Service.find({ providerId: userId })
-        .sort({ createdAt: -1 })
-        .limit(10)
-        .lean();
-
-      const activeServices = services.filter(s => s.status === 'approved').length;
-      const pendingServices = services.filter(s => s.status === 'pending').length;
-
-      let servicesText = `📈 **ESTADÍSTICAS DE TUS SERVICIOS**\n\n`;
-      servicesText += `• 🟢 Servicios activos: ${activeServices}\n`;
-      servicesText += `• 🟡 Pendientes: ${pendingServices}\n`;
-      servicesText += `• 📊 Total: ${services.length}\n\n`;
-
-      if (services.length > 0) {
-        servicesText += `**Servicios recientes:**\n`;
-        services.slice(0, 3).forEach((service, index) => {
-          servicesText += `${index + 1}. ${service.name} - ${service.status}\n`;
+        let response = `Tienes ${appointments.length} citas hoy:\n\n`;
+        
+        appointments.forEach((appt, index) => {
+          response += `${index + 1}. **${appt.serviceId?.name || 'Servicio'}**\n`;
+          response += `   Cliente: ${appt.userId?.name || 'No especificado'}\n`;
+          response += `   Hora: ${appt.time || 'Por confirmar'}\n`;
+          response += `   Estado: ${appt.status}\n\n`;
         });
-      }
 
-      return servicesText;
+        return response;
+      } catch (error) {
+        return `No pude cargar tu agenda hoy. Revisa en tu panel de proveedor.`;
+      }
     }
 
     default:
@@ -447,87 +380,24 @@ async function generateProviderResponse(intent, user, userMessage) {
   }
 }
 
-// -----------------------------------------
-// Helper: Respuestas para ADMINISTRADORES
-// -----------------------------------------
-async function generateAdminResponse(intent, user, userMessage) {
-  const { name } = user;
-  
+async function generateAdminResponse(intent, user) {
   switch (intent) {
     case "admin_list_providers": {
-      const pendingProviders = await User.find({
-        role: "provider",
-        status: "pending"
-      })
-        .select('name email businessName createdAt')
-        .sort({ createdAt: -1 })
-        .lean();
-
-      const approvedProviders = await User.find({
-        role: "provider", 
-        status: "approved"
-      }).countDocuments();
-
-      let providersText = `🏢 **GESTIÓN DE PROVEEDORES**\n\n`;
-      providersText += `• ⏳ Pendientes: ${pendingProviders.length}\n`;
-      providersText += `• ✅ Aprobados: ${approvedProviders}\n\n`;
-
-      if (pendingProviders.length > 0) {
-        providersText += `**Proveedores pendientes:**\n`;
-        pendingProviders.slice(0, 5).forEach((provider, index) => {
-          providersText += `${index + 1}. ${provider.name} - ${provider.email}\n`;
+      try {
+        const pendingCount = await User.countDocuments({
+          role: "provider",
+          status: "pending"
         });
-        providersText += `\nPuedes revisarlos en el panel de administración. 👨‍💼`;
-      } else {
-        providersText += `¡No hay proveedores pendientes de revisión! 🎉`;
+
+        const approvedCount = await User.countDocuments({
+          role: "provider", 
+          status: "approved"
+        });
+
+        return `**Proveedores en el sistema:**\n• Pendientes: ${pendingCount}\n• Aprobados: ${approvedCount}\n\nRevisa el panel de administración para más detalles.`;
+      } catch (error) {
+        return `No pude cargar la información de proveedores. Revisa el panel de admin.`;
       }
-
-      return providersText;
-    }
-
-    case "admin_list_users": {
-      const totalUsers = await User.countDocuments();
-      const clients = await User.countDocuments({ role: "client" });
-      const providers = await User.countDocuments({ role: "provider" });
-      const admins = await User.countDocuments({ role: "admin" });
-
-      let usersText = `👥 **ESTADÍSTICAS DE USUARIOS**\n\n`;
-      usersText += `• 👤 Clientes: ${clients}\n`;
-      usersText += `• 🏢 Proveedores: ${providers}\n`;
-      usersText += `• 👨‍💼 Administradores: ${admins}\n`;
-      usersText += `• 📊 Total: ${totalUsers}\n\n`;
-      usersText += `Puedes gestionar usuarios desde el panel de administración. ⚙️`;
-
-      return usersText;
-    }
-
-    case "admin_list_appointments": {
-      const totalAppointments = await Appointment.countDocuments();
-      const today = new Date().toISOString().split('T')[0];
-      const todayAppointments = await Appointment.countDocuments({ date: today });
-      const pendingAppointments = await Appointment.countDocuments({ status: "pending" });
-
-      let appointmentsText = `📅 **REPORTE DE CITAS**\n\n`;
-      appointmentsText += `• 📊 Total histórico: ${totalAppointments}\n`;
-      appointmentsText += `• 📅 Hoy: ${todayAppointments}\n`;
-      appointmentsText += `• ⏳ Pendientes: ${pendingAppointments}\n\n`;
-      appointmentsText += `Puedes ver el detalle completo en el panel de administración. 📈`;
-
-      return appointmentsText;
-    }
-
-    case "list_services": {
-      const totalServices = await Service.countDocuments();
-      const approvedServices = await Service.countDocuments({ status: "approved" });
-      const pendingServices = await Service.countDocuments({ status: "pending" });
-
-      let servicesText = `🛎️ **REPORTE DE SERVICIOS**\n\n`;
-      servicesText += `• 📊 Total: ${totalServices}\n`;
-      servicesText += `• ✅ Aprobados: ${approvedServices}\n`;
-      servicesText += `• ⏳ Pendientes: ${pendingServices}\n\n`;
-      servicesText += `Puedes gestionar servicios desde el panel de administración. 🔧`;
-
-      return servicesText;
     }
 
     default:
@@ -535,106 +405,61 @@ async function generateAdminResponse(intent, user, userMessage) {
   }
 }
 
-// -----------------------------------------
-// Helper: Emojis para estados
-// -----------------------------------------
-function getStatusEmoji(status) {
-  const emojis = {
-    'pending': '⏳',
-    'confirmed': '✅',
-    'completed': '🏁',
-    'cancelled': '❌',
-    'approved': '🟢',
-    'rejected': '🔴'
-  };
-  return emojis[status] || '📝';
-}
+// ============================================
+// 🎯 DETECCIÓN DE INTENCIONES (SIMPLIFICADA)
+// ============================================
 
-// -----------------------------------------
-// Intent detection MEJORADO POR ROL
-// -----------------------------------------
 function detectIntent(text, role = "client") {
   if (!text || typeof text !== 'string') return "fallback";
   
   const lowerText = text.toLowerCase().trim();
 
-  // Intents comunes a todos los roles
-  if (/(hola|buenos\s+días|buenas\s+tardes|buenas\s+noches|saludos|hey)/.test(lowerText)) 
-    return "greeting";
+  // Intents básicos
+  if (/(hola|buenos|buenas|saludos)/.test(lowerText)) return "greeting";
+  if (/(gracias|thank|merci)/.test(lowerText)) return "thanks";
+  if (/(adiós|chao|bye|nos vemos)/.test(lowerText)) return "goodbye";
+  if (/(ayuda|help|soporte)/.test(lowerText)) return "help";
+  if (/(quién eres|qué eres|tu nombre)/.test(lowerText)) return "about";
 
-  if (/(gracias|thanks|merci|agradecido)/.test(lowerText)) 
-    return "thanks";
-
-  if (/(adiós|chao|hasta\s+luego|nos\s+vemos|bye)/.test(lowerText)) 
-    return "goodbye";
-
-  if (/(ayuda|help|soporte|qué\s+puedes\s+hacer)/.test(lowerText)) 
-    return "help";
-
-  if (/(quién\s+eres|qué\s+eres|tu\s+nombre|te\s+llamas)/.test(lowerText)) 
-    return "about";
-
-  // Intents específicos por rol
+  // Intents por rol
   if (role === "client") {
-    if (/(mis\s+citas|mis\s+reservas|citas\s+agendadas|próximas\s+citas)/.test(lowerText)) 
-      return "get_user_appointments";
-    
-    if (/(mis\s+mascotas|mascotas\s+registradas|ver\s+mascotas)/.test(lowerText)) 
-      return "get_user_pets";
-    
-    if (/(servicios\s+disponibles|qué\s+servicios|tipos\s+de\s+servicio)/.test(lowerText)) 
-      return "list_services";
-
-    if (/(agendar\s+cita|nueva\s+cita|reservar\s+servicio)/.test(lowerText)) 
-      return "book_appointment";
-
-  } else if (role === "provider") {
-    if (/(citas\s+hoy|agenda\s+de\s+hoy|hoy\s+tengo\s+citas)/.test(lowerText)) 
-      return "provider_today_appointments";
-    
-    if (/(mis\s+servicios|servicios\s+que\s+ofrezco|gestionar\s+servicios)/.test(lowerText)) 
-      return "list_services";
-    
-    if (/(estadísticas|métricas|rendimiento|ingresos)/.test(lowerText)) 
-      return "provider_my_services";
-
-  } else if (role === "admin") {
-    if (/(proveedores\s+pendientes|proveedores\s+en\s+espera|aprobar\s+proveedores)/.test(lowerText)) 
-      return "admin_list_providers";
-    
-    if (/(usuarios\s+registrados|listar\s+usuarios|todos\s+los\s+usuarios)/.test(lowerText)) 
-      return "admin_list_users";
-    
-    if (/(todas\s+las\s+citas|listar\s+citas|reporte\s+citas)/.test(lowerText)) 
-      return "admin_list_appointments";
-    
-    if (/(servicios\s+del\s+sistema|gestionar\s+servicios|reporte\s+servicios)/.test(lowerText)) 
-      return "list_services";
+    if (/(mis citas|citas agendadas|próximas citas)/.test(lowerText)) return "get_user_appointments";
+    if (/(mis mascotas|mascotas registradas)/.test(lowerText)) return "get_user_pets";
+    if (/(servicios|qué servicios|tipos de servicio)/.test(lowerText)) return "list_services";
+    if (/(agendar cita|nueva cita|reservar)/.test(lowerText)) return "book_appointment";
+  } 
+  else if (role === "provider") {
+    if (/(citas hoy|agenda hoy|hoy tengo)/.test(lowerText)) return "provider_today_appointments";
+    if (/(mis servicios|servicios que ofrezco)/.test(lowerText)) return "list_services";
+  }
+  else if (role === "admin") {
+    if (/(proveedores pendientes|aprobar proveedores)/.test(lowerText)) return "admin_list_providers";
+    if (/(usuarios|listar usuarios)/.test(lowerText)) return "admin_list_users";
   }
 
   // Intents generales
-  if (/(precios|costos|tarifas|cuánto\s+cuesta)/.test(lowerText)) 
-    return "prices";
-
-  if (/(emergencia|urgencia|veterinario\s+emergencia)/.test(lowerText)) 
-    return "emergency";
+  if (/(precios|costos|tarifas|cuánto)/.test(lowerText)) return "prices";
+  if (/(emergencia|urgencia|veterinario)/.test(lowerText)) return "emergency";
 
   return "fallback";
 }
 
-// -----------------------------------------
-// MAIN ENDPOINT - COMPLETAMENTE POR ROLES
-// -----------------------------------------
+// ============================================
+// 🚀 ENDPOINT PRINCIPAL OPTIMIZADO
+// ============================================
+
 router.post("/", protect, async (req, res) => {
   const startTime = Date.now();
   
   try {
     const { message } = req.body;
-    const { _id: userId, role, name, email } = req.user;
+    const { role, name, _id: userId } = req.user;
 
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return res.status(400).json({ 
-        error: "El mensaje no puede estar vacío",
+    // Validación rápida
+    if (!message || !message.trim()) {
+      return res.json({
+        success: false,
+        reply: "Por favor, escribe un mensaje válido.",
         type: "error"
       });
     }
@@ -642,173 +467,202 @@ router.post("/", protect, async (req, res) => {
     const text = message.trim();
     const intent = detectIntent(text, role);
 
-    console.log(`📱 Chat - Usuario: ${name}, Rol: ${role}, Intent: ${intent}`);
+    console.log(`💬 Chat [${role}] ${name}: "${text.substring(0, 30)}..." -> ${intent}`);
 
-    // -----------------------------
-    // RESPUESTAS RÁPIDAS POR ROL
-    // -----------------------------
-    switch (intent) {
-      case "greeting":
-        const roleGreetings = {
-          client: `¡Hola ${name}! 👋 Soy PetBot, tu asistente para servicios de mascotas. ¿En qué puedo ayudarte hoy? 🐾`,
-          provider: `¡Hola ${name}! 💼 Soy PetBot, tu asistente para la gestión de servicios. ¿Cómo puedo ayudarte con tu negocio? 📊`,
-          admin: `¡Hola ${name}! 👨‍💼 Soy PetBot, tu asistente administrativo. ¿En qué área del sistema necesitas ayuda? ⚙️`
-        };
-        return res.json({ 
-          reply: roleGreetings[role] || roleGreetings.client, 
-          type: "text",
-          hasData: false,
-          intent: intent
-        });
-
-      case "help":
-        const roleHelp = {
-          client: `¡Claro que sí ${name}! 😊 **Como cliente, te ayudo con:**
-
-🐾 **Tus mascotas** - información y gestión
-📅 **Tus citas** - agendadas y próximas  
-🛎️ **Servicios** - disponibles y precios
-🏥 **Emergencias** - protocolos y contactos
-
-¿En qué específicamente necesitas ayuda?`,
-
-          provider: `¡Por supuesto ${name}! 🔧 **Como proveedor, te ayudo con:**
-
-📊 **Tu agenda** - citas de hoy y futuras
-🛎️ **Tus servicios** - gestión y estadísticas
-📈 **Métricas** - rendimiento de negocio
-👥 **Clientes** - información de reservas
-
-¿Qué área de tu negocio necesitas gestionar?`,
-
-          admin: `¡Desde luego ${name}! ⚙️ **Como administrador, te ayudo con:**
-
-👥 **Usuarios** - gestión del sistema
-🏢 **Proveedores** - aprobación y control
-📊 **Reportes** - estadísticas globales
-🛎️ **Servicios** - gestión completa
-📅 **Citas** - monitoreo del sistema
-
-¿Qué funcionalidad administrativa necesitas?`
-        };
-        return res.json({ 
-          reply: roleHelp[role] || roleHelp.client, 
-          type: "text",
-          hasData: false,
-          intent: intent
-        });
-
-      case "thanks":
-        return res.json({ 
-          reply: `¡De nada, ${name}! 😊 ¿Hay algo más en lo que pueda ayudarte?`, 
-          type: "text",
-          hasData: false,
-          intent: intent
-        });
-
-      case "goodbye":
-        const roleGoodbyes = {
-          client: `¡Hasta luego, ${name}! 👋 ¡Que tengas un excelente día con tus mascotas! 🐾`,
-          provider: `¡Hasta luego, ${name}! 💼 ¡Que tengas un productivo día! 📈`,
-          admin: `¡Hasta luego, ${name}! 👨‍💼 ¡Que tengas un excelente día administrativo! ⚙️`
-        };
-        return res.json({ 
-          reply: roleGoodbyes[role] || roleGoodbyes.client, 
-          type: "text",
-          hasData: false,
-          intent: intent
-        });
-    }
-
-    // -----------------------------
-    // INTENTS CON DATOS REALES POR ROL
-    // -----------------------------
-    const dataIntents = {
-      client: ["list_services", "get_user_appointments", "get_user_pets"],
-      provider: ["list_services", "provider_today_appointments", "provider_my_services"],
-      admin: ["list_services", "admin_list_providers", "admin_list_users", "admin_list_appointments"]
+    // Procesamiento rápido con respuestas inmediatas para intents comunes
+    const quickResponses = {
+      greeting: `¡Hola ${name}! 👋 ¿En qué puedo ayudarte?`,
+      thanks: `¡De nada! 😊 ¿Algo más en lo que pueda asistirte?`,
+      goodbye: `¡Hasta luego ${name}! Que tengas un excelente día. 👋`,
+      help: `¡Claro! Puedo ayudarte con información del sistema, tus mascotas, citas y más. ¿Qué necesitas específicamente?`
     };
 
-    if (dataIntents[role]?.includes(intent)) {
-      console.log(`📊 Generando respuesta con datos reales para ${role}: ${intent}`);
-      
-      const reply = await generateResponseWithData(intent, req.user, text);
-      
-      return res.json({ 
-        reply, 
+    if (quickResponses[intent]) {
+      return res.json({
+        success: true,
+        reply: quickResponses[intent],
         type: "text",
-        hasData: true,
-        intent: intent
+        intent,
+        responseTime: Date.now() - startTime
       });
     }
 
-    // -----------------------------
-    // INTENTS QUE USAN IA
-    // -----------------------------
-    const aiIntents = ["book_appointment", "prices", "emergency", "about"];
-    if (aiIntents.includes(intent)) {
-      console.log(`🤖 Usando IA para: ${intent}`);
-      
-      const reply = await askPetBot(text, "", role);
-      
-      return res.json({ 
-        reply, 
-        type: "text",
-        hasData: false,
-        intent: intent
-      });
-    }
-
-    // -----------------------------
-    // FALLBACK - CONSULTA GENERAL CON IA
-    // -----------------------------
-    console.log(`🤖 Usando IA para respuesta general`);
-    const fallbackReply = await askPetBot(text, `Usuario: ${name} (${role})`, role);
+    // Intents que requieren datos de la base de datos
+    const dataIntents = ["list_services", "get_user_appointments", "get_user_pets", 
+                         "provider_today_appointments", "admin_list_providers"];
     
-    return res.json({ 
-      reply: fallbackReply, 
+    if (dataIntents.includes(intent)) {
+      try {
+        const reply = await generateResponseWithData(intent, req.user, text);
+        
+        return res.json({
+          success: true,
+          reply,
+          type: "text",
+          intent,
+          hasData: true,
+          responseTime: Date.now() - startTime
+        });
+      } catch (dbError) {
+        console.error("❌ Error DB en chat:", dbError);
+        // Fallback a respuesta predefinida
+        return res.json({
+          success: true,
+          reply: getFallbackResponse(intent, role),
+          type: "text",
+          intent,
+          responseTime: Date.now() - startTime
+        });
+      }
+    }
+
+    // Intents que usan IA (procesamiento asíncrono para no bloquear)
+    if (["book_appointment", "prices", "emergency", "about", "fallback"].includes(intent)) {
+      // Responder inmediatamente y procesar en segundo plano
+      const initialResponse = {
+        success: true,
+        reply: "🤖 Procesando tu consulta...",
+        type: "processing",
+        intent,
+        responseTime: Date.now() - startTime
+      };
+
+      // Enviar respuesta inmediata
+      res.json(initialResponse);
+
+      // Procesar IA en segundo plano (no bloqueante)
+      setTimeout(async () => {
+        try {
+          const aiReply = await callGeminiAPI(
+            `Usuario (${role} ${name}) pregunta: "${text}"`,
+            role
+          );
+          
+          console.log(`✅ IA procesada para ${name} (${intent}) en ${Date.now() - startTime}ms`);
+          
+          // Aquí podrías enviar la respuesta real via WebSocket o guardarla para que el frontend la recupere
+          // Por ahora solo logueamos
+          
+        } catch (aiError) {
+          console.error("❌ Error IA en background:", aiError);
+        }
+      }, 0);
+
+      return;
+    }
+
+    // Fallback final
+    return res.json({
+      success: true,
+      reply: getFallbackResponse("general", role),
       type: "text",
-      hasData: false,
-      intent: "fallback"
+      intent: "fallback",
+      responseTime: Date.now() - startTime
     });
 
   } catch (error) {
-    console.error("❌ Error en el endpoint:", error.message);
-
-    const errorReply = `😔 **Lo siento, ${req.user?.name || 'usuario'}**
-
-He encontrado un problema técnico al procesar tu solicitud.
-
-🔧 **Qué puedes hacer:**
-• Intentar nuevamente en unos momentos
-• Contactar al soporte técnico si el problema persiste
-
-¡Estaré aquí cuando me necesites!`;
-
-    return res.status(500).json({ 
-      reply: errorReply,
-      type: "error"
+    console.error("❌ Error crítico en /chat:", error);
+    
+    return res.json({
+      success: false,
+      reply: "😔 **Lo siento, hubo un error inesperado.** Por favor, intenta de nuevo en unos momentos.",
+      type: "error",
+      responseTime: Date.now() - startTime
     });
   }
 });
 
-// -----------------------------------------
-// ENDPOINT DE ESTADO
-// -----------------------------------------
-router.get("/status", protect, (req, res) => {
-  const status = {
-    status: "operational",
-    aiProvider: "Google Gemini 2.5 Flash",
-    user: {
-      name: req.user.name,
-      role: req.user.role,
-      id: req.user._id
-    },
-    timestamp: new Date().toISOString()
-  };
+// ============================================
+// 📊 ENDPOINTS ADICIONALES
+// ============================================
 
-  console.log("📊 Estado del chatbot consultado por:", req.user.name);
-  res.json(status);
+// Health check del chatbot
+router.get("/health", protect, (req, res) => {
+  res.json({
+    status: "operational",
+    service: "PetBot Chat Service",
+    aiProvider: GEMINI_API_KEY ? "Google Gemini" : "Fallback Mode",
+    model: GEMINI_MODEL,
+    userRole: req.user.role,
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  });
+});
+
+// Diagnóstico del chatbot
+router.get("/diagnostic", protect, async (req, res) => {
+  try {
+    // Probar conexión a Gemini
+    let geminiStatus = "not_configured";
+    if (GEMINI_API_KEY) {
+      try {
+        const testResponse = await callGeminiAPI("Responde solo con 'OK'", req.user.role);
+        geminiStatus = testResponse.includes("OK") ? "working" : "error";
+      } catch (error) {
+        geminiStatus = "error";
+      }
+    }
+
+    // Estadísticas básicas
+    const stats = {
+      gemini: {
+        configured: !!GEMINI_API_KEY,
+        status: geminiStatus,
+        model: GEMINI_MODEL
+      },
+      user: {
+        name: req.user.name,
+        role: req.user.role,
+        id: req.user._id
+      },
+      system: {
+        environment: process.env.NODE_ENV,
+        nodeVersion: process.version,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+
+  } catch (error) {
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Endpoint simple para pruebas
+router.post("/test", async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    if (!message) {
+      return res.json({
+        success: false,
+        reply: "Mensaje requerido para prueba"
+      });
+    }
+
+    const reply = await callGeminiAPI(`Prueba: ${message}`, "client");
+    
+    res.json({
+      success: true,
+      reply,
+      test: true,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    res.json({
+      success: false,
+      reply: `Error en prueba: ${error.message}`,
+      test: true
+    });
+  }
 });
 
 export default router;
