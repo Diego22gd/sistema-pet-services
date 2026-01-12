@@ -1,13 +1,16 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend para Pet Services - Vue.js + Express + MongoDB",
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "echo 'Backend build complete'",
+    "render-build": "cd .. && cd frontend && npm install && npm run build"
   },
-  "keywords": [],
+  "keywords": ["pet-services", "express", "mongodb", "vue"],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -27,5 +30,9 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }
