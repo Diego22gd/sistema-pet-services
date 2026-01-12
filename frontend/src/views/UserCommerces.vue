@@ -1775,6 +1775,34 @@ export default {
   background: rgba(16, 185, 129, 0.1);
   transform: translateY(-2px);
 }
+/* Estilos específicos para la selección de mascotas */
+.pet-selection-active {
+  border-color: #10b981 !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(13, 148, 136, 0.05)) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2) !important;
+}
+
+.pet-selection-active .w-10 {
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
+}
+
+/* Animación para el borde seleccionado */
+@keyframes pulse-border {
+  0%, 100% { 
+    border-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% { 
+    border-color: #34d399;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  }
+}
+
+.pet-selection-pulse {
+  animation: pulse-border 2s infinite;
+}
 
 .btn-modal-ghost {
   background: transparent;
