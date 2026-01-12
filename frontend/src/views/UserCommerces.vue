@@ -729,10 +729,11 @@
 import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
 import { useUserStore } from "@/stores/userStore";
+import Layout from "../components/Layout.vue";
 
 export default {
   name: "UserCommerces",
-  components: { Chatbot },
+  components: { Chatbot,Layout },
   
   setup() {
     const userStore = useUserStore();
