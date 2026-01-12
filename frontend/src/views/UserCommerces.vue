@@ -521,7 +521,7 @@
       </div>
     </div>
 
-    <!-- Modal de Reserva -->
+    <!-- Modal de Reserva - VERSIÓN CORREGIDA -->
     <div v-if="showReservationModal && selectedBusiness && selectedService" class="modal-overlay" @click.self="closeReservationModal">
       <div class="modal-modern-box max-w-2xl" @click.stop>
         <div class="modal-modern-header flex justify-between items-start">
@@ -599,7 +599,7 @@
               <span>📋</span> Datos de la reserva
             </h3>
             <div class="space-y-4">
-              <!-- Seleccionar mascota -->
+              <!-- Seleccionar mascota - CORREGIDO -->
               <div>
                 <label class="block mb-2 font-medium text-gray-900">
                   <span class="text-emerald-600">🐾</span> Selecciona tu mascota:
@@ -615,23 +615,64 @@
                       :key="pet._id"
                       @click="selectPet(pet)"
                       :class="[
-                        'border-2 rounded-xl p-3 cursor-pointer transition-all duration-200',
+                        'pet-card relative border-2 rounded-xl p-3 cursor-pointer transition-all duration-200 transform hover:-translate-y-1',
                         selectedPet?._id === pet._id
-                          ? 'border-emerald-500 bg-emerald-50'
-                          : 'border-gray-200 hover:border-emerald-300'
+                          ? 'pet-card-selected border-emerald-500 bg-gradient-to-br from-emerald-50 to-green-50 shadow-lg scale-[1.02]'
+                          : 'pet-card-unselected border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
                       ]"
                     >
+                      <!-- Indicador de selección (check verde) -->
+                      <div 
+                        v-if="selectedPet?._id === pet._id"
+                        class="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center z-10 shadow-lg border border-white"
+                      >
+                        <span class="text-white text-xs font-bold">✓</span>
+                      </div>
+                      
+                      <!-- Punto verde animado -->
+                      <div 
+                        v-if="selectedPet?._id === pet._id"
+                        class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full animate-ping"
+                      ></div>
+                      
                       <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center">
-                          <span class="text-lg">{{ getPetIcon(pet.type) }}</span>
+                        <!-- Icono de mascota -->
+                        <div :class="[
+                          'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200',
+                          selectedPet?._id === pet._id
+                            ? 'bg-gradient-to-br from-emerald-500 to-teal-400 scale-110'
+                            : 'bg-gradient-to-br from-emerald-100 to-teal-100'
+                        ]">
+                          <span :class="[
+                            'text-lg transition-all duration-200',
+                            selectedPet?._id === pet._id ? 'text-white transform scale-125' : 'text-emerald-600'
+                          ]">
+                            {{ getPetIcon(pet.type) }}
+                          </span>
                         </div>
+                        
+                        <!-- Información de la mascota -->
                         <div>
-                          <p class="font-bold text-gray-900">{{ pet.name }}</p>
+                          <p :class="[
+                            'font-bold transition-colors duration-200',
+                            selectedPet?._id === pet._id ? 'text-emerald-700' : 'text-gray-900'
+                          ]">
+                            {{ pet.name }}
+                            <span v-if="selectedPet?._id === pet._id" class="ml-1 text-emerald-500">✓</span>
+                          </p>
                           <p class="text-sm text-gray-600 capitalize">{{ pet.type }} • {{ pet.breed || 'Sin raza especificada' }}</p>
+                          <p v-if="pet.age" class="text-xs text-gray-500 mt-0.5">{{ pet.age }} años</p>
                         </div>
                       </div>
+                      
+                      <!-- Borde decorativo animado para seleccionado -->
+                      <div 
+                        v-if="selectedPet?._id === pet._id"
+                        class="absolute inset-0 rounded-xl border-2 border-emerald-400 opacity-50 animate-pulse"
+                      ></div>
                     </div>
                   </div>
+                  
                   <div v-else class="text-center py-6">
                     <p class="text-gray-500 mb-3">No tienes mascotas registradas</p>
                     <button
@@ -651,6 +692,27 @@
                   >
                     🔐 Iniciar sesión
                   </button>
+                </div>
+                
+                <!-- Mostrar mascota seleccionada -->
+                <div v-if="selectedPet && isAuthenticated" class="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                        <span class="text-white text-sm">{{ getPetIcon(selectedPet.type) }}</span>
+                      </div>
+                      <div>
+                        <p class="font-bold text-emerald-700">{{ selectedPet.name }} seleccionada</p>
+                        <p class="text-xs text-gray-600">Para: {{ selectedService.name }}</p>
+                      </div>
+                    </div>
+                    <button
+                      @click="clearPetSelection"
+                      class="text-xs text-gray-500 hover:text-red-500 transition-colors"
+                    >
+                      Cambiar
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -707,11 +769,21 @@
           </button>
           <button 
             @click="confirmReservation"
-            class="btn-modal-primary"
+            class="btn-modal-primary relative group"
             :disabled="!isReservationValid || reserving"
           >
-            <span v-if="!reserving">
-              <span class="mr-2">✅</span> Confirmar reserva - ${{ selectedService.price }}
+            <!-- Indicador de mascota seleccionada -->
+            <span v-if="selectedPet" class="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs px-2 py-1 rounded-full shadow-lg border border-white">
+              {{ selectedPet.name }}
+            </span>
+            
+            <span v-if="!reserving" class="flex items-center gap-2">
+              <span class="text-lg">✅</span>
+              <span>Confirmar reserva</span>
+              <span class="font-bold ml-1">${{ selectedService.price }}</span>
+              <span v-if="selectedPet" class="ml-2 text-xs opacity-75">
+                para {{ selectedPet.name }}
+              </span>
             </span>
             <span v-else class="flex items-center gap-2">
               <span class="animate-spin">⟳</span>
@@ -1303,7 +1375,14 @@ export default {
     },
     
     selectPet(pet) {
-      this.selectedPet = pet;
+      // Forzar reactividad
+      this.selectedPet = { ...pet };
+      console.log('Mascota seleccionada:', this.selectedPet.name);
+    },
+    
+    clearPetSelection() {
+      this.selectedPet = null;
+      console.log('Selección de mascota limpiada');
     },
     
     async loadAvailableHours() {
@@ -1775,34 +1854,6 @@ export default {
   background: rgba(16, 185, 129, 0.1);
   transform: translateY(-2px);
 }
-/* Estilos específicos para la selección de mascotas */
-.pet-selection-active {
-  border-color: #10b981 !important;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(13, 148, 136, 0.05)) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2) !important;
-}
-
-.pet-selection-active .w-10 {
-  transform: scale(1.1);
-  transition: transform 0.3s ease;
-}
-
-/* Animación para el borde seleccionado */
-@keyframes pulse-border {
-  0%, 100% { 
-    border-color: #10b981;
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
-  }
-  50% { 
-    border-color: #34d399;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
-  }
-}
-
-.pet-selection-pulse {
-  animation: pulse-border 2s infinite;
-}
 
 .btn-modal-ghost {
   background: transparent;
@@ -1853,6 +1904,146 @@ export default {
   to { transform: rotate(360deg); }
 }
 
+/* ============ ESTILOS PARA SELECCIÓN DE MASCOTAS ============ */
+.pet-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pet-card-selected {
+  animation: cardSelect 0.4s ease-out;
+  box-shadow: 
+    0 10px 25px -5px rgba(16, 185, 129, 0.2), 
+    0 0 0 2px rgba(16, 185, 129, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5);
+  border-color: #10b981 !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(13, 148, 136, 0.05)) !important;
+  transform: translateY(-4px) scale(1.02);
+}
+
+.pet-card-unselected:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #a7f3d0;
+  background-color: #f9fafb;
+}
+
+@keyframes cardSelect {
+  0% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+  50% {
+    transform: scale(1.03) translateY(-2px);
+  }
+  100% {
+    transform: scale(1.02) translateY(-4px);
+    box-shadow: 
+      0 10px 25px -5px rgba(16, 185, 129, 0.2), 
+      0 0 0 2px rgba(16, 185, 129, 0.3);
+  }
+}
+
+/* Borde animado para selección */
+@keyframes borderGlow {
+  0%, 100% {
+    opacity: 0.5;
+    border-color: rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    opacity: 0.8;
+    border-color: rgba(16, 185, 129, 0.8);
+  }
+}
+
+.pet-card-selected::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: linear-gradient(45deg, #10b981, #0d9488, #10b981) border-box;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) padding-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  animation: borderGlow 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Efecto de brillo para botón con mascota seleccionada */
+.btn-modal-primary:not(:disabled) {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-modal-primary:not(:disabled)::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 70%
+  );
+  transform: rotate(45deg);
+  animation: shimmer 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Indicador en el botón de confirmar para mascota seleccionada */
+.btn-modal-primary:not(:disabled)::before {
+  content: '🐾';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  background: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #10b981;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+/* Efecto de pulso para el indicador de selección */
+@keyframes ping {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  80%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3.xl\:grid-cols-4 {
@@ -1886,6 +2077,15 @@ export default {
   
   .text-6xl {
     font-size: 3rem;
+  }
+  
+  /* Ajustes para selección de mascotas en móvil */
+  .pet-card-selected {
+    transform: translateY(-2px) scale(1.01);
+  }
+  
+  .pet-card-selected::before {
+    display: none; /* Ocultar borde animado en móvil para mejor rendimiento */
   }
 }
 
