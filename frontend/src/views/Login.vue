@@ -343,73 +343,12 @@
     </div>
 
     <!-- FOOTER IDÉNTICO A LANDING -->
-    <footer class="footer-emerald">
-      <div class="container mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div class="flex items-center space-x-3 mb-4">
-              <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center">
-                <span class="text-xl text-emerald-600">🐾</span>
-              </div>
-              <div class="text-2xl font-bold text-white">
-                PetServices
-              </div>
-            </div>
-            <p class="text-emerald-100 mb-6">Cuidando de tus mascotas desde 2023 con servicios de calidad y profesionales verificados.</p>
-            <div class="flex space-x-4">
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">🌐</span>
-              </a>
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">📱</span>
-              </a>
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">📷</span>
-              </a>
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">📹</span>
-              </a>
-            </div>
-          </div>
-          
-          <div>
-            <h3 class="font-bold text-lg text-white mb-4">Servicios</h3>
-            <ul class="space-y-3">
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Veterinaria</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Peluquería</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Guardería</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Entrenamiento</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Paseadores</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 class="font-bold text-lg text-white mb-4">Empresa</h3>
-            <ul class="space-y-3">
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Sobre nosotros</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Trabaja con nosotros</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Para negocios</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Blog</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Prensa</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 class="font-bold text-lg text-white mb-4">Soporte</h3>
-            <ul class="space-y-3">
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Centro de ayuda</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Contacto</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Política de privacidad</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Términos de servicio</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Cookies</a></li>
-            </ul>
-          </div>
-        </div>
-        
-        <div class="border-t border-emerald-500 mt-8 pt-8 text-center text-emerald-100">
-          <p class="mb-2">© 2025 PetServices. Todos los derechos reservados.</p>
-          <p class="text-sm">Creado con ❤️ para mascotas felices</p>
-        </div>
+        <footer class="bg-neutral-light text-neutral-medium py-6 text-center mt-auto shadow-inner">
+      <div class="container mx-auto px-6">
+        <p class="text-base md:text-lg">© 2025 PetServices - Todos los derechos reservados</p>
+        <p class="text-sm mt-2 text-neutral-medium/80">
+          Cuidando de tus mascotas desde 2023
+        </p>
       </div>
     </footer>
   </div>
