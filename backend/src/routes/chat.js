@@ -18,7 +18,7 @@ if (!GEMINI_API_KEY) {
 
 // CAMBIO: Usar modelo compatible con v1beta
 // Opciones compatibles: gemini-1.5-pro, gemini-1.0-pro, gemini-pro
-const GEMINI_MODEL = 'gemini-1.5-flash';// Cambiado a modelo compatible
+const GEMINI_MODEL = 'gemini-pro';// Cambiado a modelo compatible
 // CAMBIO 2: Usar la versión v1 (Estable) en lugar de v1beta
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
