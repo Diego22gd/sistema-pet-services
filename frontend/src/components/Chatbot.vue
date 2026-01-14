@@ -1,6 +1,6 @@
 <template>
   <!-- ChatBot Container -->
-  <div class="chatbot-container">
+  <div class="chatbot-container" ref="chatbotContainer">
     <!-- Mensaje tipo nube sobre el botón flotante -->
     <transition name="bubble">
       <div 
@@ -28,6 +28,7 @@
       @click="toggleChat"
       class="chatbot-toggle"
       :class="{ 'pulse-animation': !isOpen && hasNewMessage }"
+      ref="chatbotToggle"
     >
       <img 
         src="/petbot.png"
@@ -178,7 +179,8 @@ export default {
       showScrollArrows: false,
       userRole: "client",
       showHelpBubble: true,
-      bubbleHidden: false
+      bubbleHidden: false,
+      clickOutsideHandler: null
     };
   },
   computed: {
@@ -219,7 +221,7 @@ export default {
       return optionsByRole[this.userRole] || optionsByRole.client;
     },
 
-    // ✅ Computada para obtener la URL base dinámica
+    // ✅ URL dinámica para desarrollo y producción en Render
     apiBaseUrl() {
       // Si estamos en desarrollo local (localhost)
       if (window.location.hostname === 'localhost' || 
@@ -361,7 +363,7 @@ Como **administrador**, puedo ayudarte con:
         console.log('🌐 Conectando a API...');
         console.log('Base URL:', this.apiBaseUrl || '(URL relativa)');
         
-        // ✅ SOLUCIÓN DEFINITIVA: Construir URL correctamente
+        // ✅ URL dinámica para Render
         const apiUrl = this.apiBaseUrl 
           ? `${this.apiBaseUrl}/api/chat`
           : '/api/chat'; // URL relativa cuando están en el mismo dominio
@@ -481,7 +483,21 @@ Como **administrador**, puedo ayudarte con:
         .replace(/🛡️/g, '<span class="inline-block mr-1">🛡️</span>');
     },
 
-    // ✅ Aplicar parche de emergencia para URLs incorrectas
+    // ✅ Manejar clic fuera de la burbuja
+    handleClickOutside(event) {
+      const chatbotContainer = this.$refs.chatbotContainer;
+      const helpBubble = chatbotContainer?.querySelector('.help-bubble');
+      const chatbotToggle = this.$refs.chatbotToggle;
+      
+      if (helpBubble && 
+          !helpBubble.contains(event.target) && 
+          chatbotToggle && 
+          !chatbotToggle.contains(event.target)) {
+        this.hideBubble();
+      }
+    },
+
+    // ✅ Aplicar parche de emergencia para URLs incorrectas en Render
     applyEmergencyPatch() {
       if (window.CHATBOT_PATCH_APPLIED) return;
       
@@ -571,7 +587,7 @@ Como **administrador**, puedo ayudarte con:
       this.showHelpBubble = false;
     }
     
-    // ✅ Aplicar parche de emergencia al cargar
+    // ✅ Aplicar parche de emergencia para Render
     this.applyEmergencyPatch();
     
     // Programar mostrar burbuja de ayuda
@@ -587,22 +603,18 @@ Como **administrador**, puedo ayudarte con:
     // También verificar cuando cambia el tamaño de la ventana
     window.addEventListener('resize', this.checkScrollButtons);
 
-    // Cerrar burbuja al hacer clic fuera
-    document.addEventListener('click', (event) => {
-      const chatbotContainer = this.$el;
-      const helpBubble = chatbotContainer?.querySelector('.help-bubble');
-      
-      if (helpBubble && 
-          !helpBubble.contains(event.target) && 
-          !chatbotContainer.querySelector('.chatbot-toggle').contains(event.target)) {
-        this.hideBubble();
-      }
-    });
+    // ✅ Configurar event listener para clic fuera de la burbuja
+    this.clickOutsideHandler = this.handleClickOutside.bind(this);
+    document.addEventListener('click', this.clickOutsideHandler);
   },
 
   beforeUnmount() {
     window.removeEventListener('resize', this.checkScrollButtons);
-    document.removeEventListener('click', this.hideBubble);
+    
+    // ✅ Remover el event listener
+    if (this.clickOutsideHandler) {
+      document.removeEventListener('click', this.clickOutsideHandler);
+    }
   }
 };
 </script>

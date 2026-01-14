@@ -8,35 +8,39 @@ import Appointment from "../models/Appointment.js";
 const router = express.Router();
 
 // ============================================
-// 🔧 CONFIGURACIÓN GEMINI - PARA gemini-1.5-flash
+// 🔧 CONFIGURACIÓN GEMINI PARA PRODUCCIÓN EN RENDER
 // ============================================
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
 if (!GEMINI_API_KEY) {
-  console.warn("⚠️  ADVERTENCIA: Sin API Key. Usando respuestas predefinidas.");
+  console.warn("⚠️  ADVERTENCIA: Sin API Key de Gemini. Usando respuestas predefinidas.");
+} else {
+  console.log("✅ ChatBot Gemini configurado para Render");
+  console.log(`🔧 Entorno: ${process.env.NODE_ENV || 'production'}`);
 }
 
-// Usar gemini-1.5-flash con v1alpha
-const GEMINI_MODEL = 'gemini-1.5-flash';
-// IMPORTANTE: gemini-1.5-flash requiere v1alpha en producción
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1alpha/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+// Modelo compatible con Render - Usar v1beta para compatibilidad
+const GEMINI_MODEL = 'gemini-pro'; // Modelo compatible con v1beta
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // ============================================
-// 🚀 FUNCIÓN PARA LLAMAR A GEMINI - CON FALLBACK
+// 🚀 FUNCIÓN PARA LLAMAR A GEMINI (OPTIMIZADA PARA RENDER)
 // ============================================
 
 async function callGeminiAPI(prompt, role = "client") {
   if (!GEMINI_API_KEY) {
-    console.log("ℹ️  Usando respuesta predefinida (sin API Key)");
+    console.log("📝 Usando respuestas predefinidas (sin API Key)");
     return getFallbackResponse("general", role);
   }
 
   try {
-    console.log(`🤖 Enviando prompt a Gemini (${GEMINI_MODEL})...`);
-    console.log(`🔗 URL (segura): ${GEMINI_API_URL.replace(GEMINI_API_KEY, '***')}`);
+    console.log(`🤖 Llamando a Gemini (${GEMINI_MODEL})...`);
     
-    // Primero intentar con v1alpha (para gemini-1.5-flash)
-    let response = await fetch(GEMINI_API_URL, {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout para Render
+
+    const response = await fetch(GEMINI_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,45 +54,25 @@ async function callGeminiAPI(prompt, role = "client") {
           maxOutputTokens: 800,
         }
       }),
-      signal: AbortSignal.timeout(15000)
+      signal: controller.signal
     });
 
-    console.log(`📡 Respuesta Gemini (v1alpha): ${response.status} ${response.statusText}`);
-    
-    // Si falla con v1alpha, intentar con v1beta (para desarrollo/local)
-    if (!response.ok && response.status === 404) {
-      console.log("🔄 Probando con API v1beta...");
-      
-      const betaUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-      
-      response = await fetch(betaUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 800,
-          }
-        }),
-        signal: AbortSignal.timeout(10000)
-      });
-      
-      console.log(`📡 Respuesta Gemini (v1beta): ${response.status} ${response.statusText}`);
-    }
+    clearTimeout(timeoutId);
+
+    console.log(`📡 Respuesta Gemini: ${response.status} ${response.statusText}`);
     
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`❌ Error API Gemini (${response.status}):`, errorText.substring(0, 200));
       
+      // Manejo específico de errores comunes en Render
       if (response.status === 404) {
-        throw new Error(`Modelo ${GEMINI_MODEL} no encontrado. Verifica el nombre del modelo y versión de API.`);
-      } else if (response.status === 403) {
-        throw new Error(`API Key inválida o sin permisos.`);
+        console.log("🔄 Intentando con modelo alternativo...");
+        return await tryAlternativeModel(prompt, role);
+      }
+      
+      if (response.status === 429) {
+        return "⚠️ **Límite de uso alcanzado.** El servicio está muy ocupado. Por favor, intenta más tarde.";
       }
       
       throw new Error(`API error ${response.status}`);
@@ -97,7 +81,7 @@ async function callGeminiAPI(prompt, role = "client") {
     const data = await response.json();
     
     if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      console.warn("⚠️  Respuesta de Gemini vacía");
+      console.warn("⚠️  Respuesta vacía de Gemini");
       return getFallbackResponse("general", role);
     }
     
@@ -108,40 +92,49 @@ async function callGeminiAPI(prompt, role = "client") {
   } catch (error) {
     console.error("❌ Error en callGeminiAPI:", error.message);
     
-    // Intentar usar modelo alternativo como último recurso
-    if (error.message.includes('404') || error.message.includes('no encontrado')) {
-      console.log("🔄 Intentando con modelo alternativo gemini-pro...");
-      
-      try {
-        const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
-        const fallbackResponse = await fetch(fallbackUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt.substring(0, 1000) }] }],
-            generationConfig: { maxOutputTokens: 500 }
-          }),
-          signal: AbortSignal.timeout(8000)
-        });
-        
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json();
-          if (fallbackData?.candidates?.[0]?.content?.parts?.[0]?.text) {
-            console.log("✅ Usando modelo alternativo gemini-pro");
-            return fallbackData.candidates[0].content.parts[0].text.trim();
-          }
-        }
-      } catch (fallbackError) {
-        console.error("❌ Fallback también falló:", fallbackError.message);
-      }
+    if (error.name === 'AbortError') {
+      return "⏰ **Tiempo de espera agotado.** El servicio está respondiendo lentamente.";
     }
     
     return getFallbackResponse("general", role);
   }
 }
 
+// Función de fallback para modelo alternativo
+async function tryAlternativeModel(prompt, role) {
+  try {
+    console.log("🔄 Probando modelo alternativo gemini-1.0-pro...");
+    
+    const alternativeUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const response = await fetch(alternativeUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt.substring(0, 1000) }] }],
+        generationConfig: { maxOutputTokens: 500 }
+      }),
+      signal: AbortSignal.timeout(10000)
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        console.log("✅ Modelo alternativo funciona");
+        return data.candidates[0].content.parts[0].text.trim();
+      }
+    }
+    
+    throw new Error("Modelo alternativo también falló");
+    
+  } catch (error) {
+    console.error("❌ Modelo alternativo falló:", error.message);
+    return getFallbackResponse("general", role);
+  }
+}
+
 // ============================================
-// 🛡️ RESPUESTAS PREDEFINIDAS
+// 🛡️ RESPUESTAS PREDEFINIDAS ACTUALIZADAS CON BUSINESS
 // ============================================
 
 function getFallbackResponse(intent = "general", role = "client") {
@@ -150,7 +143,7 @@ function getFallbackResponse(intent = "general", role = "client") {
       general: `¡Hola! Soy PetBot, tu asistente de PetServices. 🐾
 
 Puedo ayudarte con:
-• 📍 Buscar comercios y servicios
+• 🏪 Buscar comercios y servicios
 • 📅 Agendar y ver tus citas
 • 🐕 Gestionar tus mascotas
 • 💰 Consultar precios
@@ -234,7 +227,18 @@ Te ayudo con:
 
 Consulta tus citas del día en el panel de proveedor, sección "Agenda del Día".
 
-¿Necesitas ayuda para gestionar alguna cita específica?`
+¿Necesitas ayuda para gestionar alguna cita específica?`,
+
+      provider_business: `🏪 **Tu Comercio**
+
+Gestiona tu comercio desde:
+• Perfil del comercio (información, fotos)
+• Servicios ofrecidos
+• Horarios de atención
+• Precios y promociones
+• Disponibilidad
+
+¿Qué aspecto de tu comercio quieres actualizar?`
     },
 
     admin: {
@@ -247,7 +251,17 @@ Consulta tus citas del día en el panel de proveedor, sección "Agenda del Día"
 • ⚙️ Configuración de la plataforma
 • 🛡️ Moderación y seguridad
 
-¿Qué área necesitas revisar?`
+¿Qué área necesitas revisar?`,
+
+      admin_list_businesses: `📊 **Estadísticas de Comercios**
+
+Consulta el panel de administración para ver:
+• Total de comercios registrados
+• Comercios activos y aprobados
+• Solicitudes pendientes de aprobación
+• Estadísticas de crecimiento
+
+¿Necesitas información específica de algún comercio?`
     }
   };
 
@@ -256,7 +270,7 @@ Consulta tus citas del día en el panel de proveedor, sección "Agenda del Día"
 }
 
 // ============================================
-// 📊 FUNCIONES CON DATOS REALES
+// 📊 FUNCIONES CON DATOS REALES (ACTUALIZADAS CON BUSINESS)
 // ============================================
 
 async function generateResponseWithData(intent, user, userMessage = "") {
@@ -292,7 +306,7 @@ async function generateResponseWithData(intent, user, userMessage = "") {
 }
 
 // ============================================
-// 📍 FUNCIONES ESPECÍFICAS PARA COMERCIOS
+// 📍 FUNCIONES ESPECÍFICAS PARA COMERCIOS (BUSINESS)
 // ============================================
 
 async function getBusinessesList(user) {
@@ -316,25 +330,30 @@ async function getBusinessesList(user) {
     businesses.forEach((business, index) => {
       response += `${index + 1}. **${business.name}**\n`;
       
+      // Mostrar categorías
       if (business.categories && business.categories.length > 0) {
         const categories = business.categories.slice(0, 2);
         response += `   📍 ${categories.join(', ')}\n`;
       }
       
+      // Descripción breve
       if (business.description) {
         const shortDesc = business.description.substring(0, 60);
         response += `   📝 ${shortDesc}...\n`;
       }
       
+      // Precio promedio si existe
       if (business.averageServicePrice > 0) {
         response += `   💰 Precio promedio: $${business.averageServicePrice.toFixed(2)}\n`;
       }
       
+      // Dirección breve
       if (business.address) {
         const shortAddr = business.address.substring(0, 40);
         response += `   🏠 ${shortAddr}\n`;
       }
       
+      // Calificación
       if (business.rating > 0) {
         response += `   ⭐ Calificación: ${business.rating.toFixed(1)}/5\n`;
       }
@@ -357,6 +376,7 @@ async function getBusinessesList(user) {
 
 async function getServicesList(user) {
   try {
+    // Obtener comercios activos
     const businesses = await Business.find({
       status: "active",
       approved: true,
@@ -548,6 +568,7 @@ async function getAllBusinessesStats() {
       isDeleted: { $ne: true }
     });
     
+    // Obtener comercios recientes
     const recentBusinesses = await Business.find({ 
       isDeleted: { $ne: true }
     })
@@ -579,7 +600,7 @@ async function getAllBusinessesStats() {
 }
 
 // ============================================
-// 🎯 DETECCIÓN DE INTENCIONES
+// 🎯 DETECCIÓN DE INTENCIONES MEJORADA
 // ============================================
 
 function detectIntent(text, role = "client") {
@@ -622,7 +643,7 @@ function detectIntent(text, role = "client") {
 }
 
 // ============================================
-// 🚀 ENDPOINT PRINCIPAL
+// 🚀 ENDPOINT PRINCIPAL (ADAPTADO PARA RENDER)
 // ============================================
 
 router.post("/", protect, async (req, res) => {
@@ -632,6 +653,7 @@ router.post("/", protect, async (req, res) => {
     const { message } = req.body;
     const { role, name, _id: userId } = req.user;
 
+    // Validación
     if (!message || !message.trim()) {
       return res.json({
         success: false,
@@ -643,9 +665,9 @@ router.post("/", protect, async (req, res) => {
     const text = message.trim();
     const intent = detectIntent(text, role);
 
-    console.log(`💬 Chat [${role}] ${name}: "${text.substring(0, 30)}..." -> ${intent}`);
+    console.log(`💬 Chat [${role}] ${name}: "${text.substring(0, 50)}..." -> ${intent}`);
 
-    // Respuestas rápidas
+    // Respuestas rápidas (para reducir llamadas a la API)
     const quickResponses = {
       greeting: `¡Hola ${name}! 👋 Soy PetBot, ¿en qué puedo ayudarte?`,
       thanks: `¡De nada! 😊 ¿Algo más en lo que pueda asistirte?`,
@@ -703,6 +725,7 @@ router.post("/", protect, async (req, res) => {
         
         Respuesta:`;
         
+        console.log(`🤖 Enviando a Gemini (intent: ${intent})...`);
         const aiReply = await callGeminiAPI(systemPrompt, role);
         
         return res.json({
@@ -747,15 +770,14 @@ router.post("/", protect, async (req, res) => {
 });
 
 // ============================================
-// 📊 ENDPOINTS ADICIONALES
+// 📊 ENDPOINTS ADICIONALES PARA PRODUCCIÓN
 // ============================================
 
-// Health check
+// Health check para Render
 router.get("/health", protect, (req, res) => {
   const aiStatus = GEMINI_API_KEY ? {
     configured: true,
     model: GEMINI_MODEL,
-    apiVersion: "v1alpha",
     status: "configurado"
   } : {
     configured: false,
@@ -765,29 +787,32 @@ router.get("/health", protect, (req, res) => {
   res.json({
     status: "operational",
     service: "PetBot Chat Service",
-    userRole: req.user.role,
+    user: {
+      name: req.user.name,
+      role: req.user.role
+    },
     ai: aiStatus,
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV || 'production',
+    platform: "Render"
   });
 });
 
-// Diagnóstico mejorado
+// Diagnóstico para Render
 router.get("/diagnostic", protect, async (req, res) => {
   try {
+    // Contar comercios disponibles
     const activeBusinesses = await Business.countDocuments({
       status: 'active',
       approved: true,
       isDeleted: { $ne: true }
     });
 
-    // Test de API de Gemini
+    // Test de conexión a Gemini
     let geminiTest = { status: "not tested" };
     if (GEMINI_API_KEY) {
       try {
-        // Test con v1alpha
-        const testUrl = `https://generativelanguage.googleapis.com/v1alpha/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-        const testResponse = await fetch(testUrl, {
+        const testResponse = await fetch(GEMINI_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -796,33 +821,10 @@ router.get("/diagnostic", protect, async (req, res) => {
           }),
           signal: AbortSignal.timeout(5000)
         });
-        
         geminiTest = {
-          apiVersion: "v1alpha",
           status: testResponse.ok ? "connected" : "error",
-          statusCode: testResponse.status,
-          model: GEMINI_MODEL
+          statusCode: testResponse.status
         };
-        
-        // Si falla, probar con v1beta
-        if (!testResponse.ok) {
-          const betaUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-          const betaResponse = await fetch(betaUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: "Test" }] }],
-              generationConfig: { maxOutputTokens: 10 }
-            }),
-            signal: AbortSignal.timeout(5000)
-          });
-          
-          geminiTest.betaTest = {
-            apiVersion: "v1beta",
-            status: betaResponse.ok ? "connected" : "error",
-            statusCode: betaResponse.status
-          };
-        }
       } catch (error) {
         geminiTest = { status: "error", error: error.message };
       }
@@ -838,8 +840,8 @@ router.get("/diagnostic", protect, async (req, res) => {
       ai: {
         configured: !!GEMINI_API_KEY,
         model: GEMINI_MODEL,
-        apiUrl: GEMINI_API_URL ? GEMINI_API_URL.replace(GEMINI_API_KEY, '***') : null,
-        test: geminiTest
+        test: geminiTest,
+        apiUrl: GEMINI_API_URL ? GEMINI_API_URL.replace(GEMINI_API_KEY, '***') : null
       },
       user: {
         name: req.user.name,
@@ -849,7 +851,13 @@ router.get("/diagnostic", protect, async (req, res) => {
       system: {
         environment: process.env.NODE_ENV,
         timestamp: new Date().toISOString(),
-        nodeVersion: process.version
+        nodeVersion: process.version,
+        memoryUsage: process.memoryUsage()
+      },
+      render: {
+        serviceType: "web service",
+        region: "unknown",
+        url: process.env.RENDER_EXTERNAL_URL || "not set"
       }
     };
 
@@ -868,7 +876,7 @@ router.get("/diagnostic", protect, async (req, res) => {
 });
 
 // ============================================
-// 🧪 TEST ENDPOINT PARA GEMINI
+// 🧪 TEST ENDPOINT PARA RENDER
 // ============================================
 
 router.post("/test-gemini", protect, async (req, res) => {
@@ -879,146 +887,78 @@ router.post("/test-gemini", protect, async (req, res) => {
       return res.json({
         success: false,
         error: "API Key de Gemini no configurada",
-        suggestion: "Agrega GEMINI_API_KEY en las variables de entorno de Render"
+        suggestion: "Verifica la variable GEMINI_API_KEY en Render Dashboard → Environment",
+        envCheck: process.env.GEMINI_API_KEY ? "✅ Presente" : "❌ Ausente"
       });
     }
     
-    console.log("🧪 Test de Gemini iniciado...");
+    console.log(`🧪 Test Gemini en Render: Modelo ${GEMINI_MODEL}`);
     
-    // Probar diferentes configuraciones
-    const testConfigs = [
-      { version: "v1alpha", model: "gemini-1.5-flash", description: "Flash con v1alpha" },
-      { version: "v1beta", model: "gemini-1.5-flash", description: "Flash con v1beta" },
-      { version: "v1beta", model: "gemini-1.0-pro", description: "1.0 Pro con v1beta" },
-      { version: "v1beta", model: "gemini-pro", description: "Pro básico con v1beta" }
-    ];
+    const testPrompt = `Eres PetBot, asistente de PetServices. Responde brevemente en español a: "${testMessage}"`;
     
-    const results = [];
-    
-    for (const config of testConfigs) {
-      const testUrl = `https://generativelanguage.googleapis.com/${config.version}/models/${config.model}:generateContent?key=${GEMINI_API_KEY}`;
-      
-      try {
-        const response = await fetch(testUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: testMessage }] }],
-            generationConfig: { maxOutputTokens: 50 }
-          }),
-          signal: AbortSignal.timeout(8000)
-        });
-        
-        const result = {
-          version: config.version,
-          model: config.model,
-          description: config.description,
-          status: response.status,
-          ok: response.ok
-        };
-        
-        if (response.ok) {
-          const data = await response.json();
-          result.response = data?.candidates?.[0]?.content?.parts?.[0]?.text?.substring(0, 100) || "No response";
-          console.log(`✅ ${config.model} funciona con ${config.version}`);
-        } else {
-          const errorText = await response.text();
-          result.error = errorText.substring(0, 150);
-          console.log(`❌ ${config.model} falló con ${config.version}: ${response.status}`);
-        }
-        
-        results.push(result);
-        
-      } catch (error) {
-        results.push({
-          version: config.version,
-          model: config.model,
-          description: config.description,
-          error: error.message,
-          ok: false
-        });
-        console.log(`❌ Error probando ${config.model}: ${error.message}`);
-      }
-    }
-    
-    // Encontrar configuración que funcione
-    const workingConfig = results.find(r => r.ok);
+    const startTime = Date.now();
+    const response = await callGeminiAPI(testPrompt, "client");
+    const responseTime = Date.now() - startTime;
     
     res.json({
       success: true,
-      workingConfig: workingConfig || null,
-      allResults: results,
-      currentConfig: {
+      test: {
+        message: testMessage,
+        response: response,
+        responseTime: `${responseTime}ms`,
         model: GEMINI_MODEL,
-        url: GEMINI_API_URL.replace(GEMINI_API_KEY, '***')
+        environment: process.env.NODE_ENV || 'production'
       },
-      recommendation: workingConfig 
-        ? `Usar ${workingConfig.model} con ${workingConfig.version}`
-        : "Ninguna configuración funcionó. Verifica tu API Key."
+      configuration: {
+        apiKeyPresent: !!GEMINI_API_KEY,
+        model: GEMINI_MODEL,
+        apiVersion: "v1beta",
+        urlConfigured: !!GEMINI_API_URL
+      }
     });
     
   } catch (error) {
-    console.error("Error en test:", error);
+    console.error("Error en test-gemini:", error);
     res.json({
       success: false,
-      error: error.message
+      error: error.message,
+      suggestion: "Para Render: 1) Verifica API Key 2) Usa modelo 'gemini-pro' 3) Verifica logs",
+      currentModel: GEMINI_MODEL
     });
   }
 });
 
 // ============================================
-// 🔧 ENDPOINT PARA CAMBIAR MODELO EN RUNTIME
+// 🔧 ENDPOINT PARA VERIFICAR CONFIGURACIÓN RENDER
 // ============================================
 
-let currentModel = GEMINI_MODEL;
-let currentApiUrl = GEMINI_API_URL;
-
-router.post("/configure-model", protect, (req, res) => {
-  try {
-    const { model = "gemini-1.5-flash", version = "v1alpha" } = req.body;
-    
-    // Modelos válidos y sus versiones recomendadas
-    const validModels = {
-      "gemini-1.5-flash": "v1alpha",
-      "gemini-1.5-pro": "v1alpha", 
-      "gemini-1.0-pro": "v1beta",
-      "gemini-pro": "v1beta"
-    };
-    
-    if (!validModels[model]) {
-      return res.json({
-        success: false,
-        error: `Modelo ${model} no válido. Modelos válidos: ${Object.keys(validModels).join(', ')}`
-      });
+router.get("/render-config", protect, (req, res) => {
+  const config = {
+    environment: {
+      NODE_ENV: process.env.NODE_ENV || 'production',
+      PORT: process.env.PORT || 4000,
+      RENDER: process.env.RENDER ? "true" : "false",
+      RENDER_EXTERNAL_URL: process.env.RENDER_EXTERNAL_URL || "not set",
+      RENDER_INSTANCE_ID: process.env.RENDER_INSTANCE_ID || "not set"
+    },
+    database: {
+      MONGO_URI: process.env.MONGO_URI ? "✅ Configurada" : "❌ No configurada"
+    },
+    ai: {
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY ? "✅ Configurada" : "❌ No configurada",
+      GEMINI_MODEL: GEMINI_MODEL,
+      DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY ? "✅ Configurada" : "❌ No configurada"
+    },
+    security: {
+      JWT_SECRET: process.env.JWT_SECRET ? "✅ Configurada" : "❌ No configurada"
     }
-    
-    // Usar versión recomendada si no se especifica
-    const apiVersion = version || validModels[model];
-    const newApiUrl = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
-    
-    // Actualizar variables
-    currentModel = model;
-    currentApiUrl = newApiUrl;
-    
-    console.log(`🔧 Modelo actualizado: ${model} (${apiVersion})`);
-    
-    res.json({
-      success: true,
-      message: `Modelo configurado a ${model} usando API ${apiVersion}`,
-      config: {
-        model: currentModel,
-        apiVersion,
-        apiUrl: newApiUrl.replace(GEMINI_API_KEY, '***')
-      }
-    });
-    
-  } catch (error) {
-    console.error("Error configurando modelo:", error);
-    res.json({
-      success: false,
-      error: error.message
-    });
-  }
+  };
+  
+  res.json({
+    success: true,
+    config,
+    timestamp: new Date().toISOString()
+  });
 });
 
 export default router;
