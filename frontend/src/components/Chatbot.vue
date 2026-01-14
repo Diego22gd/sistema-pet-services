@@ -1,10 +1,33 @@
 <template>
   <!-- ChatBot Container -->
   <div class="chatbot-container">
+    <!-- Mensaje tipo nube sobre el botón flotante -->
+    <transition name="bubble">
+      <div 
+        v-if="!isOpen && showHelpBubble" 
+        class="help-bubble"
+        @click="toggleChat"
+      >
+        <div class="bubble-arrow"></div>
+        <div class="bubble-content">
+          <span class="bubble-text">¿Necesitas ayuda?</span>
+          <span class="bubble-subtext">Pregúntame lo que necesites</span>
+        </div>
+        <button 
+          @click.stop="hideBubble" 
+          class="bubble-close"
+          title="Cerrar"
+        >
+          ×
+        </button>
+      </div>
+    </transition>
+
     <!-- Botón flotante -->
     <button
       @click="toggleChat"
       class="chatbot-toggle"
+      :class="{ 'pulse-animation': !isOpen && hasNewMessage }"
     >
       <img 
         src="/petbot.png"
@@ -153,41 +176,43 @@ export default {
       isLoading: false,
       hasNewMessage: false,
       showScrollArrows: false,
-      userRole: "client"
+      userRole: "client",
+      showHelpBubble: true,
+      bubbleHidden: false
     };
   },
   computed: {
     quickOptions() {
       const optionsByRole = {
         client: [
+          "Buscar comercios", 
+          "Servicios disponibles", 
           "Mis citas", 
           "Mis mascotas", 
-          "Servicios disponibles", 
           "Agendar cita",
-          "Precios",
+          "Precios generales",
           "Emergencias",
-          "Vacunación",
-          "Peluquería"
+          "Cómo funciona"
         ],
         provider: [
+          "Mi comercio",
           "Citas hoy",
-          "Mis servicios",
+          "Mi agenda",
           "Estadísticas",
-          "Ingresos",
-          "Clientes",
-          "Agenda",
-          "Servicios activos",
+          "Mis ingresos",
+          "Clientes recientes",
+          "Actualizar servicios",
           "Reportes"
         ],
         admin: [
-          "Proveedores pendientes",
+          "Comercios pendientes",
           "Usuarios registrados",
           "Todas las citas",
-          "Reportes sistema",
-          "Servicios globales",
-          "Estadísticas",
-          "Aprobaciones",
-          "Monitoreo"
+          "Reportes del sistema",
+          "Estadísticas globales",
+          "Aprobar comercios",
+          "Monitoreo",
+          "Soporte"
         ]
       };
       
@@ -234,9 +259,9 @@ export default {
 
     getInputPlaceholder() {
       const placeholders = {
-        client: "Pregunta sobre tus mascotas, citas o servicios...",
-        provider: "Consulta tu agenda, servicios o estadísticas...",
-        admin: "Consulta usuarios, proveedores o reportes del sistema..."
+        client: "Pregunta sobre comercios, servicios o tus mascotas...",
+        provider: "Consulta tu comercio, agenda o estadísticas...",
+        admin: "Consulta comercios, usuarios o reportes del sistema..."
       };
       return placeholders[this.userRole] || "Escribe tu mensaje...";
     },
@@ -247,10 +272,24 @@ export default {
         this.addWelcomeMessage();
       }
       this.hasNewMessage = false;
+      this.showHelpBubble = false;
       this.$nextTick(() => {
         this.scrollToBottom();
         this.checkScrollButtons();
       });
+    },
+
+    hideBubble() {
+      this.showHelpBubble = false;
+      this.bubbleHidden = true;
+      // Guardar preferencia en localStorage
+      localStorage.setItem('chatbot_bubble_hidden', 'true');
+    },
+
+    showBubble() {
+      if (!this.bubbleHidden && !this.isOpen) {
+        this.showHelpBubble = true;
+      }
     },
 
     addWelcomeMessage() {
@@ -258,33 +297,36 @@ export default {
         client: `¡Hola! 👋 Soy PetBot, tu asistente para servicios de mascotas. 
 
 Como **cliente**, puedo ayudarte con:
+• 🏪 Buscar comercios cercanos  
+• 🛎️ Servicios disponibles
 • 📅 Tus citas y reservas
 • 🐾 Información de tus mascotas  
-• 🛎️ Servicios disponibles
 • 💰 Precios y promociones
 • 🏥 Emergencias veterinarias
 
 ¿En qué puedo ayudarte hoy?`,
 
-        provider: `¡Hola! 💼 Soy PetBot, tu asistente para la gestión de servicios.
+        provider: `¡Hola! 💼 Soy PetBot, tu asistente para la gestión de tu comercio.
 
 Como **proveedor**, puedo ayudarte con:
-• 📊 Tu agenda y citas del día
-• 🛎️ Gestión de tus servicios
-• 📈 Estadísticas de negocio
+• 📊 Gestión de tu perfil de comercio
+• 📅 Agenda y citas del día
+• 📈 Estadísticas de tu negocio
 • 👥 Información de clientes
 • 💰 Reportes de ingresos
+• ⭐ Reseñas y calificaciones
 
 ¿Qué área de tu negocio necesitas gestionar?`,
 
         admin: `¡Hola! 👨‍💼 Soy PetBot, tu asistente administrativo.
 
 Como **administrador**, puedo ayudarte con:
-• 👥 Gestión de usuarios del sistema
-• 🏢 Aprobación de proveedores
+• 🏪 Gestión de comercios registrados
+• 👥 Usuarios del sistema
+• ✅ Aprobación de solicitudes
 • 📊 Reportes y estadísticas globales
-• 🛎️ Control de servicios
 • ⚙️ Monitoreo de la plataforma
+• 🛡️ Seguridad y soporte
 
 ¿Qué funcionalidad administrativa necesitas?`
       };
@@ -317,15 +359,12 @@ Como **administrador**, puedo ayudarte con:
         }
 
         console.log('🌐 Conectando a API...');
-        console.log('Entorno:', window.location.hostname);
         console.log('Base URL:', this.apiBaseUrl || '(URL relativa)');
         
         // ✅ SOLUCIÓN DEFINITIVA: Construir URL correctamente
         const apiUrl = this.apiBaseUrl 
           ? `${this.apiBaseUrl}/api/chat`
           : '/api/chat'; // URL relativa cuando están en el mismo dominio
-
-        console.log('URL final de API:', apiUrl);
 
         const res = await axios.post(
           apiUrl,
@@ -349,14 +388,15 @@ Como **administrador**, puedo ayudarte con:
           time: this.getCurrentTime()
         });
 
+        // Mostrar burbuja de ayuda después de un tiempo si no está abierto
+        if (!this.isOpen && !this.bubbleHidden) {
+          setTimeout(() => {
+            this.showBubble();
+          }, 5000);
+        }
+
       } catch (error) {
         console.error("Chat error:", error);
-        console.error("Detalles del error:", {
-          url: this.apiBaseUrl ? `${this.apiBaseUrl}/api/chat` : '/api/chat',
-          entorno: window.location.hostname,
-          mensaje: error.message,
-          codigo: error.code
-        });
         
         let errorMessage = "❌ Error al conectar con PetBot.";
         
@@ -369,15 +409,7 @@ Como **administrador**, puedo ayudarte con:
         } else if (error.message.includes("token")) {
           errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
         } else if (error.message.includes("Network Error") || error.code === 'ERR_NETWORK') {
-          errorMessage = `🌐 **Error de conexión con el servidor.**\n\n` +
-                        `**Configuración detectada:**\n` +
-                        `• Frontend: ${window.location.origin}\n` +
-                        `• API URL: ${this.apiBaseUrl || '/api/chat (URL relativa)'}\n` +
-                        `• Entorno: ${window.location.hostname.includes('localhost') ? 'Desarrollo' : 'Producción'}\n\n` +
-                        `**Posibles soluciones:**\n` +
-                        `1. Verifica que el backend esté corriendo\n` +
-                        `2. Ambos servicios comparten el dominio: ${window.location.origin}\n` +
-                        `3. Intenta recargar la página (Ctrl + Shift + R)`;
+          errorMessage = `🌐 **Error de conexión.**\n\nVerifica tu conexión a internet o intenta más tarde.`;
         }
 
         this.messages.push({
@@ -443,37 +475,34 @@ Como **administrador**, puedo ayudarte con:
         .replace(/🏥/g, '<span class="inline-block mr-1">🏥</span>')
         .replace(/📊/g, '<span class="inline-block mr-1">📊</span>')
         .replace(/👥/g, '<span class="inline-block mr-1">👥</span>')
-        .replace(/⚙️/g, '<span class="inline-block mr-1">⚙️</span>');
+        .replace(/⚙️/g, '<span class="inline-block mr-1">⚙️</span>')
+        .replace(/🏪/g, '<span class="inline-block mr-1">🏪</span>')
+        .replace(/⭐/g, '<span class="inline-block mr-1">⭐</span>')
+        .replace(/🛡️/g, '<span class="inline-block mr-1">🛡️</span>');
     },
 
     // ✅ Aplicar parche de emergencia para URLs incorrectas
     applyEmergencyPatch() {
-      // Solo ejecutar una vez
       if (window.CHATBOT_PATCH_APPLIED) return;
       
       console.log('🔧 Aplicando parche de emergencia para API...');
       
-      // Detectar si estamos en producción (Render)
       const isProduction = window.location.hostname.includes('onrender.com') && 
                           !window.location.hostname.includes('localhost');
       
       if (isProduction) {
         console.log('🚀 Detectado entorno Render en producción');
         
-        // Interceptar XMLHttpRequest (axios lo usa internamente)
         const originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
-          // Solo interceptar si es string y contiene localhost
           if (typeof url === 'string') {
             const originalUrl = url;
             
-            // Corregir localhost:4000
             if (url.includes('localhost:4000')) {
               url = url.replace('http://localhost:4000', '');
               console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
             }
             
-            // Corregir localhost:10000
             if (url.includes('localhost:10000')) {
               url = url.replace('http://localhost:10000', '');
               console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
@@ -486,6 +515,17 @@ Como **administrador**, puedo ayudarte con:
       }
       
       window.CHATBOT_PATCH_APPLIED = true;
+    },
+
+    // Mostrar burbuja de ayuda después de un tiempo
+    scheduleHelpBubble() {
+      if (this.bubbleHidden) return;
+      
+      setTimeout(() => {
+        if (!this.isOpen && !this.bubbleHidden) {
+          this.showHelpBubble = true;
+        }
+      }, 3000); // Mostrar después de 3 segundos
     }
   },
 
@@ -496,6 +536,14 @@ Como **administrador**, puedo ayudarte con:
           this.scrollToBottom();
           this.checkScrollButtons();
         });
+        this.showHelpBubble = false;
+      } else {
+        // Programar mostrar burbuja después de cerrar el chat
+        setTimeout(() => {
+          if (!this.bubbleHidden) {
+            this.scheduleHelpBubble();
+          }
+        }, 2000);
       }
     },
 
@@ -504,6 +552,9 @@ Como **administrador**, puedo ayudarte con:
         this.$nextTick(() => {
           this.scrollToBottom();
         });
+        if (!this.isOpen && this.messages.length > 0) {
+          this.hasNewMessage = true;
+        }
       },
       deep: true
     }
@@ -513,8 +564,18 @@ Como **administrador**, puedo ayudarte con:
     // Obtener el rol del usuario al montar el componente
     this.userRole = this.getUserRole();
     
+    // Verificar si el usuario ocultó la burbuja anteriormente
+    const bubbleHidden = localStorage.getItem('chatbot_bubble_hidden');
+    if (bubbleHidden === 'true') {
+      this.bubbleHidden = true;
+      this.showHelpBubble = false;
+    }
+    
     // ✅ Aplicar parche de emergencia al cargar
     this.applyEmergencyPatch();
+    
+    // Programar mostrar burbuja de ayuda
+    this.scheduleHelpBubble();
     
     // Verificar scroll después de que se rendericen los botones
     this.$nextTick(() => {
@@ -526,17 +587,22 @@ Como **administrador**, puedo ayudarte con:
     // También verificar cuando cambia el tamaño de la ventana
     window.addEventListener('resize', this.checkScrollButtons);
 
-    // ✅ Debug: Mostrar configuración actual
-    console.log('🤖 ChatBot inicializado', {
-      entorno: window.location.hostname,
-      apiBaseUrl: this.apiBaseUrl,
-      userRole: this.userRole,
-      timestamp: new Date().toISOString()
+    // Cerrar burbuja al hacer clic fuera
+    document.addEventListener('click', (event) => {
+      const chatbotContainer = this.$el;
+      const helpBubble = chatbotContainer?.querySelector('.help-bubble');
+      
+      if (helpBubble && 
+          !helpBubble.contains(event.target) && 
+          !chatbotContainer.querySelector('.chatbot-toggle').contains(event.target)) {
+        this.hideBubble();
+      }
     });
   },
 
   beforeUnmount() {
     window.removeEventListener('resize', this.checkScrollButtons);
+    document.removeEventListener('click', this.hideBubble);
   }
 };
 </script>
@@ -547,6 +613,93 @@ Como **administrador**, puedo ayudarte con:
   bottom: 20px;
   left: 20px;
   z-index: 1000;
+}
+
+/* Mensaje tipo nube */
+.help-bubble {
+  position: absolute;
+  bottom: 75px;
+  left: 10px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  padding: 12px 16px;
+  width: 200px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  z-index: 1001;
+  animation: float 3s ease-in-out infinite;
+}
+
+.help-bubble:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  background: #f8fafc;
+}
+
+.bubble-arrow {
+  position: absolute;
+  bottom: -8px;
+  left: 20px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  transform: rotate(45deg);
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.bubble-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bubble-text {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.bubble-subtext {
+  font-size: 11px;
+  color: #6b7280;
+  opacity: 0.8;
+}
+
+.bubble-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.bubble-close:hover {
+  background: #ef4444;
+  color: white;
+}
+
+/* Animación flotante */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 /* Botón flotante */
@@ -568,6 +721,22 @@ Como **administrador**, puedo ayudarte con:
   transform: scale(1.1);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   border-color: #3b82f6;
+}
+
+.chatbot-toggle.pulse-animation {
+  animation: pulse-button 2s infinite;
+}
+
+@keyframes pulse-button {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
 }
 
 .notification-dot {
@@ -959,6 +1128,17 @@ Como **administrador**, puedo ayudarte con:
   transform: translateY(20px) scale(0.95);
 }
 
+.bubble-enter-active,
+.bubble-leave-active {
+  transition: all 0.3s ease;
+}
+
+.bubble-enter-from,
+.bubble-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
 /* Scroll personalizado */
 .chatbot-messages::-webkit-scrollbar {
   width: 6px;
@@ -975,5 +1155,120 @@ Como **administrador**, puedo ayudarte con:
 
 .chatbot-messages::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .chatbot-container {
+    bottom: 10px;
+    left: 10px;
+  }
+  
+  .chatbot-window {
+    width: calc(100vw - 40px);
+    max-width: 380px;
+    left: 10px;
+    bottom: 80px;
+    height: 500px;
+  }
+  
+  .help-bubble {
+    width: 180px;
+    left: 0;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .help-bubble {
+    background: #1f2937;
+    border-color: #374151;
+    color: white;
+  }
+  
+  .bubble-arrow {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .bubble-text {
+    color: #f9fafb;
+  }
+  
+  .bubble-subtext {
+    color: #d1d5db;
+  }
+  
+  .bubble-close {
+    background: #374151;
+    color: #d1d5db;
+  }
+  
+  .bubble-close:hover {
+    background: #ef4444;
+    color: white;
+  }
+  
+  .chatbot-toggle {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .chatbot-window {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .chatbot-messages {
+    background: linear-gradient(to bottom, #111827, #1f2937);
+  }
+  
+  .message-bot {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .typing-bubble {
+    background: #374151;
+    border-color: #4b5563;
+  }
+  
+  .typing-text {
+    color: #d1d5db;
+  }
+  
+  .quick-buttons-container {
+    background: #111827;
+    border-color: #374151;
+  }
+  
+  .quick-button {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .scroll-button {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .input-container {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .message-input {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .message-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
 }
 </style>
