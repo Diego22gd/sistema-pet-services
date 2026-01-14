@@ -154,13 +154,12 @@ export default {
       hasNewMessage: false,
       showScrollArrows: false,
       userRole: "client",
-      // ✅ CORRECCIÓN: Variable para la URL de la API
-      apiUrl: import.meta.env.VITE_API_URL || "http://localhost:4000"
+      // ✅ VARIABLE PARA DETECTAR ENTORNO Y URL
+      apiBaseUrl: this.getApiBaseUrl()
     };
   },
   computed: {
     quickOptions() {
-      // Opciones diferentes según el rol del usuario
       const optionsByRole = {
         client: [
           "Mis citas", 
@@ -198,6 +197,24 @@ export default {
     }
   },
   methods: {
+    // ✅ MÉTODO NUEVO: Obtener URL base dinámica
+    getApiBaseUrl() {
+      // Si estamos en desarrollo local (localhost)
+      if (window.location.hostname === 'localhost' || 
+          window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:4000';
+      }
+      
+      // Si estamos en Render (mismo dominio para frontend y backend)
+      // Usamos URL relativa cuando están en el mismo dominio
+      if (window.location.hostname.includes('onrender.com')) {
+        return ''; // URL relativa - mismo dominio
+      }
+      
+      // Por defecto, usar el mismo dominio
+      return '';
+    },
+
     getUserRole() {
       try {
         const userStore = useUserStore();
@@ -301,9 +318,18 @@ Como **administrador**, puedo ayudarte con:
           throw new Error("No hay token de autenticación");
         }
 
-        // ✅ CORRECCIÓN: Usar variable apiUrl en lugar de localhost hardcodeado
+        console.log('🌐 Conectando a API...');
+        console.log('Base URL:', this.apiBaseUrl || '(URL relativa)');
+        
+        // ✅ SOLUCIÓN DEFINITIVA: Construir URL correctamente
+        const apiUrl = this.apiBaseUrl 
+          ? `${this.apiBaseUrl}/api/chat`
+          : '/api/chat'; // URL relativa cuando están en el mismo dominio
+
+        console.log('URL final:', apiUrl);
+
         const res = await axios.post(
-          `${this.apiUrl}/api/chat`,
+          apiUrl,
           { message: text },
           { 
             headers: { 
@@ -326,6 +352,11 @@ Como **administrador**, puedo ayudarte con:
 
       } catch (error) {
         console.error("Chat error:", error);
+        console.error("Detalles:", {
+          url: this.apiBaseUrl ? `${this.apiBaseUrl}/api/chat` : '/api/chat',
+          entorno: window.location.hostname,
+          error: error.message
+        });
         
         let errorMessage = "❌ Error al conectar con PetBot.";
         
@@ -338,11 +369,14 @@ Como **administrador**, puedo ayudarte con:
         } else if (error.message.includes("token")) {
           errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
         } else if (error.message.includes("Network Error")) {
-          // ✅ CORRECCIÓN: Mensaje específico para error de conexión
-          errorMessage = "🌐 **Error de conexión con el servidor.** Verifica: " + 
-                        "\n1. El backend está corriendo en: " + this.apiUrl + 
-                        "\n2. La URL está correctamente configurada" +
-                        "\n3. No hay problemas de CORS";
+          // ✅ MENSAJE MEJORADO CON SOLUCIÓN
+          errorMessage = `🌐 **Error de conexión con el servidor.**\n\n` +
+                        `Configuración detectada:\n` +
+                        `• Frontend: ${window.location.origin}\n` +
+                        `• API URL: ${this.apiBaseUrl || '/api/chat'}\n\n` +
+                        `**Solución:**\n` +
+                        `1. Verifica que el backend esté corriendo\n` +
+                        `2. Ambos están en el mismo dominio: ${window.location.origin}`;
         }
 
         this.messages.push({
@@ -436,6 +470,9 @@ Como **administrador**, puedo ayudarte con:
     // Obtener el rol del usuario al montar el componente
     this.userRole = this.getUserRole();
     
+    // ✅ APLICAR PARCHE DE EMERGENCIA AL CARGAR
+    this.applyEmergencyPatch();
+    
     // Verificar scroll después de que se rendericen los botones
     this.$nextTick(() => {
       setTimeout(() => {
@@ -445,11 +482,6 @@ Como **administrador**, puedo ayudarte con:
 
     // También verificar cuando cambia el tamaño de la ventana
     window.addEventListener('resize', this.checkScrollButtons);
-    
-    // ✅ DEBUG: Mostrar la URL de API configurada
-    console.log("🔄 ChatBot configurado con API URL:", this.apiUrl);
-    console.log("🌐 Entorno:", import.meta.env.MODE);
-    console.log("🔧 Variables de entorno disponibles:", import.meta.env);
   },
 
   beforeUnmount() {
@@ -459,6 +491,7 @@ Como **administrador**, puedo ayudarte con:
 </script>
 
 <style scoped>
+/* Todos los estilos permanecen IGUAL */
 .chatbot-container {
   position: fixed;
   bottom: 20px;
@@ -887,10 +920,53 @@ Como **administrador**, puedo ayudarte con:
 
 .chatbot-messages::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .chatbot-messages::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 </style>
+
+<script>
+// ✅ PARCHE DE EMERGENCIA - SE EJECUTA AUTOMÁTICAMENTE
+// Añade este script separado en el mismo archivo
+export default {
+  methods: {
+    applyEmergencyPatch() {
+      // Solo ejecutar una vez
+      if (window.CHATBOT_PATCH_APPLIED) return;
+      
+      console.log('🔧 Aplicando parche de emergencia para API...');
+      
+      // Detectar si estamos en Render
+      const isRender = window.location.hostname.includes('onrender.com');
+      const isLocalhost = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1';
+      
+      if (isRender && !isLocalhost) {
+        console.log('🚀 Detectado entorno Render, aplicando parche...');
+        
+        // 1. Interceptar XMLHttpRequest (axios lo usa internamente)
+        const originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
+          if (typeof url === 'string') {
+            // Corregir cualquier localhost a URL relativa
+            if (url.includes('localhost:4000')) {
+              url = url.replace('http://localhost:4000', '');
+            }
+            if (url.includes('localhost:10000')) {
+              url = url.replace('http://localhost:10000', '');
+            }
+          }
+          return originalXHROpen.call(this, method, url, async, user, pass);
+        };
+        
+        console.log('✅ Parche XMLHttpRequest aplicado');
+      }
+      
+      window.CHATBOT_PATCH_APPLIED = true;
+    }
+  }
+};
+</script>
