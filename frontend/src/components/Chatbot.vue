@@ -153,9 +153,7 @@ export default {
       isLoading: false,
       hasNewMessage: false,
       showScrollArrows: false,
-      userRole: "client",
-      // ✅ VARIABLE PARA DETECTAR ENTORNO Y URL
-      apiBaseUrl: this.getApiBaseUrl()
+      userRole: "client"
     };
   },
   computed: {
@@ -194,11 +192,10 @@ export default {
       };
       
       return optionsByRole[this.userRole] || optionsByRole.client;
-    }
-  },
-  methods: {
-    // ✅ MÉTODO NUEVO: Obtener URL base dinámica
-    getApiBaseUrl() {
+    },
+
+    // ✅ Computada para obtener la URL base dinámica
+    apiBaseUrl() {
       // Si estamos en desarrollo local (localhost)
       if (window.location.hostname === 'localhost' || 
           window.location.hostname === '127.0.0.1') {
@@ -213,8 +210,9 @@ export default {
       
       // Por defecto, usar el mismo dominio
       return '';
-    },
-
+    }
+  },
+  methods: {
     getUserRole() {
       try {
         const userStore = useUserStore();
@@ -319,6 +317,7 @@ Como **administrador**, puedo ayudarte con:
         }
 
         console.log('🌐 Conectando a API...');
+        console.log('Entorno:', window.location.hostname);
         console.log('Base URL:', this.apiBaseUrl || '(URL relativa)');
         
         // ✅ SOLUCIÓN DEFINITIVA: Construir URL correctamente
@@ -326,7 +325,7 @@ Como **administrador**, puedo ayudarte con:
           ? `${this.apiBaseUrl}/api/chat`
           : '/api/chat'; // URL relativa cuando están en el mismo dominio
 
-        console.log('URL final:', apiUrl);
+        console.log('URL final de API:', apiUrl);
 
         const res = await axios.post(
           apiUrl,
@@ -352,10 +351,11 @@ Como **administrador**, puedo ayudarte con:
 
       } catch (error) {
         console.error("Chat error:", error);
-        console.error("Detalles:", {
+        console.error("Detalles del error:", {
           url: this.apiBaseUrl ? `${this.apiBaseUrl}/api/chat` : '/api/chat',
           entorno: window.location.hostname,
-          error: error.message
+          mensaje: error.message,
+          codigo: error.code
         });
         
         let errorMessage = "❌ Error al conectar con PetBot.";
@@ -368,15 +368,16 @@ Como **administrador**, puedo ayudarte con:
           errorMessage = "⏰ El servicio está tardando en responder. Intenta nuevamente.";
         } else if (error.message.includes("token")) {
           errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
-        } else if (error.message.includes("Network Error")) {
-          // ✅ MENSAJE MEJORADO CON SOLUCIÓN
+        } else if (error.message.includes("Network Error") || error.code === 'ERR_NETWORK') {
           errorMessage = `🌐 **Error de conexión con el servidor.**\n\n` +
-                        `Configuración detectada:\n` +
+                        `**Configuración detectada:**\n` +
                         `• Frontend: ${window.location.origin}\n` +
-                        `• API URL: ${this.apiBaseUrl || '/api/chat'}\n\n` +
-                        `**Solución:**\n` +
+                        `• API URL: ${this.apiBaseUrl || '/api/chat (URL relativa)'}\n` +
+                        `• Entorno: ${window.location.hostname.includes('localhost') ? 'Desarrollo' : 'Producción'}\n\n` +
+                        `**Posibles soluciones:**\n` +
                         `1. Verifica que el backend esté corriendo\n` +
-                        `2. Ambos están en el mismo dominio: ${window.location.origin}`;
+                        `2. Ambos servicios comparten el dominio: ${window.location.origin}\n` +
+                        `3. Intenta recargar la página (Ctrl + Shift + R)`;
         }
 
         this.messages.push({
@@ -443,6 +444,48 @@ Como **administrador**, puedo ayudarte con:
         .replace(/📊/g, '<span class="inline-block mr-1">📊</span>')
         .replace(/👥/g, '<span class="inline-block mr-1">👥</span>')
         .replace(/⚙️/g, '<span class="inline-block mr-1">⚙️</span>');
+    },
+
+    // ✅ Aplicar parche de emergencia para URLs incorrectas
+    applyEmergencyPatch() {
+      // Solo ejecutar una vez
+      if (window.CHATBOT_PATCH_APPLIED) return;
+      
+      console.log('🔧 Aplicando parche de emergencia para API...');
+      
+      // Detectar si estamos en producción (Render)
+      const isProduction = window.location.hostname.includes('onrender.com') && 
+                          !window.location.hostname.includes('localhost');
+      
+      if (isProduction) {
+        console.log('🚀 Detectado entorno Render en producción');
+        
+        // Interceptar XMLHttpRequest (axios lo usa internamente)
+        const originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
+          // Solo interceptar si es string y contiene localhost
+          if (typeof url === 'string') {
+            const originalUrl = url;
+            
+            // Corregir localhost:4000
+            if (url.includes('localhost:4000')) {
+              url = url.replace('http://localhost:4000', '');
+              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
+            }
+            
+            // Corregir localhost:10000
+            if (url.includes('localhost:10000')) {
+              url = url.replace('http://localhost:10000', '');
+              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
+            }
+          }
+          return originalXHROpen.call(this, method, url, async, user, pass);
+        };
+        
+        console.log('✅ Parche de emergencia aplicado para producción');
+      }
+      
+      window.CHATBOT_PATCH_APPLIED = true;
     }
   },
 
@@ -470,7 +513,7 @@ Como **administrador**, puedo ayudarte con:
     // Obtener el rol del usuario al montar el componente
     this.userRole = this.getUserRole();
     
-    // ✅ APLICAR PARCHE DE EMERGENCIA AL CARGAR
+    // ✅ Aplicar parche de emergencia al cargar
     this.applyEmergencyPatch();
     
     // Verificar scroll después de que se rendericen los botones
@@ -482,6 +525,14 @@ Como **administrador**, puedo ayudarte con:
 
     // También verificar cuando cambia el tamaño de la ventana
     window.addEventListener('resize', this.checkScrollButtons);
+
+    // ✅ Debug: Mostrar configuración actual
+    console.log('🤖 ChatBot inicializado', {
+      entorno: window.location.hostname,
+      apiBaseUrl: this.apiBaseUrl,
+      userRole: this.userRole,
+      timestamp: new Date().toISOString()
+    });
   },
 
   beforeUnmount() {
@@ -491,7 +542,6 @@ Como **administrador**, puedo ayudarte con:
 </script>
 
 <style scoped>
-/* Todos los estilos permanecen IGUAL */
 .chatbot-container {
   position: fixed;
   bottom: 20px;
@@ -541,7 +591,7 @@ Como **administrador**, puedo ayudarte con:
 /* Ventana del chat - POSICIÓN MÁS ALTA */
 .chatbot-window {
   position: fixed;
-  bottom: 90px; /* Más arriba que antes */
+  bottom: 90px;
   left: 20px;
   width: 380px;
   height: 520px;
@@ -746,12 +796,12 @@ Como **administrador**, puedo ayudarte con:
   overflow-x: auto;
   padding-bottom: 4px;
   scroll-behavior: smooth;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .quick-buttons-scroll::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
 }
 
 .quick-button {
@@ -927,46 +977,3 @@ Como **administrador**, puedo ayudarte con:
   background: #94a3b8;
 }
 </style>
-
-<script>
-// ✅ PARCHE DE EMERGENCIA - SE EJECUTA AUTOMÁTICAMENTE
-// Añade este script separado en el mismo archivo
-export default {
-  methods: {
-    applyEmergencyPatch() {
-      // Solo ejecutar una vez
-      if (window.CHATBOT_PATCH_APPLIED) return;
-      
-      console.log('🔧 Aplicando parche de emergencia para API...');
-      
-      // Detectar si estamos en Render
-      const isRender = window.location.hostname.includes('onrender.com');
-      const isLocalhost = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1';
-      
-      if (isRender && !isLocalhost) {
-        console.log('🚀 Detectado entorno Render, aplicando parche...');
-        
-        // 1. Interceptar XMLHttpRequest (axios lo usa internamente)
-        const originalXHROpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
-          if (typeof url === 'string') {
-            // Corregir cualquier localhost a URL relativa
-            if (url.includes('localhost:4000')) {
-              url = url.replace('http://localhost:4000', '');
-            }
-            if (url.includes('localhost:10000')) {
-              url = url.replace('http://localhost:10000', '');
-            }
-          }
-          return originalXHROpen.call(this, method, url, async, user, pass);
-        };
-        
-        console.log('✅ Parche XMLHttpRequest aplicado');
-      }
-      
-      window.CHATBOT_PATCH_APPLIED = true;
-    }
-  }
-};
-</script>
