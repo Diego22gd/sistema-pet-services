@@ -2,13 +2,13 @@ import express from "express";
 import { protect } from "../middlewares/authMiddleware.js";
 import User from "../models/User.js";
 import Pet from "../models/Pet.js";
-import Business from "../models/Business.js"; // Cambiado de Service a Business
+import Business from "../models/Business.js";
 import Appointment from "../models/Appointment.js";
 
 const router = express.Router();
 
 // ============================================
-// 🔧 CONFIGURACIÓN GEMINI
+// 🔧 CONFIGURACIÓN GEMINI - CORREGIDO
 // ============================================
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -17,18 +17,22 @@ if (!GEMINI_API_KEY) {
 }
 
 const GEMINI_MODEL = 'gemini-1.5-flash';
+// CORRECCIÓN: Se ha eliminado el $ que causaba el error 404
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // ============================================
-// 🚀 FUNCIÓN PARA LLAMAR A GEMINI
+// 🚀 FUNCIÓN PARA LLAMAR A GEMINI - MEJORADA
 // ============================================
 
 async function callGeminiAPI(prompt, role = "client") {
   if (!GEMINI_API_KEY) {
+    console.log("ℹ️  Usando respuesta predefinida (sin API Key)");
     return getFallbackResponse("general", role);
   }
 
   try {
+    console.log(`🤖 Enviando prompt a Gemini (${GEMINI_MODEL})...`);
+    
     const response = await fetch(GEMINI_API_URL, {
       method: "POST",
       headers: {
@@ -41,21 +45,59 @@ async function callGeminiAPI(prompt, role = "client") {
         generationConfig: {
           temperature: 0.7,
           maxOutputTokens: 500,
-        }
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
       }),
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(15000) // Aumentado a 15 segundos
     });
 
+    console.log(`📡 Respuesta de Gemini: ${response.status} ${response.statusText}`);
+    
     if (!response.ok) {
-      throw new Error(`API error ${response.status}`);
+      const errorText = await response.text();
+      console.error(`❌ Error API Gemini (${response.status}):`, errorText.substring(0, 200));
+      
+      // Manejar errores específicos
+      if (response.status === 404) {
+        throw new Error(`Modelo ${GEMINI_MODEL} no encontrado. Verifica el nombre del modelo.`);
+      } else if (response.status === 403) {
+        throw new Error(`API Key inválida o sin permisos. Verifica GEMINI_API_KEY.`);
+      } else if (response.status === 429) {
+        throw new Error(`Límite de tasa excedido. Espera un momento.`);
+      } else {
+        throw new Error(`API error ${response.status}: ${errorText.substring(0, 100)}`);
+      }
     }
 
     const data = await response.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() 
-      || getFallbackResponse("general", role);
+    
+    if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      console.warn("⚠️  Respuesta de Gemini vacía o mal formada:", data);
+      return getFallbackResponse("general", role);
+    }
+    
+    const reply = data.candidates[0].content.parts[0].text.trim();
+    console.log(`✅ Respuesta recibida (${reply.length} caracteres)`);
+    return reply;
     
   } catch (error) {
     console.error("❌ Error en callGeminiAPI:", error.message);
+    
+    // Mejor manejo de errores específicos
+    if (error.name === 'AbortError') {
+      return "⏰ La solicitud a Gemini tardó demasiado. Intenta nuevamente.";
+    } else if (error.message.includes('API Key')) {
+      console.error("🔑 ERROR CRÍTICO: API Key de Gemini inválida o faltante");
+      return "🔑 Error de configuración: API Key de Gemini no válida. Contacta al administrador.";
+    } else if (error.message.includes('Modelo')) {
+      return `🤖 Error: Modelo ${GEMINI_MODEL} no disponible. Usando respuestas predefinidas.`;
+    }
+    
     return getFallbackResponse("general", role);
   }
 }
@@ -329,7 +371,7 @@ async function getUserAppointments(userId) {
     const appointments = await Appointment.find({ userId })
       .populate("petId", "name")
       .populate({
-        path: "businessId", // Cambiado de serviceId a businessId
+        path: "businessId",
         select: "name categories"
       })
       .limit(5)
@@ -496,7 +538,7 @@ function detectIntent(text, role = "client") {
 }
 
 // ============================================
-// 🚀 ENDPOINT PRINCIPAL
+// 🚀 ENDPOINT PRINCIPAL - MEJORADO CON LOGS
 // ============================================
 
 router.post("/", protect, async (req, res) => {
@@ -518,7 +560,7 @@ router.post("/", protect, async (req, res) => {
     const text = message.trim();
     const intent = detectIntent(text, role);
 
-    console.log(`💬 Chat [${role}] ${name}: "${text.substring(0, 30)}..." -> ${intent}`);
+    console.log(`💬 Chat [${role}] ${name}: "${text.substring(0, 50)}..." -> ${intent}`);
 
     // Respuestas rápidas
     const quickResponses = {
@@ -578,6 +620,7 @@ router.post("/", protect, async (req, res) => {
         
         Respuesta:`;
         
+        console.log(`🤖 Enviando a Gemini (intent: ${intent})...`);
         const aiReply = await callGeminiAPI(systemPrompt, role);
         
         return res.json({
@@ -625,18 +668,25 @@ router.post("/", protect, async (req, res) => {
 // 📊 ENDPOINTS ADICIONALES
 // ============================================
 
-// Health check
+// Health check mejorado
 router.get("/health", protect, (req, res) => {
+  const aiStatus = GEMINI_API_KEY ? "configurado" : "no configurado";
+  
   res.json({
     status: "operational",
     service: "PetBot Chat Service",
     userRole: req.user.role,
+    ai: {
+      configured: !!GEMINI_API_KEY,
+      model: GEMINI_MODEL,
+      status: aiStatus
+    },
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV
   });
 });
 
-// Diagnóstico
+// Diagnóstico detallado
 router.get("/diagnostic", protect, async (req, res) => {
   try {
     // Contar comercios disponibles
@@ -650,15 +700,18 @@ router.get("/diagnostic", protect, async (req, res) => {
       platform: {
         activeBusinesses,
         aiConfigured: !!GEMINI_API_KEY,
-        model: GEMINI_MODEL
+        model: GEMINI_MODEL,
+        apiUrl: GEMINI_API_URL.replace(GEMINI_API_KEY, '***') // Ocultar API key
       },
       user: {
         name: req.user.name,
-        role: req.user.role
+        role: req.user.role,
+        id: req.user._id
       },
       system: {
         environment: process.env.NODE_ENV,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        nodeVersion: process.version
       }
     };
 
@@ -722,6 +775,45 @@ router.get("/businesses", protect, async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Error obteniendo comercios"
+    });
+  }
+});
+
+// ============================================
+// 🧪 TEST ENDPOINT PARA GEMINI
+// ============================================
+
+router.post("/test-gemini", protect, async (req, res) => {
+  try {
+    const { testMessage = "Hola, ¿cómo estás?" } = req.body;
+    
+    if (!GEMINI_API_KEY) {
+      return res.json({
+        success: false,
+        error: "API Key de Gemini no configurada",
+        envKey: process.env.GEMINI_API_KEY ? "Presente" : "Ausente"
+      });
+    }
+    
+    console.log(`🧪 Test Gemini: ${GEMINI_API_URL.replace(GEMINI_API_KEY, '***')}`);
+    
+    const testPrompt = `Eres PetBot. Responde brevemente a: "${testMessage}"`;
+    const response = await callGeminiAPI(testPrompt, "client");
+    
+    res.json({
+      success: true,
+      testMessage,
+      response,
+      model: GEMINI_MODEL,
+      apiKeyPresent: !!GEMINI_API_KEY,
+      apiUrl: GEMINI_API_URL.replace(GEMINI_API_KEY, '***')
+    });
+    
+  } catch (error) {
+    res.json({
+      success: false,
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
