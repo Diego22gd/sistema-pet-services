@@ -887,7 +887,7 @@ Como **administrador**, puedo ayudarte con:
 
 .chatbot-messages::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .chatbot-messages::-webkit-scrollbar-thumb:hover {
