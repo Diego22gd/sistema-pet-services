@@ -153,7 +153,9 @@ export default {
       isLoading: false,
       hasNewMessage: false,
       showScrollArrows: false,
-      userRole: "client"
+      userRole: "client",
+      // ✅ CORRECCIÓN: Variable para la URL de la API
+      apiUrl: import.meta.env.VITE_API_URL || "http://localhost:4000"
     };
   },
   computed: {
@@ -299,8 +301,9 @@ Como **administrador**, puedo ayudarte con:
           throw new Error("No hay token de autenticación");
         }
 
+        // ✅ CORRECCIÓN: Usar variable apiUrl en lugar de localhost hardcodeado
         const res = await axios.post(
-          "http://localhost:4000/api/chat",
+          `${this.apiUrl}/api/chat`,
           { message: text },
           { 
             headers: { 
@@ -334,6 +337,12 @@ Como **administrador**, puedo ayudarte con:
           errorMessage = "⏰ El servicio está tardando en responder. Intenta nuevamente.";
         } else if (error.message.includes("token")) {
           errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
+        } else if (error.message.includes("Network Error")) {
+          // ✅ CORRECCIÓN: Mensaje específico para error de conexión
+          errorMessage = "🌐 **Error de conexión con el servidor.** Verifica: " + 
+                        "\n1. El backend está corriendo en: " + this.apiUrl + 
+                        "\n2. La URL está correctamente configurada" +
+                        "\n3. No hay problemas de CORS";
         }
 
         this.messages.push({
@@ -436,6 +445,11 @@ Como **administrador**, puedo ayudarte con:
 
     // También verificar cuando cambia el tamaño de la ventana
     window.addEventListener('resize', this.checkScrollButtons);
+    
+    // ✅ DEBUG: Mostrar la URL de API configurada
+    console.log("🔄 ChatBot configurado con API URL:", this.apiUrl);
+    console.log("🌐 Entorno:", import.meta.env.MODE);
+    console.log("🔧 Variables de entorno disponibles:", import.meta.env);
   },
 
   beforeUnmount() {
