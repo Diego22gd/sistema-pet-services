@@ -8,7 +8,7 @@ import Appointment from "../models/Appointment.js";
 const router = express.Router();
 
 // ============================================
-// 🔧 CONFIGURACIÓN GEMINI - CORREGIDO
+// 🔧 CONFIGURACIÓN GEMINI - ACTUALIZADA
 // ============================================
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -16,12 +16,13 @@ if (!GEMINI_API_KEY) {
   console.warn("⚠️  ADVERTENCIA: Sin API Key. Usando respuestas predefinidas.");
 }
 
-const GEMINI_MODEL = 'gemini-1.5-flash';
-// CORRECCIÓN: Se ha eliminado el $ que causaba el error 404
+// CAMBIO: Usar modelo compatible con v1beta
+// Opciones compatibles: gemini-1.5-pro, gemini-1.0-pro, gemini-pro
+const GEMINI_MODEL = 'gemini-1.5-pro'; // Cambiado a modelo compatible
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // ============================================
-// 🚀 FUNCIÓN PARA LLAMAR A GEMINI - MEJORADA
+// 🚀 FUNCIÓN PARA LLAMAR A GEMINI - ACTUALIZADA
 // ============================================
 
 async function callGeminiAPI(prompt, role = "client") {
@@ -32,6 +33,7 @@ async function callGeminiAPI(prompt, role = "client") {
 
   try {
     console.log(`🤖 Enviando prompt a Gemini (${GEMINI_MODEL})...`);
+    console.log(`🔗 URL: ${GEMINI_API_URL.replace(GEMINI_API_KEY, '***')}`);
     
     const response = await fetch(GEMINI_API_URL, {
       method: "POST",
@@ -44,40 +46,63 @@ async function callGeminiAPI(prompt, role = "client") {
         }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 500,
+          maxOutputTokens: 1000, // Aumentado para respuestas más completas
+          topP: 0.8,
+          topK: 40
         },
         safetySettings: [
           {
             category: "HARM_CATEGORY_HARASSMENT",
             threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH", 
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
           }
         ]
       }),
-      signal: AbortSignal.timeout(15000) // Aumentado a 15 segundos
+      signal: AbortSignal.timeout(20000) // 20 segundos
     });
 
     console.log(`📡 Respuesta de Gemini: ${response.status} ${response.statusText}`);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ Error API Gemini (${response.status}):`, errorText.substring(0, 200));
+      console.error(`❌ Error API Gemini (${response.status}):`, errorText.substring(0, 300));
       
       // Manejar errores específicos
       if (response.status === 404) {
-        throw new Error(`Modelo ${GEMINI_MODEL} no encontrado. Verifica el nombre del modelo.`);
+        throw new Error(`Modelo ${GEMINI_MODEL} no encontrado. Prueba con 'gemini-pro' o 'gemini-1.0-pro'.`);
       } else if (response.status === 403) {
-        throw new Error(`API Key inválida o sin permisos. Verifica GEMINI_API_KEY.`);
+        throw new Error(`API Key inválida o sin permisos. Verifica GEMINI_API_KEY en Render.`);
       } else if (response.status === 429) {
         throw new Error(`Límite de tasa excedido. Espera un momento.`);
+      } else if (response.status === 400) {
+        throw new Error(`Solicitud incorrecta: ${errorText.substring(0, 150)}`);
       } else {
-        throw new Error(`API error ${response.status}: ${errorText.substring(0, 100)}`);
+        throw new Error(`API error ${response.status}: ${errorText.substring(0, 150)}`);
       }
     }
 
     const data = await response.json();
     
     if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      console.warn("⚠️  Respuesta de Gemini vacía o mal formada:", data);
+      console.warn("⚠️  Respuesta de Gemini vacía o mal formada:", JSON.stringify(data).substring(0, 200));
+      
+      // Verificar si hay bloqueo por seguridad
+      if (data?.promptFeedback?.blockReason) {
+        console.warn(`🚫 Bloqueado por: ${data.promptFeedback.blockReason}`);
+        return "Lo siento, no puedo responder a esa solicitud por razones de seguridad. ¿Puedes reformular tu pregunta?";
+      }
+      
       return getFallbackResponse("general", role);
     }
     
@@ -90,12 +115,15 @@ async function callGeminiAPI(prompt, role = "client") {
     
     // Mejor manejo de errores específicos
     if (error.name === 'AbortError') {
-      return "⏰ La solicitud a Gemini tardó demasiado. Intenta nuevamente.";
+      return "⏰ La solicitud a Gemini tardó demasiado. Intenta nuevamente con una pregunta más específica.";
     } else if (error.message.includes('API Key')) {
-      console.error("🔑 ERROR CRÍTICO: API Key de Gemini inválida o faltante");
-      return "🔑 Error de configuración: API Key de Gemini no válida. Contacta al administrador.";
+      console.error("🔑 ERROR: Verifica GEMINI_API_KEY en variables de entorno de Render");
+      return "🔑 Configuración de API incompleta. El asistente está usando respuestas predefinidas.";
     } else if (error.message.includes('Modelo')) {
-      return `🤖 Error: Modelo ${GEMINI_MODEL} no disponible. Usando respuestas predefinidas.`;
+      console.error(`🤖 ERROR: Modelo ${GEMINI_MODEL} no disponible`);
+      return `🤖 Configuración de modelo incorrecta. Usando respuestas predefinidas.`;
+    } else if (error.message.includes('400')) {
+      return "📝 Error en la solicitud. ¿Podrías reformular tu pregunta?";
     }
     
     return getFallbackResponse("general", role);
@@ -166,7 +194,18 @@ Para precios exactos, te recomiendo:
 2. Contactar directamente al proveedor
 3. Solicitar cotización personalizada
 
-¿Te ayudo a buscar algún comercio específico?`
+¿Te ayudo a buscar algún comercio específico?`,
+
+      book_appointment: `📅 **Agendar una Cita**
+
+Para agendar una cita:
+1. Busca comercios en tu área
+2. Selecciona el comercio que prefieras
+3. Revisa los servicios disponibles
+4. Elige fecha y hora
+5. Confirma tu cita
+
+¿Te ayudo a buscar comercios para agendar tu cita?`
     },
 
     provider: {
@@ -185,7 +224,18 @@ Te ayudo con:
 
 Consulta tus citas del día en el panel de proveedor, sección "Agenda del Día".
 
-¿Necesitas ayuda para gestionar alguna cita específica?`
+¿Necesitas ayuda para gestionar alguna cita específica?`,
+
+      provider_business: `🏪 **Tu Comercio**
+
+Gestiona tu comercio desde:
+• Perfil del comercio (información, fotos)
+• Servicios ofrecidos
+• Horarios de atención
+• Precios y promociones
+• Disponibilidad
+
+¿Qué aspecto de tu comercio quieres actualizar?`
     },
 
     admin: {
@@ -198,7 +248,19 @@ Consulta tus citas del día en el panel de proveedor, sección "Agenda del Día"
 • ⚙️ Configuración de la plataforma
 • 🛡️ Moderación y seguridad
 
-¿Qué área necesitas revisar?`
+¿Qué área necesitas revisar?`,
+
+      admin_pending_businesses: `⏳ **Comercios Pendientes**
+
+Revisa los comercios pendientes de aprobación en el panel de administración.
+
+Para cada comercio puedes:
+• Ver detalles completos
+• Aprobar o rechazar
+• Solicitar información adicional
+• Contactar al proveedor
+
+¿Necesitas ayuda con algún caso específico?`
     }
   };
 
@@ -207,7 +269,7 @@ Consulta tus citas del día en el panel de proveedor, sección "Agenda del Día"
 }
 
 // ============================================
-// 📊 FUNCIONES CON DATOS REALES (ACTUALIZADAS)
+// 📊 FUNCIONES CON DATOS REALES
 // ============================================
 
 async function generateResponseWithData(intent, user, userMessage = "") {
@@ -253,7 +315,7 @@ async function getBusinessesList(user) {
       approved: true,
       isDeleted: { $ne: true }
     })
-    .select('name categories description averageServicePrice address')
+    .select('name categories description averageServicePrice address rating')
     .limit(6)
     .sort({ rating: -1, views: -1 })
     .lean();
@@ -290,6 +352,11 @@ async function getBusinessesList(user) {
         response += `   🏠 ${shortAddr}\n`;
       }
       
+      // Calificación
+      if (business.rating > 0) {
+        response += `   ⭐ Calificación: ${business.rating.toFixed(1)}/5\n`;
+      }
+      
       response += `\n`;
     });
 
@@ -315,8 +382,9 @@ async function getServicesList(user) {
       isDeleted: { $ne: true },
       'services.isActive': true
     })
-    .select('name services')
+    .select('name services rating')
     .limit(5)
+    .sort({ rating: -1 })
     .lean();
 
     if (businesses.length === 0) {
@@ -331,12 +399,17 @@ async function getServicesList(user) {
         const activeServices = business.services.filter(s => s.isActive !== false);
         
         if (activeServices.length > 0) {
-          response += `**${bizIndex + 1}. ${business.name}:**\n`;
+          response += `**${bizIndex + 1}. ${business.name}**`;
+          if (business.rating > 0) {
+            response += ` ⭐ ${business.rating.toFixed(1)}`;
+          }
+          response += `:\n`;
           
           activeServices.slice(0, 3).forEach((service, svcIndex) => {
             serviceCount++;
             response += `   ◦ **${service.name}**`;
             if (service.price) response += ` - $${service.price}`;
+            if (service.duration) response += ` (${service.duration} min)`;
             if (service.description) {
               const shortDesc = service.description.substring(0, 40);
               response += `\n     ${shortDesc}...`;
@@ -405,7 +478,7 @@ async function getUserAppointments(userId) {
 async function getUserPets(userId) {
   try {
     const pets = await Pet.find({ owner: userId })
-      .select('name type breed age')
+      .select('name type breed age medicalNotes')
       .limit(5)
       .lean();
 
@@ -420,6 +493,10 @@ async function getUserPets(userId) {
       response += `   🐕 Tipo: ${pet.type || 'No especificado'}\n`;
       if (pet.breed) response += `   🧬 Raza: ${pet.breed}\n`;
       if (pet.age) response += `   📅 Edad: ${pet.age}\n`;
+      if (pet.medicalNotes) {
+        const shortNotes = pet.medicalNotes.substring(0, 50);
+        response += `   🏥 Notas: ${shortNotes}...\n`;
+      }
       response += `\n`;
     });
 
@@ -427,6 +504,7 @@ async function getUserPets(userId) {
     response += `• Agregar más mascotas\n`;
     response += `• Editar información\n`;
     response += `• Ver historial de cada mascota\n`;
+    response += `• Agregar notas médicas\n`;
     
     return response;
   } catch (error) {
@@ -443,10 +521,11 @@ async function getProviderAppointments(providerId) {
       date: today,
       status: { $in: ['pending', 'confirmed'] }
     })
-      .populate("userId", "name")
+      .populate("userId", "name email")
       .populate("petId", "name")
       .populate("businessId", "name")
       .limit(10)
+      .sort({ time: 1 })
       .lean();
 
     if (appointments.length === 0) {
@@ -458,9 +537,14 @@ async function getProviderAppointments(providerId) {
     appointments.forEach((appt, index) => {
       response += `${index + 1}. **${appt.businessId?.name || 'Servicio'}**\n`;
       response += `   👤 Cliente: ${appt.userId?.name || 'Sin nombre'}\n`;
+      response += `   📧 Email: ${appt.userId?.email || 'No disponible'}\n`;
       response += `   🐾 Mascota: ${appt.petId?.name || 'Sin nombre'}\n`;
       response += `   ⏰ Hora: ${appt.time || 'Por confirmar'}\n`;
-      response += `   📊 Estado: ${appt.status}\n\n`;
+      response += `   📊 Estado: ${appt.status}\n`;
+      if (appt.notes) {
+        response += `   📝 Notas: ${appt.notes.substring(0, 40)}...\n`;
+      }
+      response += `\n`;
     });
 
     return response;
@@ -482,12 +566,32 @@ async function getAllBusinessesStats() {
       status: 'pending',
       isDeleted: { $ne: true }
     });
+    
+    // Obtener comercios recientes
+    const recentBusinesses = await Business.find({ 
+      isDeleted: { $ne: true }
+    })
+    .select('name status approved createdAt')
+    .sort({ createdAt: -1 })
+    .limit(3)
+    .lean();
 
-    return `📊 **Estadísticas de Comercios:**\n\n` +
-           `• Total registrados: ${totalBusinesses}\n` +
-           `• Activos y aprobados: ${activeBusinesses}\n` +
-           `• Pendientes de aprobación: ${pendingBusinesses}\n\n` +
-           `Revisa el panel de administración para más detalles y gestión.`;
+    let response = `📊 **Estadísticas de Comercios:**\n\n`;
+    response += `• Total registrados: ${totalBusinesses}\n`;
+    response += `• Activos y aprobados: ${activeBusinesses}\n`;
+    response += `• Pendientes de aprobación: ${pendingBusinesses}\n\n`;
+    
+    if (recentBusinesses.length > 0) {
+      response += `🆕 **Comercios recientes:**\n`;
+      recentBusinesses.forEach((biz, index) => {
+        response += `${index + 1}. ${biz.name} - ${biz.status} ${biz.approved ? '✅' : '⏳'}\n`;
+      });
+      response += `\n`;
+    }
+    
+    response += `Revisa el panel de administración para más detalles y gestión.`;
+    
+    return response;
   } catch (error) {
     console.error("Error obteniendo stats:", error);
     return `Consulta el panel de administración para ver el estado de los comercios.`;
@@ -495,7 +599,7 @@ async function getAllBusinessesStats() {
 }
 
 // ============================================
-// 🎯 DETECCIÓN DE INTENCIONES ACTUALIZADA
+// 🎯 DETECCIÓN DE INTENCIONES MEJORADA
 // ============================================
 
 function detectIntent(text, role = "client") {
@@ -504,41 +608,51 @@ function detectIntent(text, role = "client") {
   const lowerText = text.toLowerCase().trim();
 
   // Intents básicos
-  if (/(hola|buenos|buenas|saludos)/i.test(lowerText)) return "greeting";
-  if (/(gracias|thank|merci)/i.test(lowerText)) return "thanks";
-  if (/(adiós|chao|bye|nos vemos)/i.test(lowerText)) return "goodbye";
-  if (/(ayuda|help|soporte)/i.test(lowerText)) return "help";
-  if (/(quién eres|qué eres|tu nombre)/i.test(lowerText)) return "about";
+  if (/(hola|buenos|buenas|saludos|hey|hello)/i.test(lowerText)) return "greeting";
+  if (/(gracias|thank|merci|agradecido)/i.test(lowerText)) return "thanks";
+  if (/(adiós|chao|bye|nos vemos|hasta luego)/i.test(lowerText)) return "goodbye";
+  if (/(ayuda|help|soporte|asistencia|no entiendo)/i.test(lowerText)) return "help";
+  if (/(quién eres|qué eres|tu nombre|presentate)/i.test(lowerText)) return "about";
 
   // Intents para clientes
   if (role === "client") {
-    if (/(comercios|negocios|tiendas|veterinarias|peluquer[ií]as)/i.test(lowerText)) return "list_businesses";
-    if (/(servicios|qué ofrecen|tipos de servicio)/i.test(lowerText)) return "list_services";
-    if (/(mis citas|citas agendadas|próximas citas)/i.test(lowerText)) return "get_user_appointments";
-    if (/(mis mascotas|mascotas registradas)/i.test(lowerText)) return "get_user_pets";
-    if (/(agendar cita|nueva cita|reservar)/i.test(lowerText)) return "book_appointment";
-    if (/(precios|costos|tarifas|cuánto cuesta)/i.test(lowerText)) return "prices";
-    if (/(emergencia|urgencia|veterinario emergencia)/i.test(lowerText)) return "emergency";
+    if (/(comercios|negocios|tiendas|veterinarias|peluquer[ií]as|proveedores|donde encuentro)/i.test(lowerText)) return "list_businesses";
+    if (/(servicios|qué ofrecen|tipos de servicio|que hacen|opciones)/i.test(lowerText)) return "list_services";
+    if (/(mis citas|citas agendadas|próximas citas|tengo cita|reservas)/i.test(lowerText)) return "get_user_appointments";
+    if (/(mis mascotas|mascotas registradas|animales|perros|gatos)/i.test(lowerText)) return "get_user_pets";
+    if (/(agendar cita|nueva cita|reservar|hacer cita|programar|sacar hora)/i.test(lowerText)) return "book_appointment";
+    if (/(precios|costos|tarifas|cuánto cuesta|valor|dinero)/i.test(lowerText)) return "prices";
+    if (/(emergencia|urgencia|veterinario emergencia|accidente|herido|enfermo)/i.test(lowerText)) return "emergency";
+    if (/(cómo funciona|qué es petservices|para qué sirve|explicame)/i.test(lowerText)) return "how_it_works";
   }
   
   // Intents para proveedores
   else if (role === "provider") {
-    if (/(citas hoy|agenda hoy|hoy tengo)/i.test(lowerText)) return "provider_today_appointments";
-    if (/(mi comercio|perfil comercio|mi negocio)/i.test(lowerText)) return "provider_business";
+    if (/(citas hoy|agenda hoy|hoy tengo|para hoy|este día)/i.test(lowerText)) return "provider_today_appointments";
+    if (/(mi comercio|perfil comercio|mi negocio|mi empresa|mi tienda)/i.test(lowerText)) return "provider_business";
+    if (/(mis ingresos|ganancias|ventas|facturación|dinero ganado)/i.test(lowerText)) return "provider_earnings";
+    if (/(clientes|mis clientes|usuarios atendidos)/i.test(lowerText)) return "provider_clients";
+    if (/(reseñas|calificaciones|opiniones|comentarios)/i.test(lowerText)) return "provider_reviews";
   }
   
   // Intents para administradores
   else if (role === "admin") {
-    if (/(comercios|negocios registrados|todos los comercios)/i.test(lowerText)) return "admin_list_businesses";
-    if (/(proveedores pendientes|aprobar proveedores)/i.test(lowerText)) return "admin_pending_businesses";
-    if (/(usuarios|listar usuarios)/i.test(lowerText)) return "admin_list_users";
+    if (/(comercios|negocios registrados|todos los comercios|proveedores)/i.test(lowerText)) return "admin_list_businesses";
+    if (/(proveedores pendientes|aprobar proveedores|solicitudes|pendientes)/i.test(lowerText)) return "admin_pending_businesses";
+    if (/(usuarios|listar usuarios|clientes registrados)/i.test(lowerText)) return "admin_list_users";
+    if (/(reportes|estadísticas|métricas|analítica)/i.test(lowerText)) return "admin_reports";
+    if (/(problemas|errores|incidencias|soporte técnico)/i.test(lowerText)) return "admin_issues";
   }
+
+  // Intents generales adicionales
+  if (/(contacto|teléfono|email|correo|dirección|dónde están)/i.test(lowerText)) return "contact";
+  if (/(horarios|cuándo abren|disponibilidad)/i.test(lowerText)) return "schedule";
 
   return "fallback";
 }
 
 // ============================================
-// 🚀 ENDPOINT PRINCIPAL - MEJORADO CON LOGS
+// 🚀 ENDPOINT PRINCIPAL - OPTIMIZADO
 // ============================================
 
 router.post("/", protect, async (req, res) => {
@@ -564,11 +678,55 @@ router.post("/", protect, async (req, res) => {
 
     // Respuestas rápidas
     const quickResponses = {
-      greeting: `¡Hola ${name}! 👋 Soy PetBot, ¿en qué puedo ayudarte?`,
-      thanks: `¡De nada! 😊 ¿Algo más en lo que pueda asistirte?`,
-      goodbye: `¡Hasta luego ${name}! Que tengas un excelente día. 🐾👋`,
-      help: `¡Claro! Puedo ayudarte con información de comercios, servicios, tus mascotas, citas y más. ¿Qué necesitas específicamente?`,
-      about: `¡Hola! Soy PetBot 🤖, el asistente virtual de PetServices. Te ayudo a encontrar comercios, agendar citas, gestionar tus mascotas y resolver dudas sobre la plataforma.`
+      greeting: `¡Hola ${name}! 👋 Soy PetBot, tu asistente virtual de PetServices. ¿En qué puedo ayudarte hoy?`,
+      thanks: `¡De nada ${name}! 😊 ¿Hay algo más en lo que pueda asistirte?`,
+      goodbye: `¡Hasta luego ${name}! Que tengas un excelente día junto a tus mascotas. 🐾👋`,
+      help: `¡Claro que sí ${name}! Puedo ayudarte con:
+• Información de comercios y servicios
+• Gestión de tus citas
+• Información de tus mascotas
+• Precios y disponibilidad
+• Soporte general
+
+¿Qué necesitas específicamente?`,
+      about: `¡Hola! Soy PetBot 🤖, el asistente virtual de PetServices. 
+Estoy aquí para ayudarte a encontrar los mejores servicios para tus mascotas, 
+gestionar tus citas y resolver cualquier duda sobre la plataforma.
+
+¿En qué puedo ayudarte hoy?`,
+      how_it_works: `**📱 Cómo funciona PetServices:**
+
+1. **Busca** comercios especializados cerca de ti
+2. **Explora** servicios y precios
+3. **Agenda** citas fácilmente
+4. **Gestiona** tus mascotas en un solo lugar
+5. **Califica** tu experiencia
+
+Todo diseñado para hacerte la vida más fácil junto a tus mascotas. 🐕❤️`,
+      contact: `**📞 Contacto PetServices:**
+
+• 📧 Email: soporte@petservices.com
+• 📱 Teléfono: +1 (555) 123-4567
+• 🏢 Dirección: Av. Principal 123, Ciudad
+
+**Horarios de atención:**
+Lunes a Viernes: 9:00 AM - 6:00 PM
+Sábados: 10:00 AM - 2:00 PM
+
+¿En qué más puedo ayudarte?`,
+      schedule: `**🕒 Horarios de atención:**
+
+La mayoría de los comercios trabajan:
+• Lunes a Viernes: 8:00 AM - 7:00 PM
+• Sábados: 9:00 AM - 5:00 PM
+• Algunos abren domingos: 10:00 AM - 2:00 PM
+
+**Para horarios específicos:**
+1. Busca el comercio que te interesa
+2. Revisa su perfil completo
+3. Contacta directamente para confirmar
+
+¿Buscas algún tipo de comercio en particular?`
     };
 
     if (quickResponses[intent]) {
@@ -611,14 +769,26 @@ router.post("/", protect, async (req, res) => {
     }
 
     // Intents que usan IA
-    if (["book_appointment", "fallback", "provider_business", "admin_pending_businesses"].includes(intent)) {
+    const aiIntents = ["book_appointment", "fallback", "provider_business", 
+                      "admin_pending_businesses", "provider_earnings", 
+                      "provider_clients", "provider_reviews", "admin_reports",
+                      "admin_issues", "admin_list_users"];
+    
+    if (aiIntents.includes(intent)) {
       try {
-        const systemPrompt = `Eres PetBot, asistente de PetServices. Usuario (${role}: ${name}) pregunta: "${text}"
-        
-        Rol del usuario: ${role}
-        Responde en español, claro y conciso. Si no sabes algo, di "No tengo esa información, pero puedo ayudarte con..."
-        
-        Respuesta:`;
+        // Crear prompt contextualizado
+        let systemPrompt = `Eres PetBot, el asistente virtual de PetServices.
+Usuario: ${name} (Rol: ${role})
+Pregunta: "${text}"
+
+Instrucciones:
+• Responde en español claro y conciso
+• Mantén un tono amigable y profesional
+• Si no tienes la información, ofrece alternativas
+• Enfócate en servicios para mascotas
+• No inventes información que no tengas
+
+Respuesta:`;
         
         console.log(`🤖 Enviando a Gemini (intent: ${intent})...`);
         const aiReply = await callGeminiAPI(systemPrompt, role);
@@ -657,7 +827,7 @@ router.post("/", protect, async (req, res) => {
     
     return res.json({
       success: false,
-      reply: "😔 **Lo siento, hubo un error inesperado.** Por favor, intenta de nuevo en unos momentos.",
+      reply: "😔 **Lo siento, hubo un error inesperado.** Por favor, intenta de nuevo en unos momentos o contacta al soporte.",
       type: "error",
       responseTime: Date.now() - startTime
     });
@@ -665,28 +835,35 @@ router.post("/", protect, async (req, res) => {
 });
 
 // ============================================
-// 📊 ENDPOINTS ADICIONALES
+// 📊 ENDPOINTS DE DIAGNÓSTICO
 // ============================================
 
 // Health check mejorado
 router.get("/health", protect, (req, res) => {
-  const aiStatus = GEMINI_API_KEY ? "configurado" : "no configurado";
+  const aiStatus = GEMINI_API_KEY ? {
+    configured: true,
+    model: GEMINI_MODEL,
+    status: "configurado"
+  } : {
+    configured: false,
+    status: "usando respuestas predefinidas"
+  };
   
   res.json({
     status: "operational",
     service: "PetBot Chat Service",
-    userRole: req.user.role,
-    ai: {
-      configured: !!GEMINI_API_KEY,
-      model: GEMINI_MODEL,
-      status: aiStatus
+    user: {
+      name: req.user.name,
+      role: req.user.role
     },
+    ai: aiStatus,
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV || 'production',
+    responseTime: Date.now()
   });
 });
 
-// Diagnóstico detallado
+// Diagnóstico completo
 router.get("/diagnostic", protect, async (req, res) => {
   try {
     // Contar comercios disponibles
@@ -696,12 +873,40 @@ router.get("/diagnostic", protect, async (req, res) => {
       isDeleted: { $ne: true }
     });
 
+    // Test de conexión a Gemini
+    let geminiTest = { status: "not tested" };
+    if (GEMINI_API_KEY) {
+      try {
+        const testResponse = await fetch(GEMINI_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: "Hola" }] }],
+            generationConfig: { maxOutputTokens: 10 }
+          }),
+          signal: AbortSignal.timeout(5000)
+        });
+        geminiTest = {
+          status: testResponse.ok ? "connected" : "error",
+          statusCode: testResponse.status
+        };
+      } catch (error) {
+        geminiTest = { status: "error", error: error.message };
+      }
+    }
+
     const stats = {
       platform: {
         activeBusinesses,
-        aiConfigured: !!GEMINI_API_KEY,
+        totalUsers: await User.countDocuments(),
+        totalPets: await Pet.countDocuments(),
+        totalAppointments: await Appointment.countDocuments()
+      },
+      ai: {
+        configured: !!GEMINI_API_KEY,
         model: GEMINI_MODEL,
-        apiUrl: GEMINI_API_URL.replace(GEMINI_API_KEY, '***') // Ocultar API key
+        test: geminiTest,
+        apiUrl: GEMINI_API_URL ? GEMINI_API_URL.replace(GEMINI_API_KEY, '***') : null
       },
       user: {
         name: req.user.name,
@@ -711,7 +916,8 @@ router.get("/diagnostic", protect, async (req, res) => {
       system: {
         environment: process.env.NODE_ENV,
         timestamp: new Date().toISOString(),
-        nodeVersion: process.version
+        nodeVersion: process.version,
+        memoryUsage: process.memoryUsage()
       }
     };
 
@@ -721,7 +927,8 @@ router.get("/diagnostic", protect, async (req, res) => {
     });
 
   } catch (error) {
-    res.json({
+    console.error("Error en diagnóstico:", error);
+    res.status(500).json({
       success: false,
       error: error.message
     });
@@ -729,7 +936,7 @@ router.get("/diagnostic", protect, async (req, res) => {
 });
 
 // ============================================
-// 📍 ENDPOINT ESPECÍFICO PARA COMERCIOS
+// 📍 ENDPOINT PARA COMERCIOS
 // ============================================
 
 router.get("/businesses", protect, async (req, res) => {
@@ -759,7 +966,7 @@ router.get("/businesses", protect, async (req, res) => {
     }
 
     const businesses = await Business.find(query)
-      .select('name categories description address phone email averageServicePrice rating')
+      .select('name categories description address phone email averageServicePrice rating services')
       .limit(parseInt(limit))
       .sort({ rating: -1, featured: -1 })
       .lean();
@@ -790,32 +997,70 @@ router.post("/test-gemini", protect, async (req, res) => {
     if (!GEMINI_API_KEY) {
       return res.json({
         success: false,
-        error: "API Key de Gemini no configurada",
-        envKey: process.env.GEMINI_API_KEY ? "Presente" : "Ausente"
+        error: "API Key de Gemini no configurada en variables de entorno",
+        suggestion: "Verifica la variable GEMINI_API_KEY en Render Dashboard",
+        envCheck: process.env.GEMINI_API_KEY ? "PRESENTE" : "AUSENTE"
       });
     }
     
-    console.log(`🧪 Test Gemini: ${GEMINI_API_URL.replace(GEMINI_API_KEY, '***')}`);
+    console.log(`🧪 Test Gemini: Modelo ${GEMINI_MODEL}`);
+    console.log(`🔗 URL: ${GEMINI_API_URL.replace(GEMINI_API_KEY, '***')}`);
     
-    const testPrompt = `Eres PetBot. Responde brevemente a: "${testMessage}"`;
+    const testPrompt = `Eres PetBot, asistente de PetServices. Responde brevemente en español a: "${testMessage}"`;
+    
+    const startTime = Date.now();
     const response = await callGeminiAPI(testPrompt, "client");
+    const responseTime = Date.now() - startTime;
     
     res.json({
       success: true,
-      testMessage,
-      response,
-      model: GEMINI_MODEL,
-      apiKeyPresent: !!GEMINI_API_KEY,
-      apiUrl: GEMINI_API_URL.replace(GEMINI_API_KEY, '***')
+      test: {
+        message: testMessage,
+        response: response,
+        responseTime: `${responseTime}ms`,
+        model: GEMINI_MODEL
+      },
+      configuration: {
+        apiKeyPresent: !!GEMINI_API_KEY,
+        apiKeyLength: GEMINI_API_KEY.length,
+        model: GEMINI_MODEL,
+        environment: process.env.NODE_ENV
+      }
     });
     
   } catch (error) {
+    console.error("Error en test-gemini:", error);
     res.json({
       success: false,
       error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      suggestion: "Verifica: 1) API Key válida 2) Modelo compatible 3) Conexión a internet",
+      modelAttempted: GEMINI_MODEL,
+      availableModels: ["gemini-1.5-pro", "gemini-1.0-pro", "gemini-pro", "gemini-1.5-flash-latest"]
     });
   }
+});
+
+// ============================================
+// 🔄 MODEL FALLBACK SYSTEM
+// ============================================
+
+router.get("/available-models", protect, async (req, res) => {
+  // Lista de modelos compatibles con la API v1beta
+  const compatibleModels = [
+    { name: "gemini-1.5-pro", description: "Modelo Pro más reciente", recommended: true },
+    { name: "gemini-1.0-pro", description: "Modelo Pro estable" },
+    { name: "gemini-pro", description: "Modelo Pro básico" },
+    { name: "gemini-1.5-flash-latest", description: "Flash más reciente" },
+    { name: "gemini-1.5-flash", description: "Flash (puede requerir v1alpha)" }
+  ];
+  
+  res.json({
+    success: true,
+    currentModel: GEMINI_MODEL,
+    compatibleModels,
+    apiVersion: "v1beta",
+    note: "Algunos modelos pueden requerir diferentes versiones de API"
+  });
 });
 
 export default router;
