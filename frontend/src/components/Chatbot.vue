@@ -1,134 +1,282 @@
 <template>
   <!-- ChatBot Container -->
   <div class="chatbot-container">
-    <!-- Mensaje tipo nube sobre el botón flotante -->
-    <transition name="bubble">
-      <div 
-        v-if="!isOpen && showHelpBubble" 
-        class="help-bubble"
-        @click="toggleChat"
-      >
-        <div class="bubble-arrow"></div>
-        <div class="bubble-content">
-          <span class="bubble-text">¿Necesitas ayuda?</span>
-          <span class="bubble-subtext">Pregúntame lo que necesites</span>
-        </div>
-        <button 
-          @click.stop="hideBubble" 
-          class="bubble-close"
-          title="Cerrar"
-        >
-          ×
-        </button>
-      </div>
-    </transition>
-
     <!-- Botón flotante -->
     <button
       @click="toggleChat"
       class="chatbot-toggle"
-      :class="{ 'pulse-animation': !isOpen && hasNewMessage }"
+      :class="{ 'chatbot-toggle-open': isOpen }"
+      :title="isOpen ? 'Cerrar chat' : 'Abrir chat'"
+      aria-label="Abrir/Cerrar asistente virtual"
     >
       <img 
         src="/petbot.png"
-        class="w-12 h-12 object-contain rounded-full"
-        alt="PetBot"
+        class="chatbot-toggle-img"
+        alt="PetBot - Asistente virtual"
       />
       <!-- Indicador de notificación -->
       <div v-if="!isOpen && hasNewMessage" class="notification-dot"></div>
+      <!-- Indicador de estado -->
+      <div v-if="connectionStatus !== 'connected'" 
+           class="connection-status-indicator"
+           :class="connectionStatus"></div>
     </button>
 
-    <!-- Ventana del Chat - Posición más alta -->
+    <!-- Ventana del Chat -->
     <transition name="chat-window">
       <div
         v-if="isOpen"
         class="chatbot-window"
+        role="dialog"
+        aria-label="Ventana de chat con PetBot"
       >
         <!-- Header -->
         <div class="chatbot-header">
-          <img 
-            src="/petbot2.png"
-            class="chatbot-avatar"
-            alt="PetBot"
-          />
-          <div class="chatbot-info">
-            <h3>PetBot AI</h3>
-            <p>{{ getRoleDescription() }}</p>
+          <div class="chatbot-identity">
+            <img 
+              src="/petbot2.png"
+              class="chatbot-avatar"
+              alt="Avatar de PetBot"
+              loading="lazy"
+            />
+            <div class="chatbot-info">
+              <h3>PetBot AI</h3>
+              <p>{{ getRoleDescription() }}</p>
+              <div class="chatbot-status">
+                <span class="status-dot" :class="connectionStatus"></span>
+                <span class="status-text">{{ getStatusText() }}</span>
+              </div>
+            </div>
           </div>
-          <button 
-            @click="toggleChat" 
-            class="close-btn"
-            title="Cerrar chat"
-          >
-            ×
-          </button>
+          <div class="chatbot-controls">
+            <button 
+              @click="clearChat"
+              class="control-btn"
+              title="Limpiar conversación"
+              aria-label="Limpiar historial de chat"
+            >
+              <svg class="control-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+            <button 
+              @click="toggleSound"
+              class="control-btn"
+              :title="soundEnabled ? 'Silenciar sonidos' : 'Activar sonidos'"
+              aria-label="Alternar sonidos del chat"
+            >
+              <svg v-if="soundEnabled" class="control-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              <svg v-else class="control-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+              </svg>
+            </button>
+            <button 
+              @click="toggleChat" 
+              class="control-btn close-btn"
+              title="Cerrar chat"
+              aria-label="Cerrar ventana de chat"
+            >
+              <svg class="control-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Área de mensajes -->
-        <div ref="messagesContainer" class="chatbot-messages">
+        <div 
+          ref="messagesContainer" 
+          class="chatbot-messages"
+          role="log"
+          aria-live="polite"
+          aria-label="Historial de mensajes"
+        >
+          <!-- Mensaje de bienvenida inicial -->
+          <div v-if="messages.length === 0" class="welcome-container">
+            <div class="welcome-message">
+              <div class="welcome-header">
+                <h4>👋 ¡Hola, {{ userName }}!</h4>
+                <p class="welcome-subtitle">Soy PetBot, tu asistente virtual</p>
+              </div>
+              <div class="welcome-content">
+                <p><strong>Puedo ayudarte con:</strong></p>
+                <ul class="welcome-features">
+                  <li v-for="feature in welcomeFeatures" :key="feature">
+                    {{ feature }}
+                  </li>
+                </ul>
+                <p class="welcome-tip">
+                  💡 <strong>Tip:</strong> Usa los botones rápidos para consultas frecuentes
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mensajes de la conversación -->
           <div
             v-for="(msg, index) in messages"
-            :key="index"
-            :class="msg.sender === 'me' ? 'message-right' : 'message-left'"
-            class="message-container"
+            :key="`message-${index}-${msg.timestamp}`"
+            :class="[
+              'message-container',
+              msg.sender === 'me' ? 'message-right' : 'message-left',
+              msg.type === 'error' ? 'message-error' : ''
+            ]"
+            :data-intent="msg.intent"
           >
             <div
-              :class="msg.sender === 'me'
-                ? 'message-user'
-                : 'message-bot'"
-              class="message-bubble"
+              :class="[
+                'message-bubble',
+                msg.sender === 'me' ? 'message-user' : 'message-bot',
+                msg.type === 'error' ? 'error-bubble' : ''
+              ]"
+              :aria-label="msg.sender === 'me' ? 'Tu mensaje' : 'Respuesta de PetBot'"
             >
-              <div class="message-content" v-html="formatMessage(msg.text)"></div>
-              <div 
-                :class="msg.sender === 'me' ? 'message-time-user' : 'message-time-bot'"
-                class="message-time"
-              >
-                {{ msg.time }}
+              <!-- Avatar del mensaje -->
+              <div v-if="msg.sender === 'bot'" class="message-avatar">
+                <img 
+                  src="/petbot2.png" 
+                  alt="PetBot"
+                  class="avatar-small"
+                />
+              </div>
+              
+              <div class="message-content-wrapper">
+                <!-- Contenido del mensaje -->
+                <div class="message-content" v-html="formatMessage(msg.text)"></div>
+                
+                <!-- Metadatos del mensaje -->
+                <div class="message-metadata">
+                  <div 
+                    :class="msg.sender === 'me' ? 'message-time-user' : 'message-time-bot'"
+                    class="message-time"
+                  >
+                    {{ formatTime(msg.timestamp) }}
+                  </div>
+                  <div v-if="msg.responseTime && msg.sender === 'bot'" class="response-time">
+                    {{ msg.responseTime }}ms
+                  </div>
+                  <div v-if="msg.aiUsed && msg.sender === 'bot'" class="ai-badge">
+                    🤖 IA
+                  </div>
+                </div>
+                
+                <!-- Indicadores de carga para mensajes de bot -->
+                <div v-if="msg.loading" class="message-loading">
+                  <div class="loading-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Avatar del usuario -->
+              <div v-if="msg.sender === 'me'" class="message-avatar user-avatar">
+                <div class="user-avatar-initial">
+                  {{ getUserInitial() }}
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Indicador de typing -->
-          <div v-if="isLoading" class="typing-indicator">
+          <div v-if="isLoading" class="typing-indicator" aria-label="PetBot está escribiendo">
             <div class="typing-bubble">
-              <div class="typing-dots">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
+              <div class="typing-avatar">
+                <img 
+                  src="/petbot2.png" 
+                  alt="PetBot"
+                  class="avatar-typing"
+                />
               </div>
-              <span class="typing-text">PetBot está escribiendo...</span>
+              <div class="typing-content">
+                <div class="typing-dots">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </div>
+                <span class="typing-text">PetBot está escribiendo...</span>
+              </div>
             </div>
+          </div>
+
+          <!-- Indicador de nuevos mensajes -->
+          <div 
+            v-if="showNewMessageIndicator" 
+            class="new-messages-indicator"
+            @click="scrollToBottom"
+            role="button"
+            aria-label="Ir a los mensajes más recientes"
+          >
+            <span class="indicator-text">Nuevos mensajes</span>
+            <svg class="indicator-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
         </div>
 
-        <!-- Botones rápidos CON SCROLL HORIZONTAL -->
-        <div class="quick-buttons-container">
+        <!-- Sugerencias rápidas -->
+        <div v-if="showSuggestions" class="suggestions-container">
+          <div class="suggestions-header">
+            <span class="suggestions-title">💡 Sugerencias rápidas</span>
+            <button 
+              @click="toggleSuggestions" 
+              class="suggestions-toggle"
+              aria-label="Ocultar sugerencias"
+            >
+              ▲
+            </button>
+          </div>
+          <div class="suggestions-grid">
+            <button
+              v-for="suggestion in currentSuggestions"
+              :key="suggestion.text"
+              @click="sendQuick(suggestion.text)"
+              :disabled="isLoading"
+              class="suggestion-button"
+              :class="{ 'suggestion-highlight': suggestion.highlight }"
+              :title="suggestion.tooltip"
+            >
+              <span class="suggestion-emoji">{{ suggestion.emoji }}</span>
+              <span class="suggestion-text">{{ suggestion.text }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Botones rápidos con scroll horizontal -->
+        <div class="quick-buttons-container" v-if="showQuickButtons">
           <div class="quick-buttons-wrapper">
             <div class="quick-buttons-scroll" ref="quickButtonsScroll">
               <button
-                v-for="q in quickOptions"
-                :key="q"
-                @click="sendQuick(q)"
-                :disabled="isLoading"
+                v-for="q in filteredQuickOptions"
+                :key="q.text"
+                @click="sendQuick(q.text)"
+                :disabled="isLoading || isButtonDisabled(q.text)"
                 class="quick-button"
+                :class="{ 'quick-button-active': isButtonActive(q.text) }"
+                :title="q.tooltip || q.text"
               >
-                {{ q }}
+                <span class="quick-button-emoji">{{ q.emoji }}</span>
+                <span class="quick-button-text">{{ q.text }}</span>
               </button>
             </div>
             <!-- Flechas de navegación -->
             <button 
-              v-if="showScrollArrows" 
-              @click="scrollQuickButtons(-100)"
+              v-if="showScrollArrows && canScrollLeft" 
+              @click="scrollQuickButtons(-200)"
               class="scroll-button scroll-left"
-              title="Desplazar izquierda"
+              aria-label="Desplazar botones hacia la izquierda"
             >
               ‹
             </button>
             <button 
-              v-if="showScrollArrows" 
-              @click="scrollQuickButtons(100)"
+              v-if="showScrollArrows && canScrollRight" 
+              @click="scrollQuickButtons(200)"
               class="scroll-button scroll-right"
-              title="Desplazar derecha"
+              aria-label="Desplazar botones hacia la derecha"
             >
               ›
             </button>
@@ -137,25 +285,69 @@
 
         <!-- Área de input -->
         <div class="input-container">
-          <input
-            v-model="userInput"
-            @keyup.enter="sendMessage"
-            :disabled="isLoading"
-            :placeholder="getInputPlaceholder()"
-            class="message-input"
-            maxlength="500"
-          />
-          <button
-            @click="sendMessage"
-            :disabled="isLoading || !userInput.trim()"
-            class="send-button"
-            title="Enviar mensaje"
-          >
-            <svg v-if="!isLoading" class="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-            </svg>
-            <div v-else class="loading-spinner"></div>
-          </button>
+          <div class="input-wrapper">
+            <button 
+              @click="toggleQuickButtons"
+              class="input-action-btn"
+              :title="showQuickButtons ? 'Ocultar botones rápidos' : 'Mostrar botones rápidos'"
+              aria-label="Alternar botones rápidos"
+            >
+              <svg class="action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+              </svg>
+            </button>
+            
+            <input
+              v-model="userInput"
+              @keyup.enter="sendMessage"
+              @keyup="checkInput"
+              @paste="handlePaste"
+              :disabled="isLoading"
+              :placeholder="getInputPlaceholder()"
+              class="message-input"
+              maxlength="1000"
+              aria-label="Escribe tu mensaje"
+              ref="messageInput"
+            />
+            
+            <div class="input-actions">
+              <div class="char-counter" :class="{'char-warning': userInput.length > 800}">
+                {{ userInput.length }}/1000
+              </div>
+              <button
+                v-if="userInput.trim()"
+                @click="clearInput"
+                class="input-action-btn clear-btn"
+                title="Limpiar mensaje"
+                aria-label="Limpiar campo de texto"
+              >
+                ×
+              </button>
+              <button
+                @click="sendMessage"
+                :disabled="isLoading || !canSendMessage"
+                class="send-button"
+                :class="{ 'send-button-loading': isLoading }"
+                title="Enviar mensaje"
+                aria-label="Enviar mensaje"
+              >
+                <svg v-if="!isLoading" class="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                <div v-else class="loading-spinner"></div>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Información de estado -->
+          <div v-if="connectionStatus !== 'connected'" class="connection-info">
+            <span class="connection-text" :class="connectionStatus">
+              {{ getConnectionMessage() }}
+            </span>
+            <button v-if="connectionStatus === 'error'" @click="retryConnection" class="retry-btn">
+              Reintentar
+            </button>
+          </div>
         </div>
       </div>
     </transition>
@@ -163,11 +355,19 @@
 </template>
 
 <script>
-import axios from "axios";
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useUserStore } from "@/stores/userStore";
+import API from "@/services/api";
+import { useToast } from "vue-toastification";
 
 export default {
   name: "ChatBot",
+  
+  setup() {
+    const toast = useToast();
+    return { toast };
+  },
+  
   data() {
     return {
       isOpen: false,
@@ -176,67 +376,154 @@ export default {
       isLoading: false,
       hasNewMessage: false,
       showScrollArrows: false,
+      canScrollLeft: false,
+      canScrollRight: true,
       userRole: "client",
-      showHelpBubble: true,
-      bubbleHidden: false
+      connectionStatus: "connected", // 'connected', 'connecting', 'error', 'offline'
+      soundEnabled: true,
+      showSuggestions: true,
+      showQuickButtons: true,
+      messageHistory: [],
+      lastMessageTime: null,
+      isAtBottom: true,
+      scrollPosition: 0,
+      retryCount: 0,
+      typingSound: null,
+      notificationSound: null
     };
   },
+  
   computed: {
     quickOptions() {
       const optionsByRole = {
         client: [
-          "Buscar comercios", 
-          "Servicios disponibles", 
-          "Mis citas", 
-          "Mis mascotas", 
-          "Agendar cita",
-          "Precios generales",
-          "Emergencias",
-          "Cómo funciona"
+          { text: "Mis citas", emoji: "📅", tooltip: "Ver mis citas agendadas" },
+          { text: "Mis mascotas", emoji: "🐾", tooltip: "Ver mis mascotas registradas" },
+          { text: "Servicios disponibles", emoji: "🛎️", tooltip: "Ver servicios ofrecidos" },
+          { text: "Agendar cita", emoji: "➕", tooltip: "Agendar nueva cita" },
+          { text: "Precios", emoji: "💰", tooltip: "Consultar precios de servicios" },
+          { text: "Emergencias", emoji: "🏥", tooltip: "Información de emergencias" },
+          { text: "Vacunación", emoji: "💉", tooltip: "Información sobre vacunación" },
+          { text: "Peluquería", emoji: "✂️", tooltip: "Servicios de peluquería" },
+          { text: "Guardería", emoji: "🏠", tooltip: "Servicios de guardería" },
+          { text: "Entrenamiento", emoji: "🎯", tooltip: "Servicios de entrenamiento" }
         ],
         provider: [
-          "Mi comercio",
-          "Citas hoy",
-          "Mi agenda",
-          "Estadísticas",
-          "Mis ingresos",
-          "Clientes recientes",
-          "Actualizar servicios",
-          "Reportes"
+          { text: "Citas hoy", emoji: "📊", tooltip: "Ver citas del día de hoy" },
+          { text: "Mis servicios", emoji: "🛎️", tooltip: "Gestionar mis servicios" },
+          { text: "Estadísticas", emoji: "📈", tooltip: "Ver estadísticas de negocio" },
+          { text: "Ingresos", emoji: "💰", tooltip: "Ver reportes de ingresos" },
+          { text: "Clientes", emoji: "👥", tooltip: "Ver información de clientes" },
+          { text: "Agenda", emoji: "📅", tooltip: "Ver agenda completa" },
+          { text: "Servicios activos", emoji: "✅", tooltip: "Ver servicios activos" },
+          { text: "Reportes", emoji: "📋", tooltip: "Generar reportes" },
+          { text: "Disponibilidad", emoji: "⏰", tooltip: "Gestionar disponibilidad" },
+          { text: "Promociones", emoji: "🎁", tooltip: "Crear promociones" }
         ],
         admin: [
-          "Comercios pendientes",
-          "Usuarios registrados",
-          "Todas las citas",
-          "Reportes del sistema",
-          "Estadísticas globales",
-          "Aprobar comercios",
-          "Monitoreo",
-          "Soporte"
+          { text: "Proveedores pendientes", emoji: "⏳", tooltip: "Ver proveedores por aprobar" },
+          { text: "Usuarios registrados", emoji: "👥", tooltip: "Ver todos los usuarios" },
+          { text: "Todas las citas", emoji: "📋", tooltip: "Ver todas las citas del sistema" },
+          { text: "Reportes sistema", emoji: "📊", tooltip: "Reportes del sistema completo" },
+          { text: "Servicios globales", emoji: "🛎️", tooltip: "Gestionar servicios globalmente" },
+          { text: "Estadísticas", emoji: "📈", tooltip: "Estadísticas generales" },
+          { text: "Aprobaciones", emoji: "✅", tooltip: "Gestionar aprobaciones" },
+          { text: "Monitoreo", emoji: "👁️", tooltip: "Monitorear sistema" },
+          { text: "Logs", emoji: "📝", tooltip: "Ver logs del sistema" },
+          { text: "Backup", emoji: "💾", tooltip: "Gestionar backups" }
         ]
       };
       
       return optionsByRole[this.userRole] || optionsByRole.client;
     },
-
-    // ✅ Computada para obtener la URL base dinámica
-    apiBaseUrl() {
-      // Si estamos en desarrollo local (localhost)
-      if (window.location.hostname === 'localhost' || 
-          window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:4000';
-      }
+    
+    filteredQuickOptions() {
+      // Filtrar opciones basadas en el historial reciente
+      const recentMessages = this.messageHistory.slice(-5);
+      return this.quickOptions.filter(option => {
+        // No mostrar opciones recientemente usadas
+        return !recentMessages.some(msg => 
+          msg.toLowerCase().includes(option.text.toLowerCase()) ||
+          option.text.toLowerCase().includes(msg.toLowerCase())
+        );
+      });
+    },
+    
+    currentSuggestions() {
+      const suggestionsByRole = {
+        client: [
+          { text: "¿Cómo agendo una cita?", emoji: "❓", tooltip: "Instrucciones para agendar" },
+          { text: "Horarios de atención", emoji: "⏰", tooltip: "Ver horarios disponibles" },
+          { text: "Cancelar cita", emoji: "❌", tooltip: "Cómo cancelar una cita" },
+          { text: "Mi perfil", emoji: "👤", tooltip: "Ver mi perfil" }
+        ],
+        provider: [
+          { text: "Añadir nuevo servicio", emoji: "➕", tooltip: "Agregar nuevo servicio" },
+          { text: "Modificar horarios", emoji: "🕒", tooltip: "Cambiar horarios disponibles" },
+          { text: "Clientes frecuentes", emoji: "⭐", tooltip: "Ver clientes frecuentes" },
+          { text: "Reseñas", emoji: "🌟", tooltip: "Ver reseñas recibidas" }
+        ],
+        admin: [
+          { text: "Usuarios inactivos", emoji: "👤", tooltip: "Ver usuarios inactivos" },
+          { text: "Reportes diarios", emoji: "📅", tooltip: "Generar reporte diario" },
+          { text: "Alertas del sistema", emoji: "⚠️", tooltip: "Ver alertas recientes" },
+          { text: "Configuración", emoji: "⚙️", tooltip: "Configuración del sistema" }
+        ]
+      };
       
-      // Si estamos en Render (mismo dominio para frontend y backend)
-      // Usamos URL relativa cuando están en el mismo dominio
-      if (window.location.hostname.includes('onrender.com')) {
-        return ''; // URL relativa - mismo dominio
-      }
+      return suggestionsByRole[this.userRole] || suggestionsByRole.client;
+    },
+    
+    welcomeFeatures() {
+      const featuresByRole = {
+        client: [
+          "📅 Gestión de citas y reservas",
+          "🐾 Información de tus mascotas",
+          "🛎️ Explorar servicios disponibles",
+          "💰 Consultar precios y promociones",
+          "🏥 Emergencias veterinarias",
+          "📱 Actualizaciones en tiempo real"
+        ],
+        provider: [
+          "📊 Gestión de agenda completa",
+          "🛎️ Administración de servicios",
+          "📈 Estadísticas de negocio",
+          "👥 Información de clientes",
+          "💰 Reportes de ingresos",
+          "🔔 Notificaciones importantes"
+        ],
+        admin: [
+          "👥 Gestión completa de usuarios",
+          "🏢 Control de proveedores",
+          "📊 Reportes del sistema",
+          "🛎️ Administración de servicios",
+          "🔒 Seguridad y auditoría",
+          "📈 Métricas de plataforma"
+        ]
+      };
       
-      // Por defecto, usar el mismo dominio
-      return '';
+      return featuresByRole[this.userRole] || featuresByRole.client;
+    },
+    
+    userName() {
+      try {
+        const userStore = useUserStore();
+        return userStore.user?.name || "Usuario";
+      } catch {
+        return "Usuario";
+      }
+    },
+    
+    canSendMessage() {
+      const trimmed = this.userInput.trim();
+      return trimmed.length > 0 && trimmed.length <= 1000 && !this.isLoading;
+    },
+    
+    showNewMessageIndicator() {
+      return !this.isAtBottom && this.messages.length > 3;
     }
   },
+  
   methods: {
     getUserRole() {
       try {
@@ -247,7 +534,16 @@ export default {
         return "client";
       }
     },
-
+    
+    getUserInitial() {
+      try {
+        const userStore = useUserStore();
+        return userStore.user?.name?.charAt(0)?.toUpperCase() || "U";
+      } catch {
+        return "U";
+      }
+    },
+    
     getRoleDescription() {
       const descriptions = {
         client: "Asistente para clientes",
@@ -256,326 +552,650 @@ export default {
       };
       return descriptions[this.userRole] || "Asistente virtual";
     },
-
+    
+    getStatusText() {
+      const statusTexts = {
+        connected: "Conectado",
+        connecting: "Conectando...",
+        error: "Error de conexión",
+        offline: "Sin conexión"
+      };
+      return statusTexts[this.connectionStatus] || "Conectado";
+    },
+    
+    getConnectionMessage() {
+      const messages = {
+        connected: "✅ Conectado",
+        connecting: "🔄 Conectando...",
+        error: "❌ Error de conexión",
+        offline: "📴 Sin conexión"
+      };
+      return messages[this.connectionStatus] || "Conectado";
+    },
+    
     getInputPlaceholder() {
       const placeholders = {
-        client: "Pregunta sobre comercios, servicios o tus mascotas...",
-        provider: "Consulta tu comercio, agenda o estadísticas...",
-        admin: "Consulta comercios, usuarios o reportes del sistema..."
+        client: "Pregunta sobre tus mascotas, citas o servicios...",
+        provider: "Consulta tu agenda, servicios o estadísticas...",
+        admin: "Consulta usuarios, proveedores o reportes del sistema..."
       };
       return placeholders[this.userRole] || "Escribe tu mensaje...";
     },
-
+    
     toggleChat() {
       this.isOpen = !this.isOpen;
-      if (this.isOpen && this.messages.length === 0) {
-        this.addWelcomeMessage();
+      
+      if (this.isOpen) {
+        // Inicializar cuando se abre
+        this.userRole = this.getUserRole();
+        this.checkConnection();
+        
+        if (this.messages.length === 0) {
+          this.addWelcomeMessage();
+        }
+        
+        this.hasNewMessage = false;
+        
+        // Enfocar el input después de la animación
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.scrollToBottom();
+            this.checkScrollButtons();
+            this.$refs.messageInput?.focus();
+          }, 300);
+        });
+        
+        // Registrar apertura
+        this.logInteraction('chat_opened');
+      } else {
+        this.logInteraction('chat_closed');
       }
-      this.hasNewMessage = false;
-      this.showHelpBubble = false;
-      this.$nextTick(() => {
-        this.scrollToBottom();
-        this.checkScrollButtons();
-      });
     },
-
-    hideBubble() {
-      this.showHelpBubble = false;
-      this.bubbleHidden = true;
-      // Guardar preferencia en localStorage
-      localStorage.setItem('chatbot_bubble_hidden', 'true');
-    },
-
-    showBubble() {
-      if (!this.bubbleHidden && !this.isOpen) {
-        this.showHelpBubble = true;
-      }
-    },
-
+    
     addWelcomeMessage() {
       const welcomeMessages = {
-        client: `¡Hola! 👋 Soy PetBot, tu asistente para servicios de mascotas. 
+        client: `¡Hola **${this.userName}**! 👋 Soy PetBot, tu asistente virtual especializado en servicios para mascotas.
 
-Como **cliente**, puedo ayudarte con:
-• 🏪 Buscar comercios cercanos  
-• 🛎️ Servicios disponibles
-• 📅 Tus citas y reservas
-• 🐾 Información de tus mascotas  
-• 💰 Precios y promociones
-• 🏥 Emergencias veterinarias
+Estoy aquí para ayudarte con todo lo relacionado con el cuidado de tus mascotas. Puedo:
 
-¿En qué puedo ayudarte hoy?`,
+• **Gestionar citas** - Ver, agendar o cancelar
+• **Información de mascotas** - Tus animales registrados
+• **Servicios disponibles** - Explorar opciones y precios
+• **Emergencias** - Protocolos y contactos urgentes
+• **Preguntas generales** - Todo sobre cuidado animal
 
-        provider: `¡Hola! 💼 Soy PetBot, tu asistente para la gestión de tu comercio.
+¡Estoy disponible 24/7 para asistirte! ¿En qué puedo ayudarte hoy? 😊`,
 
-Como **proveedor**, puedo ayudarte con:
-• 📊 Gestión de tu perfil de comercio
-• 📅 Agenda y citas del día
-• 📈 Estadísticas de tu negocio
-• 👥 Información de clientes
-• 💰 Reportes de ingresos
-• ⭐ Reseñas y calificaciones
+        provider: `¡Hola **${this.userName}**! 💼 Soy PetBot, tu asistente para la gestión de servicios.
 
-¿Qué área de tu negocio necesitas gestionar?`,
+Mi función es ayudarte a optimizar tu negocio de cuidado animal. Puedo asistirte con:
 
-        admin: `¡Hola! 👨‍💼 Soy PetBot, tu asistente administrativo.
+• **Gestión de agenda** - Citas, disponibilidad, horarios
+• **Servicios ofrecidos** - Administrar y promocionar
+• **Estadísticas** - Métricas de negocio y rendimiento
+• **Clientes** - Información y preferencias
+• **Reportes** - Generación y análisis de datos
 
-Como **administrador**, puedo ayudarte con:
-• 🏪 Gestión de comercios registrados
-• 👥 Usuarios del sistema
-• ✅ Aprobación de solicitudes
-• 📊 Reportes y estadísticas globales
-• ⚙️ Monitoreo de la plataforma
-• 🛡️ Seguridad y soporte
+¿Qué área de tu negocio necesitas gestionar hoy? 📊`,
 
-¿Qué funcionalidad administrativa necesitas?`
+        admin: `¡Hola **${this.userName}**! 👨‍💼 Soy PetBot, tu asistente administrativo del sistema.
+
+Tengo acceso a las funcionalidades administrativas completas de la plataforma. Puedo ayudarte con:
+
+• **Gestión de usuarios** - Control completo del sistema
+• **Proveedores** - Aprobación, seguimiento y reportes
+• **Servicios globales** - Categorización y control
+• **Estadísticas** - Métricas de toda la plataforma
+• **Seguridad** - Monitoreo y auditoría
+• **Reportes** - Generación y exportación
+
+¿Qué aspecto del sistema necesitas revisar? ⚙️`
       };
 
       const message = welcomeMessages[this.userRole] || welcomeMessages.client;
-      this.messages.push({ 
-        sender: "bot", 
+      this.addMessage({
+        sender: "bot",
         text: message,
-        time: this.getCurrentTime()
+        timestamp: new Date(),
+        type: "welcome"
       });
     },
-
-    async sendMessage() {
-      if (!this.userInput.trim() || this.isLoading) return;
-
-      const text = this.userInput.trim();
-      this.messages.push({ 
-        sender: "me", 
-        text: text,
-        time: this.getCurrentTime()
+    
+    addMessage(messageData) {
+      const message = {
+        sender: messageData.sender || "bot",
+        text: messageData.text,
+        timestamp: messageData.timestamp || new Date(),
+        type: messageData.type || "text",
+        intent: messageData.intent,
+        responseTime: messageData.responseTime,
+        aiUsed: messageData.aiUsed,
+        loading: messageData.loading || false,
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      };
+      
+      this.messages.push(message);
+      
+      // Guardar en historial para filtrado
+      if (message.sender === 'me') {
+        this.messageHistory.push(message.text);
+        if (this.messageHistory.length > 10) {
+          this.messageHistory.shift();
+        }
+      }
+      
+      // Reproducir sonido si está habilitado
+      if (this.soundEnabled && message.sender === 'bot' && !message.loading) {
+        this.playNotificationSound();
+      }
+      
+      // Scroll automático si está cerca del fondo
+      this.$nextTick(() => {
+        if (this.isAtBottom) {
+          this.scrollToBottom();
+        }
       });
+    },
+    
+    addUserMessage(text) {
+      this.addMessage({
+        sender: "me",
+        text: text,
+        timestamp: new Date()
+      });
+    },
+    
+    async sendMessage() {
+      if (!this.canSendMessage || this.isLoading) return;
+      
+      const text = this.userInput.trim();
+      this.addUserMessage(text);
       this.userInput = "";
       this.isLoading = true;
-
+      this.connectionStatus = "connecting";
+      
+      // Agregar mensaje de carga
+      const loadingMessageId = `loading_${Date.now()}`;
+      this.addMessage({
+        sender: "bot",
+        text: "",
+        loading: true,
+        id: loadingMessageId
+      });
+      
       try {
         const token = localStorage.getItem("token");
         
         if (!token) {
-          throw new Error("No hay token de autenticación");
+          throw new Error("No hay token de autenticación. Por favor, inicia sesión nuevamente.");
         }
-
-        console.log('🌐 Conectando a API...');
-        console.log('Base URL:', this.apiBaseUrl || '(URL relativa)');
         
-        // ✅ SOLUCIÓN DEFINITIVA: Construir URL correctamente
-        const apiUrl = this.apiBaseUrl 
-          ? `${this.apiBaseUrl}/api/chat`
-          : '/api/chat'; // URL relativa cuando están en el mismo dominio
-
-        const res = await axios.post(
-          apiUrl,
+        const startTime = Date.now();
+        
+        const res = await API.post("/chat", 
           { message: text },
           { 
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json"
-            },
-            timeout: 30000
+            timeout: 35000,
+            headers: {
+              'X-Request-ID': `frontend_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            }
           }
         );
-
+        
+        const responseTime = Date.now() - startTime;
+        
         if (res.data.error) {
           throw new Error(res.data.error);
         }
-
-        this.messages.push({
+        
+        // Remover mensaje de carga
+        const loadingIndex = this.messages.findIndex(m => m.id === loadingMessageId);
+        if (loadingIndex !== -1) {
+          this.messages.splice(loadingIndex, 1);
+        }
+        
+        // Agregar respuesta
+        this.addMessage({
           sender: "bot",
           text: res.data.reply || "Lo siento, no pude generar una respuesta.",
-          time: this.getCurrentTime()
+          timestamp: new Date(),
+          intent: res.data.intent,
+          responseTime: res.data.responseTime || responseTime,
+          aiUsed: res.data.aiUsed || false,
+          requestId: res.data.requestId
         });
-
-        // Mostrar burbuja de ayuda después de un tiempo si no está abierto
-        if (!this.isOpen && !this.bubbleHidden) {
-          setTimeout(() => {
-            this.showBubble();
-          }, 5000);
-        }
-
+        
+        this.connectionStatus = "connected";
+        this.retryCount = 0;
+        
+        // Log exitoso
+        this.logInteraction('message_sent', {
+          length: text.length,
+          responseTime,
+          intent: res.data.intent
+        });
+        
       } catch (error) {
         console.error("Chat error:", error);
         
-        let errorMessage = "❌ Error al conectar con PetBot.";
-        
-        if (error.response?.status === 401) {
-          errorMessage = "🔐 Por favor, inicia sesión nuevamente.";
-        } else if (error.response?.status === 400) {
-          errorMessage = "📝 Por favor, escribe un mensaje válido.";
-        } else if (error.code === 'ECONNABORTED') {
-          errorMessage = "⏰ El servicio está tardando en responder. Intenta nuevamente.";
-        } else if (error.message.includes("token")) {
-          errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
-        } else if (error.message.includes("Network Error") || error.code === 'ERR_NETWORK') {
-          errorMessage = `🌐 **Error de conexión.**\n\nVerifica tu conexión a internet o intenta más tarde.`;
+        // Remover mensaje de carga
+        const loadingIndex = this.messages.findIndex(m => m.id === loadingMessageId);
+        if (loadingIndex !== -1) {
+          this.messages.splice(loadingIndex, 1);
         }
-
-        this.messages.push({
-          sender: "bot",
-          text: errorMessage,
-          time: this.getCurrentTime()
+        
+        this.handleChatError(error);
+        
+        // Log de error
+        this.logInteraction('message_error', {
+          error: error.message,
+          status: error.response?.status
         });
+        
       } finally {
         this.isLoading = false;
-        this.scrollToBottom();
+        this.$nextTick(() => {
+          this.$refs.messageInput?.focus();
+        });
       }
     },
-
+    
+    handleChatError(error) {
+      let errorMessage = "";
+      
+      if (error.response) {
+        switch (error.response.status) {
+          case 401:
+            errorMessage = "🔐 **Sesión expirada**\n\nPor favor, inicia sesión nuevamente para continuar usando el chat.";
+            this.connectionStatus = "error";
+            this.logoutUser();
+            break;
+          case 429:
+            errorMessage = "⏰ **Demasiadas peticiones**\n\nPor favor, espera unos momentos antes de enviar otro mensaje.";
+            this.connectionStatus = "connected";
+            break;
+          case 400:
+            errorMessage = "📝 **Mensaje no válido**\n\nPor favor, escribe un mensaje válido (máximo 1000 caracteres).";
+            this.connectionStatus = "connected";
+            break;
+          case 500:
+          case 502:
+          case 503:
+          case 504:
+            errorMessage = "🚧 **Servicio temporalmente no disponible**\n\nNuestros servidores están experimentando problemas. Por favor, intenta nuevamente en unos minutos.";
+            this.connectionStatus = "error";
+            break;
+          default:
+            errorMessage = "❌ **Error de conexión**\n\nNo se pudo conectar con el servidor. Verifica tu conexión a internet.";
+            this.connectionStatus = "error";
+        }
+      } else if (error.code === 'ECONNABORTED') {
+        errorMessage = "⏰ **Tiempo de espera agotado**\n\nEl servidor está tardando en responder. Por favor, intenta nuevamente.";
+        this.connectionStatus = "error";
+      } else if (error.message.includes("token")) {
+        errorMessage = "🔐 **Error de autenticación**\n\nPor favor, inicia sesión nuevamente.";
+        this.connectionStatus = "error";
+        this.logoutUser();
+      } else if (error.message.includes("Network Error")) {
+        errorMessage = "🌐 **Error de red**\n\nVerifica tu conexión a internet e intenta nuevamente.";
+        this.connectionStatus = "offline";
+      } else {
+        errorMessage = "❌ **Error inesperado**\n\nHa ocurrido un problema inesperado. Por favor, intenta nuevamente más tarde.";
+        this.connectionStatus = "error";
+      }
+      
+      this.addMessage({
+        sender: "bot",
+        text: errorMessage,
+        timestamp: new Date(),
+        type: "error"
+      });
+      
+      // Incrementar contador de reintentos
+      this.retryCount++;
+      
+      // Mostrar toast para errores graves
+      if (error.response?.status === 500 || this.retryCount > 3) {
+        this.toast.error("Problemas técnicos en el chat. Contacta soporte si persiste.", {
+          timeout: 5000,
+          position: "bottom-right"
+        });
+      }
+    },
+    
+    logoutUser() {
+      setTimeout(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }, 2000);
+    },
+    
     sendQuick(text) {
+      if (this.isLoading) return;
+      
       this.userInput = text;
       this.sendMessage();
+      
+      // Log de botón rápido usado
+      this.logInteraction('quick_button_used', { buttonText: text });
     },
-
+    
+    clearChat() {
+      if (this.messages.length === 0) return;
+      
+      if (confirm("¿Estás seguro de que quieres limpiar toda la conversación?")) {
+        this.messages = [];
+        this.messageHistory = [];
+        this.addWelcomeMessage();
+        
+        this.logInteraction('chat_cleared');
+        
+        this.toast.success("Conversación limpiada", {
+          timeout: 2000,
+          position: "bottom-right"
+        });
+      }
+    },
+    
+    clearInput() {
+      this.userInput = "";
+      this.$refs.messageInput?.focus();
+    },
+    
+    toggleSound() {
+      this.soundEnabled = !this.soundEnabled;
+      localStorage.setItem("chatSoundEnabled", this.soundEnabled.toString());
+      
+      this.toast.info(this.soundEnabled ? "Sonidos activados" : "Sonidos desactivados", {
+        timeout: 1500,
+        position: "bottom-right"
+      });
+    },
+    
+    toggleSuggestions() {
+      this.showSuggestions = !this.showSuggestions;
+      localStorage.setItem("chatSuggestions", this.showSuggestions.toString());
+    },
+    
+    toggleQuickButtons() {
+      this.showQuickButtons = !this.showQuickButtons;
+      localStorage.setItem("chatQuickButtons", this.showQuickButtons.toString());
+      
+      this.$nextTick(() => {
+        this.checkScrollButtons();
+      });
+    },
+    
+    isButtonDisabled(buttonText) {
+      // Deshabilitar botones que ya fueron usados recientemente
+      const recentUsage = this.messageHistory.some(msg => 
+        msg.toLowerCase().includes(buttonText.toLowerCase())
+      );
+      return recentUsage || this.isLoading;
+    },
+    
+    isButtonActive(buttonText) {
+      // Resaltar botón si coincide con el input actual
+      return this.userInput.toLowerCase().includes(buttonText.toLowerCase());
+    },
+    
+    checkInput() {
+      // Auto-expandir input para múltiples líneas
+      const input = this.$refs.messageInput;
+      if (input && this.userInput.includes('\n')) {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+      }
+    },
+    
+    handlePaste(event) {
+      // Limitar contenido pegado
+      const pastedText = event.clipboardData.getData('text');
+      if (pastedText.length > 1000) {
+        event.preventDefault();
+        this.toast.warning("El texto pegado es demasiado largo", {
+          timeout: 3000
+        });
+      }
+    },
+    
     scrollToBottom() {
       this.$nextTick(() => {
         const container = this.$refs.messagesContainer;
         if (container) {
           container.scrollTop = container.scrollHeight;
+          this.isAtBottom = true;
         }
       });
     },
-
+    
     scrollQuickButtons(distance) {
       const container = this.$refs.quickButtonsScroll;
       if (container) {
-        container.scrollLeft += distance;
+        const newScrollLeft = container.scrollLeft + distance;
+        container.scrollLeft = newScrollLeft;
+        
+        // Actualizar estado de flechas después de la animación
+        setTimeout(() => {
+          this.updateScrollButtonsState();
+        }, 100);
       }
     },
-
+    
     checkScrollButtons() {
       this.$nextTick(() => {
         const container = this.$refs.quickButtonsScroll;
         if (container) {
           this.showScrollArrows = container.scrollWidth > container.clientWidth;
+          this.updateScrollButtonsState();
         }
       });
     },
-
+    
+    updateScrollButtonsState() {
+      const container = this.$refs.quickButtonsScroll;
+      if (container) {
+        this.canScrollLeft = container.scrollLeft > 0;
+        this.canScrollRight = container.scrollLeft < (container.scrollWidth - container.clientWidth - 10);
+      }
+    },
+    
+    handleScroll() {
+      const container = this.$refs.messagesContainer;
+      if (container) {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        this.scrollPosition = scrollTop;
+        this.isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      }
+    },
+    
+    checkConnection() {
+      // Verificar conexión a la API
+      API.get("/chat/health")
+        .then(() => {
+          this.connectionStatus = "connected";
+          this.retryCount = 0;
+        })
+        .catch(() => {
+          this.connectionStatus = "offline";
+        });
+    },
+    
+    retryConnection() {
+      this.connectionStatus = "connecting";
+      this.checkConnection();
+    },
+    
     getCurrentTime() {
       return new Date().toLocaleTimeString('es-VE', { 
         hour: '2-digit', 
         minute: '2-digit' 
       });
     },
-
+    
+    formatTime(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      
+      if (diffMins < 1) {
+        return "Ahora";
+      } else if (diffMins < 60) {
+        return `Hace ${diffMins} min`;
+      } else if (date.toDateString() === now.toDateString()) {
+        return date.toLocaleTimeString('es-VE', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      } else {
+        return date.toLocaleDateString('es-VE', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+    },
+    
     formatMessage(text) {
       if (!text) return '';
       
-      return text
+      // Escapar HTML primero
+      const escapedText = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+      
+      // Aplicar formato
+      return escapedText
         .replace(/\n/g, '<br>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-800">$1</strong>')
         .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-        .replace(/•/g, '•')
-        .replace(/📅/g, '<span class="inline-block mr-1">📅</span>')
-        .replace(/🐾/g, '<span class="inline-block mr-1">🐾</span>')
-        .replace(/🛎️/g, '<span class="inline-block mr-1">🛎️</span>')
-        .replace(/💰/g, '<span class="inline-block mr-1">💰</span>')
-        .replace(/🏥/g, '<span class="inline-block mr-1">🏥</span>')
-        .replace(/📊/g, '<span class="inline-block mr-1">📊</span>')
-        .replace(/👥/g, '<span class="inline-block mr-1">👥</span>')
-        .replace(/⚙️/g, '<span class="inline-block mr-1">⚙️</span>')
-        .replace(/🏪/g, '<span class="inline-block mr-1">🏪</span>')
-        .replace(/⭐/g, '<span class="inline-block mr-1">⭐</span>')
-        .replace(/🛡️/g, '<span class="inline-block mr-1">🛡️</span>');
+        .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">$1</code>')
+        .replace(/# (.*?)(?=\n|$)/g, '<h4 class="text-lg font-bold mt-3 mb-2">$1</h4>')
+        .replace(/## (.*?)(?=\n|$)/g, '<h5 class="text-md font-semibold mt-2 mb-1">$1</h5>')
+        .replace(/• (.*?)(?=\n|$)/g, '<div class="flex items-start mt-1"><span class="mr-2">•</span><span>$1</span></div>')
+        .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline break-all">$1</a>')
+        .replace(/📅/g, '<span class="inline-block mr-1" aria-label="calendario">📅</span>')
+        .replace(/🐾/g, '<span class="inline-block mr-1" aria-label="huella">🐾</span>')
+        .replace(/🛎️/g, '<span class="inline-block mr-1" aria-label="campana">🛎️</span>')
+        .replace(/💰/g, '<span class="inline-block mr-1" aria-label="dinero">💰</span>')
+        .replace(/🏥/g, '<span class="inline-block mr-1" aria-label="hospital">🏥</span>')
+        .replace(/📊/g, '<span class="inline-block mr-1" aria-label="gráfico">📊</span>')
+        .replace(/👥/g, '<span class="inline-block mr-1" aria-label="personas">👥</span>')
+        .replace(/⚙️/g, '<span class="inline-block mr-1" aria-label="engranaje">⚙️</span>');
     },
-
-    // ✅ Aplicar parche de emergencia para URLs incorrectas
-    applyEmergencyPatch() {
-      if (window.CHATBOT_PATCH_APPLIED) return;
+    
+    playNotificationSound() {
+      if (!this.soundEnabled) return;
       
-      console.log('🔧 Aplicando parche de emergencia para API...');
-      
-      const isProduction = window.location.hostname.includes('onrender.com') && 
-                          !window.location.hostname.includes('localhost');
-      
-      if (isProduction) {
-        console.log('🚀 Detectado entorno Render en producción');
+      try {
+        // Crear sonido simple (beep)
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
         
-        const originalXHROpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
-          if (typeof url === 'string') {
-            const originalUrl = url;
-            
-            if (url.includes('localhost:4000')) {
-              url = url.replace('http://localhost:4000', '');
-              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
-            }
-            
-            if (url.includes('localhost:10000')) {
-              url = url.replace('http://localhost:10000', '');
-              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
-            }
-          }
-          return originalXHROpen.call(this, method, url, async, user, pass);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+      } catch (error) {
+        console.log("Audio no disponible:", error);
+      }
+    },
+    
+    logInteraction(type, data = {}) {
+      if (process.env.NODE_ENV === 'production') {
+        // En producción, enviar a analytics
+        const logData = {
+          type,
+          userId: this.getUserId(),
+          userRole: this.userRole,
+          timestamp: new Date().toISOString(),
+          ...data
         };
         
-        console.log('✅ Parche de emergencia aplicado para producción');
+        // Aquí podrías enviar a Google Analytics, Mixpanel, etc.
+        console.log('[Chat Interaction]', logData);
       }
-      
-      window.CHATBOT_PATCH_APPLIED = true;
     },
-
-    // Mostrar burbuja de ayuda después de un tiempo
-    scheduleHelpBubble() {
-      if (this.bubbleHidden) return;
-      
-      setTimeout(() => {
-        if (!this.isOpen && !this.bubbleHidden) {
-          this.showHelpBubble = true;
-        }
-      }, 3000); // Mostrar después de 3 segundos
+    
+    getUserId() {
+      try {
+        const userStore = useUserStore();
+        return userStore.user?._id || 'anonymous';
+      } catch {
+        return 'anonymous';
+      }
     }
   },
-
+  
   watch: {
     isOpen(newVal) {
       if (newVal) {
-        this.$nextTick(() => {
-          this.scrollToBottom();
-          this.checkScrollButtons();
-        });
-        this.showHelpBubble = false;
-      } else {
-        // Programar mostrar burbuja después de cerrar el chat
-        setTimeout(() => {
-          if (!this.bubbleHidden) {
-            this.scheduleHelpBubble();
-          }
-        }, 2000);
+        // Cargar preferencias
+        const savedSound = localStorage.getItem("chatSoundEnabled");
+        if (savedSound !== null) {
+          this.soundEnabled = savedSound === 'true';
+        }
+        
+        const savedSuggestions = localStorage.getItem("chatSuggestions");
+        if (savedSuggestions !== null) {
+          this.showSuggestions = savedSuggestions === 'true';
+        }
+        
+        const savedQuickButtons = localStorage.getItem("chatQuickButtons");
+        if (savedQuickButtons !== null) {
+          this.showQuickButtons = savedQuickButtons === 'true';
+        }
+        
+        // Verificar conexión
+        this.checkConnection();
       }
     },
-
+    
     messages: {
       handler() {
         this.$nextTick(() => {
-          this.scrollToBottom();
+          if (this.isAtBottom) {
+            this.scrollToBottom();
+          }
         });
-        if (!this.isOpen && this.messages.length > 0) {
-          this.hasNewMessage = true;
-        }
       },
       deep: true
+    },
+    
+    userRole() {
+      // Resetear sugerencias cuando cambia el rol
+      this.$nextTick(() => {
+        this.checkScrollButtons();
+      });
     }
   },
-
+  
   mounted() {
-    // Obtener el rol del usuario al montar el componente
+    // Obtener el rol del usuario
     this.userRole = this.getUserRole();
     
-    // Verificar si el usuario ocultó la burbuja anteriormente
-    const bubbleHidden = localStorage.getItem('chatbot_bubble_hidden');
-    if (bubbleHidden === 'true') {
-      this.bubbleHidden = true;
-      this.showHelpBubble = false;
+    // Configurar listeners
+    window.addEventListener('resize', this.checkScrollButtons);
+    
+    // Configurar scroll listener
+    const messagesContainer = this.$refs.messagesContainer;
+    if (messagesContainer) {
+      messagesContainer.addEventListener('scroll', this.handleScroll);
     }
-    
-    // ✅ Aplicar parche de emergencia al cargar
-    this.applyEmergencyPatch();
-    
-    // Programar mostrar burbuja de ayuda
-    this.scheduleHelpBubble();
     
     // Verificar scroll después de que se rendericen los botones
     this.$nextTick(() => {
@@ -583,260 +1203,358 @@ Como **administrador**, puedo ayudarte con:
         this.checkScrollButtons();
       }, 100);
     });
-
-    // También verificar cuando cambia el tamaño de la ventana
-    window.addEventListener('resize', this.checkScrollButtons);
-
-    // Cerrar burbuja al hacer clic fuera
-    document.addEventListener('click', (event) => {
-      const chatbotContainer = this.$el;
-      const helpBubble = chatbotContainer?.querySelector('.help-bubble');
-      
-      if (helpBubble && 
-          !helpBubble.contains(event.target) && 
-          !chatbotContainer.querySelector('.chatbot-toggle').contains(event.target)) {
-        this.hideBubble();
+    
+    // Verificar conexión inicial
+    this.checkConnection();
+    
+    // Configurar auto-focus cuando se hace clic en el toggle
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.isOpen) {
+        this.toggleChat();
       }
     });
   },
-
+  
   beforeUnmount() {
+    // Limpiar listeners
     window.removeEventListener('resize', this.checkScrollButtons);
-    document.removeEventListener('click', this.hideBubble);
+    
+    const messagesContainer = this.$refs.messagesContainer;
+    if (messagesContainer) {
+      messagesContainer.removeEventListener('scroll', this.handleScroll);
+    }
+    
+    document.removeEventListener('keydown', this.handleKeydown);
   }
 };
 </script>
 
 <style scoped>
+/* Variables CSS para consistencia */
+:root {
+  --primary-color: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --info-color: #06b6d4;
+  --bg-light: #f8fafc;
+  --bg-white: #ffffff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-light: #e5e7eb;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 350ms;
+}
+
+/* Contenedor principal */
 .chatbot-container {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
+  bottom: 24px;
+  left: 24px;
   z-index: 1000;
-}
-
-/* Mensaje tipo nube */
-.help-bubble {
-  position: absolute;
-  bottom: 75px;
-  left: 10px;
-  background: white;
-  border-radius: 18px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  padding: 12px 16px;
-  width: 200px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
-  z-index: 1001;
-  animation: float 3s ease-in-out infinite;
-}
-
-.help-bubble:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  background: #f8fafc;
-}
-
-.bubble-arrow {
-  position: absolute;
-  bottom: -8px;
-  left: 20px;
-  width: 16px;
-  height: 16px;
-  background: white;
-  transform: rotate(45deg);
-  border-right: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.bubble-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.bubble-text {
-  font-weight: 600;
-  font-size: 13px;
-  color: #1f2937;
-}
-
-.bubble-subtext {
-  font-size: 11px;
-  color: #6b7280;
-  opacity: 0.8;
-}
-
-.bubble-close {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #f3f4f6;
-  border: none;
-  color: #6b7280;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.bubble-close:hover {
-  background: #ef4444;
-  color: white;
-}
-
-/* Animación flotante */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Botón flotante */
 .chatbot-toggle {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: white;
-  border: 2px solid #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  border: 3px solid white;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  cursor: pointer;
+  outline: none;
 }
 
 .chatbot-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  border-color: #3b82f6;
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.chatbot-toggle.pulse-animation {
-  animation: pulse-button 2s infinite;
+.chatbot-toggle-open {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, var(--primary-dark), #1e40af);
 }
 
-@keyframes pulse-button {
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
+.chatbot-toggle-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .notification-dot {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 4px;
+  right: 4px;
   width: 12px;
   height: 12px;
-  background: #ef4444;
-  border-radius: 50%;
+  background: var(--error-color);
+  border-radius: var(--radius-full);
   border: 2px solid white;
   animation: pulse 2s infinite;
+  z-index: 2;
+}
+
+.connection-status-indicator {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  border: 2px solid white;
+  z-index: 2;
+}
+
+.connection-status-indicator.connected {
+  background: var(--success-color);
+  animation: pulse 3s infinite;
+}
+
+.connection-status-indicator.connecting {
+  background: var(--warning-color);
+  animation: pulse 1s infinite;
+}
+
+.connection-status-indicator.error,
+.connection-status-indicator.offline {
+  background: var(--error-color);
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
+  0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
-  100% { opacity: 1; }
 }
 
-/* Ventana del chat - POSICIÓN MÁS ALTA */
+/* Ventana del chat */
 .chatbot-window {
   position: fixed;
-  bottom: 90px;
-  left: 20px;
-  width: 380px;
-  height: 520px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  border: 1px solid #e2e8f0;
+  bottom: 96px;
+  left: 24px;
+  width: 420px;
+  max-width: calc(100vw - 48px);
+  height: 580px;
+  max-height: calc(100vh - 120px);
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 10px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 
 /* Header */
 .chatbot-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   color: white;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.chatbot-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 .chatbot-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
-  border-radius: 50%;
-  border: 2px solid white;
+  border-radius: var(--radius-full);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
 }
 
 .chatbot-info {
   flex: 1;
+  min-width: 0;
 }
 
 .chatbot-info h3 {
-  font-weight: bold;
-  font-size: 14px;
-  margin: 0;
+  font-weight: 700;
+  font-size: 16px;
+  margin: 0 0 2px 0;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chatbot-info p {
   font-size: 12px;
   opacity: 0.9;
-  margin: 0;
+  margin: 0 0 4px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.close-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+.chatbot-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--success-color);
+}
+
+.status-dot.connected { background: var(--success-color); }
+.status-dot.connecting { background: var(--warning-color); animation: pulse 1s infinite; }
+.status-dot.error { background: var(--error-color); }
+.status-dot.offline { background: var(--text-secondary); }
+
+.status-text {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.chatbot-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.control-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: white;
-  font-size: 18px;
-  font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast) ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
 }
 
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: rotate(90deg);
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.control-btn:active {
+  transform: scale(0.95);
+}
+
+.control-icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* Área de mensajes */
 .chatbot-messages {
   flex: 1;
-  padding: 16px;
+  padding: 20px;
   overflow-y: auto;
-  background: linear-gradient(to bottom, #f8fafc, #ffffff);
+  background: linear-gradient(to bottom, var(--bg-light), var(--bg-white));
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+.welcome-container {
+  margin-bottom: 8px;
+}
+
+.welcome-message {
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.welcome-header {
+  margin-bottom: 16px;
+}
+
+.welcome-header h4 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.welcome-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.welcome-content {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.welcome-content p {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.welcome-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+}
+
+.welcome-features li {
+  padding: 8px 0 8px 24px;
+  position: relative;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.welcome-features li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.welcome-tip {
+  padding: 12px;
+  background: #fef3c7;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: #92400e;
+  border-left: 3px solid var(--warning-color);
 }
 
 .message-container {
@@ -854,33 +1572,111 @@ Como **administrador**, puedo ayudarte con:
 
 .message-bubble {
   max-width: 85%;
-  padding: 12px 16px;
-  border-radius: 18px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  animation: messageAppear 0.3s ease-out;
+}
+
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message-user {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: white;
-  border-bottom-right-radius: 6px;
+  flex-direction: row-reverse;
 }
 
 .message-bot {
-  background: white;
-  color: #1f2937;
-  border: 1px solid #e5e7eb;
-  border-bottom-left-radius: 6px;
+  flex-direction: row;
+}
+
+.message-avatar {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.avatar-small {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  object-fit: contain;
+  border: 1px solid var(--border-light);
+}
+
+.user-avatar-initial {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.message-content-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-user .message-content-wrapper {
+  text-align: right;
 }
 
 .message-content {
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.message-user .message-content {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  border-bottom-right-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.message-bot .message-content {
+  background: white;
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  border-bottom-left-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.error-bubble .message-content {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.message-metadata {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.message-user .message-metadata {
+  justify-content: flex-end;
 }
 
 .message-time {
   font-size: 11px;
-  margin-top: 4px;
-  text-align: right;
+  opacity: 0.7;
 }
 
 .message-time-user {
@@ -888,68 +1684,264 @@ Como **administrador**, puedo ayudarte con:
 }
 
 .message-time-bot {
-  color: #6b7280;
+  color: var(--text-secondary);
+}
+
+.response-time {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--bg-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+.ai-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.message-loading {
+  margin-top: 8px;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.loading-dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--text-secondary);
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dots .dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots .dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
 }
 
 /* Typing indicator */
 .typing-indicator {
   display: flex;
   justify-content: flex-start;
+  animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .typing-bubble {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  border-bottom-left-radius: 6px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-sm);
   padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.typing-avatar {
+  flex-shrink: 0;
+}
+
+.avatar-typing {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  object-fit: contain;
+  border: 1px solid var(--border-light);
+}
+
+.typing-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .typing-dots {
   display: flex;
   gap: 4px;
+  margin-bottom: 4px;
 }
 
-.dot {
-  width: 6px;
-  height: 6px;
-  background: #6b7280;
-  border-radius: 50%;
-  animation: typing-bounce 1.4s infinite ease-in-out;
+.typing-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--primary-color);
+  animation: typing-bounce 1.4s infinite ease-in-out both;
 }
 
-.dot:nth-child(2) {
-  animation-delay: 0.16s;
-}
-
-.dot:nth-child(3) {
-  animation-delay: 0.32s;
-}
+.typing-dots .dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots .dot:nth-child(2) { animation-delay: -0.16s; }
 
 @keyframes typing-bounce {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-  30% {
-    transform: translateY(-4px);
-    opacity: 1;
-  }
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-4px); opacity: 1; }
 }
 
 .typing-text {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
-/* Botones rápidos MEJORADO CON SCROLL HORIZONTAL */
-.quick-buttons-container {
+/* Indicador de nuevos mensajes */
+.new-messages-indicator {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary-color);
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+  transition: all var(--transition-fast) ease;
+  animation: bounce 2s infinite;
+}
+
+.new-messages-indicator:hover {
+  background: var(--primary-dark);
+  transform: translateX(-50%) scale(1.05);
+}
+
+.indicator-text {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.indicator-icon {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+  40% { transform: translateX(-50%) translateY(-5px); }
+  60% { transform: translateX(-50%) translateY(-3px); }
+}
+
+/* Sugerencias rápidas */
+.suggestions-container {
+  border-top: 1px solid var(--border-light);
+  background: white;
+  flex-shrink: 0;
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
-  border-top: 1px solid #e5e7eb;
   background: #f8fafc;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.suggestions-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.suggestions-toggle {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast) ease;
+}
+
+.suggestions-toggle:hover {
+  color: var(--primary-color);
+  transform: rotate(180deg);
+}
+
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.suggestion-button {
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.suggestion-button:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.suggestion-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.suggestion-highlight {
+  background: #eff6ff;
+  border-color: var(--primary-color);
+  font-weight: 600;
+}
+
+.suggestion-emoji {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.suggestion-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Botones rápidos */
+.quick-buttons-container {
+  border-top: 1px solid var(--border-light);
+  background: #f8fafc;
+  flex-shrink: 0;
   position: relative;
 }
 
@@ -963,10 +1955,11 @@ Como **administrador**, puedo ayudarte con:
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding: 12px 16px;
   scroll-behavior: smooth;
-  -ms-overflow-style: none;
   scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex: 1;
 }
 
 .quick-buttons-scroll::-webkit-scrollbar {
@@ -977,89 +1970,151 @@ Como **administrador**, puedo ayudarte con:
   flex-shrink: 0;
   padding: 8px 12px;
   background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  font-size: 11px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  font-size: 12px;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-primary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast) ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
   min-width: max-content;
 }
 
 .quick-button:hover:not(:disabled) {
-  background: #3b82f6;
+  background: var(--primary-color);
   color: white;
-  border-color: #3b82f6;
+  border-color: var(--primary-color);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .quick-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
+  transform: none !important;
 }
 
-/* Botones de scroll */
+.quick-button-active {
+  background: #eff6ff;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.quick-button-emoji {
+  font-size: 14px;
+}
+
+.quick-button-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
 .scroll-button {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 50%;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  color: #374151;
+  font-size: 14px;
+  color: var(--text-primary);
   cursor: pointer;
   z-index: 10;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-fast) ease;
 }
 
 .scroll-button:hover {
-  background: #3b82f6;
+  background: var(--primary-color);
   color: white;
-  border-color: #3b82f6;
+  border-color: var(--primary-color);
 }
 
 .scroll-left {
-  left: -8px;
+  left: 8px;
 }
 
 .scroll-right {
-  right: -8px;
+  right: 8px;
 }
 
-/* Input area */
+/* Área de input */
 .input-container {
+  border-top: 1px solid var(--border-light);
+  background: white;
+  flex-shrink: 0;
+}
+
+.input-wrapper {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 16px;
-  border-top: 1px solid #e5e7eb;
-  background: white;
+  position: relative;
+}
+
+.input-action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--bg-light);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.input-action-btn:hover {
+  background: #e5e7eb;
+  color: var(--text-primary);
+}
+
+.action-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.clear-btn {
+  font-size: 20px;
+  font-weight: 300;
 }
 
 .message-input {
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
   font-size: 14px;
+  line-height: 1.5;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast) ease;
   background: white;
+  min-height: 44px;
+  max-height: 120px;
+  resize: none;
+  font-family: inherit;
 }
 
 .message-input:focus {
-  border-color: #3b82f6;
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -1068,18 +2123,42 @@ Como **administrador**, puedo ayudarte con:
   cursor: not-allowed;
 }
 
+.message-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.input-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.char-counter {
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 50px;
+  text-align: right;
+}
+
+.char-warning {
+  color: var(--warning-color);
+  font-weight: 600;
+}
+
 .send-button {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   color: white;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast) ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .send-button:hover:not(:disabled) {
@@ -1087,10 +2166,18 @@ Como **administrador**, puedo ayudarte con:
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
+.send-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .send-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+.send-button-loading {
+  opacity: 0.8;
 }
 
 .send-icon {
@@ -1101,9 +2188,9 @@ Como **administrador**, puedo ayudarte con:
 .loading-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid white;
-  border-top: 2px solid transparent;
-  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: var(--radius-full);
   animation: spin 1s linear infinite;
 }
 
@@ -1112,7 +2199,44 @@ Como **administrador**, puedo ayudarte con:
   100% { transform: rotate(360deg); }
 }
 
-/* Animaciones */
+.connection-info {
+  padding: 8px 16px;
+  background: #f8fafc;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.connection-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.connection-text.connected { color: var(--success-color); }
+.connection-text.connecting { color: var(--warning-color); }
+.connection-text.error { color: var(--error-color); }
+.connection-text.offline { color: var(--text-secondary); }
+
+.retry-btn {
+  padding: 4px 12px;
+  background: var(--primary-color);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+}
+
+.retry-btn:hover {
+  background: var(--primary-dark);
+}
+
+/* Animaciones de la ventana */
 .chat-window-enter-active,
 .chat-window-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1126,17 +2250,6 @@ Como **administrador**, puedo ayudarte con:
 .chat-window-leave-to {
   opacity: 0;
   transform: translateY(20px) scale(0.95);
-}
-
-.bubble-enter-active,
-.bubble-leave-active {
-  transition: all 0.3s ease;
-}
-
-.bubble-enter-from,
-.bubble-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
 }
 
 /* Scroll personalizado */
@@ -1160,99 +2273,71 @@ Como **administrador**, puedo ayudarte con:
 /* Responsive */
 @media (max-width: 480px) {
   .chatbot-container {
-    bottom: 10px;
-    left: 10px;
-  }
-  
-  .chatbot-window {
-    width: calc(100vw - 40px);
-    max-width: 380px;
-    left: 10px;
-    bottom: 80px;
-    height: 500px;
-  }
-  
-  .help-bubble {
-    width: 180px;
-    left: 0;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .help-bubble {
-    background: #1f2937;
-    border-color: #374151;
-    color: white;
-  }
-  
-  .bubble-arrow {
-    background: #1f2937;
-    border-color: #374151;
-  }
-  
-  .bubble-text {
-    color: #f9fafb;
-  }
-  
-  .bubble-subtext {
-    color: #d1d5db;
-  }
-  
-  .bubble-close {
-    background: #374151;
-    color: #d1d5db;
-  }
-  
-  .bubble-close:hover {
-    background: #ef4444;
-    color: white;
+    bottom: 16px;
+    left: 16px;
   }
   
   .chatbot-toggle {
-    background: #1f2937;
-    border-color: #374151;
+    width: 56px;
+    height: 56px;
   }
   
+  .chatbot-window {
+    bottom: 80px;
+    left: 16px;
+    width: calc(100vw - 32px);
+    height: calc(100vh - 96px);
+    max-height: calc(100vh - 96px);
+  }
+  
+  .suggestions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
   .chatbot-window {
     background: #1f2937;
     border-color: #374151;
   }
   
-  .chatbot-messages {
-    background: linear-gradient(to bottom, #111827, #1f2937);
+  .message-bot .message-content {
+    background: #374151;
+    color: #f9fafb;
+    border-color: #4b5563;
   }
   
-  .message-bot {
+  .welcome-message {
     background: #374151;
     border-color: #4b5563;
     color: #f9fafb;
   }
   
-  .typing-bubble {
-    background: #374151;
-    border-color: #4b5563;
+  .welcome-header h4,
+  .welcome-content p {
+    color: #f9fafb;
   }
   
-  .typing-text {
+  .welcome-features li {
     color: #d1d5db;
   }
   
+  .suggestions-container,
   .quick-buttons-container {
     background: #111827;
     border-color: #374151;
   }
   
+  .suggestion-button,
   .quick-button {
     background: #374151;
     border-color: #4b5563;
     color: #f9fafb;
   }
   
-  .scroll-button {
-    background: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
+  .suggestion-button:hover:not(:disabled) {
+    background: #4b5563;
   }
   
   .input-container {
@@ -1266,9 +2351,18 @@ Como **administrador**, puedo ayudarte con:
     color: #f9fafb;
   }
   
-  .message-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  .message-input::placeholder {
+    color: #9ca3af;
+  }
+  
+  .input-action-btn {
+    background: #374151;
+    border-color: #4b5563;
+    color: #d1d5db;
+  }
+  
+  .char-counter {
+    color: #9ca3af;
   }
 }
 </style>
