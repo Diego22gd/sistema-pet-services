@@ -1,47 +1,56 @@
-// routes/chat.js - Versión para Render
 import express from "express";
 import { protect } from "../middlewares/authMiddleware.js";
 import User from "../models/User.js";
 import Pet from "../models/Pet.js";
 import Service from "../models/Service.js";
 import Appointment from "../models/Appointment.js";
-import Business from "../models/Business.js";
+import Business from "../models/Business.js"; // Importar modelo de negocio
 
 const router = express.Router();
 
 // ============================================
-// 🔧 CONFIGURACIÓN PARA RENDER
+// 🔧 CONFIGURACIÓN OPTIMIZADA PARA RENDER (PRODUCCIÓN)
 // ============================================
 
-// API Key desde variables de entorno (configurar en Render Dashboard)
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+const RENDER_TIMEOUT = 10000; // 10 segundos timeout para Render (evitar 503)
+const NODE_ENV = process.env.NODE_ENV || "development";
 
 if (!GEMINI_API_KEY) {
-  console.warn("⚠️  ADVERTENCIA: No se encontró GEMINI_API_KEY. El chatbot usará respuestas predefinidas.");
+  console.warn("⚠️  ADVERTENCIA: No se encontró API Key para Gemini. El chatbot usará respuestas predefinidas.");
 } else {
-  console.log("✅ ChatBot configurado con API Key");
+  console.log("✅ ChatBot configurado para producción en Render");
+  console.log(`✅ Entorno: ${NODE_ENV}`);
 }
 
-// Modelo económico para producción
-const GEMINI_MODEL = "gemini-1.5-flash-latest";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// Modelo ligero para producción
+const GEMINI_MODEL = NODE_ENV === 'production' ? 'gemini-1.5-flash' : 'gemini-1.5-flash-latest';
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // ============================================
-// 🚀 FUNCIÓN OPTIMIZADA PARA RENDER
+// 🚀 FUNCIÓN OPTIMIZADA PARA PRODUCCIÓN
 // ============================================
 
-async function callGeminiAPI(prompt, role = "client") {
+async function callGeminiAPI(prompt, role = "client", businessContext = null) {
+  // Respuesta inmediata si no hay API key
   if (!GEMINI_API_KEY) {
-    return getFallbackResponse("general", role);
+    return getFallbackResponse("general", role, businessContext);
   }
 
   try {
-    console.log(`🤖 Llamando a Gemini...`);
+    console.log(`🤖 Llamando a Gemini (${GEMINI_MODEL}) para ${role}...`);
     
+    // Timeout específico para Render (evitar 503 Service Unavailable)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), RENDER_TIMEOUT);
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    // Construir contexto de negocio si existe
+    let businessInfo = "";
+    if (businessContext) {
+      businessInfo = `\nCONTEXTO DEL NEGOCIO ACTUAL:\n• Nombre: ${businessContext.name}\n• Servicios: ${businessContext.services || 'No especificado'}\n• Descripción: ${businessContext.description || 'No disponible'}\n`;
+    }
+
+    const response = await fetch(GEMINI_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -49,13 +58,13 @@ async function callGeminiAPI(prompt, role = "client") {
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: prompt }]
+          parts: [{ text: prompt + businessInfo }]
         }],
         generationConfig: {
           temperature: 0.7,
           topP: 0.95,
           topK: 40,
-          maxOutputTokens: 800,
+          maxOutputTokens: 400, // Más reducido para producción
         },
         safetySettings: [
           {
@@ -64,14 +73,6 @@ async function callGeminiAPI(prompt, role = "client") {
           },
           {
             category: "HARM_CATEGORY_HATE_SPEECH", 
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
             threshold: "BLOCK_MEDIUM_AND_ABOVE"
           }
         ]
@@ -82,195 +83,218 @@ async function callGeminiAPI(prompt, role = "client") {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
+      const errorText = await response.text().catch(() => "No error text");
       console.error(`❌ Gemini API error ${response.status}`);
       
+      // Fallback inteligente basado en código de error
       if (response.status === 429) {
-        return "⚠️ **El servicio está muy ocupado.** Por favor, intenta de nuevo en unos minutos.";
+        return "⚠️ **El servicio de IA está muy ocupado.** Te muestro información del sistema mientras tanto.";
       }
       
-      if (response.status === 403) {
-        return "🔐 **Error de autenticación.** Por favor, verifica la configuración de API Key.";
+      if (response.status === 403 || response.status === 401) {
+        return "🔐 **Configuración requerida.** Contacta al administrador para configurar el servicio de IA.";
       }
       
-      return getFallbackResponse("general", role);
+      throw new Error(`API error ${response.status}`);
     }
 
     const data = await response.json();
     
+    // Validar y limpiar respuesta
     if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      return getFallbackResponse("general", role);
+      console.warn("⚠️  Respuesta inesperada de Gemini");
+      return getFallbackResponse("general", role, businessContext);
     }
     
-    return data.candidates[0].content.parts[0].text.trim();
+    let responseText = data.candidates[0].content.parts[0].text.trim();
+    
+    // Limpieza optimizada
+    responseText = responseText
+      .replace(/\*\*\*/g, '**')
+      .replace(/#{3,}/g, '##')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    
+    return responseText || getFallbackResponse("general", role, businessContext);
     
   } catch (error) {
-    console.error("❌ Error en callGeminiAPI:", error.message);
+    console.error("❌ Error en callGeminiAPI:", error.name);
     
     if (error.name === 'AbortError') {
-      return "⏰ **Tiempo de espera agotado.** Intenta nuevamente.";
+      return "⏰ **Tiempo de espera agotado.** Usando información del sistema. Puedes consultar directamente en tu panel.";
     }
     
-    return getFallbackResponse("general", role);
+    if (error.message.includes('network') || error.message.includes('fetch')) {
+      return "🌐 **Sin conexión a IA.** Mostrando información local del sistema.";
+    }
+    
+    return getFallbackResponse("general", role, businessContext);
   }
 }
 
 // ============================================
-// 📝 RESPUESTAS PREDEFINIDAS (FALLBACK)
+// 🏢 FUNCIONES DE NEGOCIO (BUSINESS)
 // ============================================
 
-function getFallbackResponse(intent = "general", role = "client") {
+async function getBusinessContext(userId, role) {
+  try {
+    if (role === "provider") {
+      // Para proveedores, obtener su negocio
+      const business = await Business.findOne({ owner: userId })
+        .select('name description services contactInfo status')
+        .lean();
+      
+      if (business) {
+        return {
+          name: business.name,
+          description: business.description,
+          services: Array.isArray(business.services) ? business.services.join(', ') : business.services,
+          contactInfo: business.contactInfo,
+          status: business.status
+        };
+      }
+    } else if (role === "client") {
+      // Para clientes, obtener información de negocios disponibles
+      const activeBusinesses = await Business.countDocuments({ status: "approved" });
+      return {
+        activeBusinesses,
+        context: `Hay ${activeBusinesses} negocios aprobados en el sistema.`
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("❌ Error obteniendo contexto de negocio:", error.message);
+    return null;
+  }
+}
+
+// ============================================
+// 📝 RESPUESTAS PREDEFINIDAS CON CONTEXTO DE NEGOCIO
+// ============================================
+
+function getFallbackResponse(intent = "general", role = "client", businessContext = null) {
   const responses = {
     client: {
-      general: `¡Hola! Soy PetBot, tu asistente de PetServices. 🐾
+      general: businessContext ? 
+        `¡Hola! Soy PetBot, tu asistente. 🐾
+
+En el sistema hay ${businessContext.activeBusinesses || 'varios'} negocios disponibles.
 
 Puedo ayudarte con:
-• **Mis Mascotas** - Ver y gestionar tus mascotas registradas
-• **Mis Citas** - Consultar y agendar citas
-• **Negocios** - Encontrar veterinarias, peluquerías, guarderías
-• **Servicios** - Ver servicios disponibles y precios
-• **Emergencias** - Información de contacto urgente
+• Buscar servicios por tipo
+• Ver negocios cercanos
+• Agendar citas
+• Información de mascotas
 
-¿En qué te puedo ayudar hoy?`,
+¿Qué necesitas?` : 
+        `¡Hola! Soy PetBot, tu asistente de mascotas. 🐾
+
+Puedo ayudarte con:
+• Encontrar servicios para tu mascota
+• Ver negocios disponibles
+• Agendar citas
+• Información de cuidados
+
+¿En qué te ayudo?`,
 
       list_services: `🛎️ **Servicios Disponibles**
 
-En PetServices encontrarás:
-• 🏥 **Veterinaria** - Consultas, vacunas, cirugías, emergencias
-• ✂️ **Estética** - Baño, corte de pelo, limpieza dental, spa
-• 🏠 **Guardería** - Cuidado diurno y nocturno, paseos
-• 🎯 **Entrenamiento** - Adiestramiento básico y avanzado
-• 🚑 **Emergencias** - Servicio 24/7 para urgencias
+Los negocios ofrecen servicios como:
+• 🏥 Veterinaria y consultas
+• ✂️ Estética y peluquería
+• 🎯 Entrenamiento
+• 🏠 Guardería y cuidado
 
-¿Qué tipo de servicio necesitas?`,
+Usa el buscador para encontrar negocios específicos.`,
 
-      list_businesses: `🏢 **Negocios Disponibles**
+      find_business: `🏢 **Encontrar Negocios**
 
-Puedo ayudarte a encontrar:
-• **Veterinarias** - Clínicas y hospitales veterinarios
-• **Peluquerías** - Estéticas y spas para mascotas
-• **Guarderías** - Hoteles y cuidados diarios
-• **Entrenadores** - Adiestradores profesionales
-• **Tiendas** - Alimentos y accesorios
+Para encontrar negocios:
+1. Ve a "Negocios" en el menú
+2. Filtra por tipo de servicio
+3. Revisa valoraciones y disponibilidad
 
-¿Qué tipo de negocio buscas? O dime tu ubicación para buscar cerca.`,
-
-      get_user_pets: `🐾 **Tus Mascotas**
-
-Ve a la sección "Mis Mascotas" en tu perfil para:
-• Ver todas tus mascotas registradas
-• Agregar nueva mascota
-• Actualizar información
-• Ver historial médico
-
-¿Necesitas ayuda para registrar una nueva mascota?`,
-
-      get_user_appointments: `📅 **Tus Citas**
-
-En la sección "Mis Citas" puedes:
-• Ver todas tus citas agendadas
-• Cancelar o reagendar citas
-• Ver detalles de cada cita
-• Calificar el servicio recibido
-
-¿Quieres agendar una nueva cita?`,
-
-      prices: `💰 **Precios y Tarifas**
-
-Los precios varían según:
-• Tipo de servicio
-• Tamaño de la mascota
-• Duración del servicio
-• Negocio específico
-
-Para ver precios exactos:
-1. Busca el tipo de servicio que necesitas
-2. Selecciona un negocio
-3. Verás los precios en su perfil
-
-Ejemplo de rangos:
-• Consulta veterinaria: $20 - $50
-• Baño y corte: $25 - $70
-• Guardería diaria: $15 - $40`,
-
-      emergency: `🚑 **Emergencias Veterinarias**
-
-En caso de emergencia:
-
-**Contacta inmediatamente:**
-• 📞 Emergencias PetServices: 1-800-PET-HELP
-• 📱 Tu veterinario de confianza
-• 🏥 Hospital veterinario más cercano
-
-**Síntomas de emergencia:**
-• Dificultad para respirar
-• Sangrado abundante
-• Convulsiones
-• Intoxicación
-• Trauma por accidente
-
-**¿Qué hacer?**
-1. Mantén la calma
-2. Contacta emergencias
-3. Sigue sus instrucciones
-4. Prepára para traslado`
+¿Buscas algún servicio en particular?`
     },
 
     provider: {
-      general: `¡Hola! Soy PetBot, tu asistente para proveedores. 💼
+      general: businessContext ? 
+        `¡Hola! Soy PetBot, tu asistente para negocios. 💼
+
+Tu negocio: **${businessContext.name}**
+Estado: ${businessContext.status === 'approved' ? '✅ Aprobado' : '⏳ Pendiente'}
 
 Te ayudo con:
-• 📊 **Mi Negocio** - Ver y editar información
-• 📅 **Agenda** - Citas de hoy y futuras
-• 🛎️ **Servicios** - Gestionar servicios ofrecidos
-• 👥 **Clientes** - Información de clientes
-• 💰 **Reportes** - Estadísticas e ingresos
+• Gestión de citas
+• Estadísticas
+• Configuración de servicios
+• Información de clientes
 
-¿Qué área necesitas gestionar?`,
+¿Qué área gestionamos hoy?` : 
+        `¡Hola! Soy PetBot, asistente para proveedores. 💼
 
-      provider_today_appointments: `📅 **Citas de Hoy**
+Te ayudo con:
+• Configurar tu negocio
+• Gestionar servicios
+• Ver citas y agenda
+• Reportes y estadísticas
 
-Ve a tu panel de proveedor > Agenda para:
-• Ver todas las citas programadas hoy
-• Confirmar asistencia de clientes
-• Actualizar estados
-• Ver detalles completos
+¿Necesitas ayuda para configurar algo?`,
 
-¿Necesitas ayuda con alguna cita específica?`,
+      business_stats: businessContext ? 
+        `📊 **Estadísticas de tu Negocio**
 
-      provider_business_info: `🏢 **Tu Negocio**
+Negocio: ${businessContext.name}
+Servicios: ${businessContext.services || 'Por configurar'}
+Contacto: ${businessContext.contactInfo || 'No disponible'}
 
-En la gestión de tu negocio puedes:
-• Editar información (nombre, descripción, contacto)
-• Actualizar horarios de atención
-• Agregar/editar servicios ofrecidos
-• Subir fotos y logo
-• Ver calificaciones y reseñas
+Ve al panel de proveedor para ver estadísticas completas.` : 
+        `📊 **Estadísticas de Negocio**
 
-¿Qué información necesitas actualizar?`
+Configura tu negocio primero para acceder a estadísticas detalladas.`,
+
+      manage_services: `🛠️ **Gestionar Servicios**
+
+Para gestionar servicios:
+1. Ve a "Mis Servicios"
+2. Agrega nuevos servicios
+3. Configura precios y horarios
+4. Actualiza disponibilidad
+
+¿Necesitas ayuda con algún paso específico?`
     },
 
     admin: {
       general: `¡Hola! Soy PetBot, asistente administrativo. 👨‍💼
 
-Áreas que puedo gestionar:
-• 👥 **Usuarios** - Gestión de clientes y proveedores
-• 🏢 **Negocios** - Aprobación y monitoreo
-• 📊 **Reportes** - Estadísticas del sistema
-• ⚙️ **Configuración** - Ajustes generales
-• 🛡️ **Moderación** - Reportes y quejas
+Áreas de gestión:
+• Negocios y proveedores
+• Usuarios del sistema
+• Reportes globales
+• Configuración de plataforma
 
-¿Qué área administrativa necesitas revisar?`,
+¿Qué área administrativa necesitas?`,
 
-      admin_list_businesses: `🏢 **Gestión de Negocios**
+      business_approvals: `✅ **Aprobación de Negocios**
 
-En el panel de administración > Negocios:
-• Ver todos los negocios registrados
-• Aprobar/rechazar solicitudes
-• Suspender negocios
-• Ver reportes de actividad
-• Monitorear calificaciones
+Para aprobar negocios:
+1. Revisa "Negocios Pendientes"
+2. Verifica documentación
+3. Aprueba o rechaza con comentarios
+4. Notifica al proveedor
 
-Actualmente tienes X negocios pendientes de aprobación.`
+¿Tienes preguntas sobre algún caso específico?`,
+
+      system_reports: `📈 **Reportes del Sistema**
+
+Reportes disponibles:
+• Nuevos negocios (últimos 30 días)
+• Citas agendadas
+• Ingresos totales
+• Usuarios activos
+
+Genera reportes desde el panel de administración.`
     }
   };
 
@@ -279,549 +303,257 @@ Actualmente tienes X negocios pendientes de aprobación.`
 }
 
 // ============================================
-// 📊 FUNCIONES CON DATOS REALES
+// 📊 FUNCIONES CON DATOS REALES OPTIMIZADAS
 // ============================================
 
 async function generateResponseWithData(intent, user, userMessage = "") {
-  const { name, role, _id: userId } = user;
+  const { role, _id: userId } = user;
+  
+  // Obtener contexto de negocio
+  const businessContext = await getBusinessContext(userId, role);
   
   try {
     switch (role) {
       case "provider":
-        return await generateProviderResponse(intent, user, userMessage);
+        return await generateProviderResponse(intent, user, businessContext);
       
       case "admin":
-        return await generateAdminResponse(intent, user, userMessage);
+        return await generateAdminResponse(intent, user);
       
       default: // client
-        return await generateClientResponse(intent, user, userMessage);
+        return await generateClientResponse(intent, user, businessContext);
     }
   } catch (error) {
     console.error(`❌ Error en generateResponseWithData:`, error.message);
-    return `Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta nuevamente.`;
+    return getFallbackResponse(intent, role, businessContext);
   }
 }
 
-async function generateClientResponse(intent, user, userMessage) {
+async function generateClientResponse(intent, user, businessContext) {
   const { name, _id: userId } = user;
   
   switch (intent) {
-    case "list_services": {
+    case "find_business": {
       try {
-        const services = await Service.find({ status: "active" })
-          .populate("business", "name rating")
-          .select('name description basePrice duration business')
-          .limit(10)
-          .lean();
-
-        if (services.length === 0) {
-          return `Actualmente no hay servicios disponibles. Los proveedores estarán agregando servicios pronto.`;
-        }
-
-        let response = `🔍 **Encontré ${services.length} servicios disponibles:**\n\n`;
-        
-        services.forEach((service, index) => {
-          response += `**${index + 1}. ${service.name}**\n`;
-          if (service.business?.name) {
-            response += `   🏢 ${service.business.name}`;
-            if (service.business.rating) response += ` ⭐ ${service.business.rating}`;
-            response += `\n`;
-          }
-          if (service.description) response += `   📝 ${service.description.substring(0, 80)}${service.description.length > 80 ? '...' : ''}\n`;
-          if (service.basePrice) response += `   💰 Desde: $${service.basePrice}\n`;
-          if (service.duration) response += `   ⏱️ Duración: ${service.duration} min\n`;
-          response += `\n`;
-        });
-
-        response += `\n¿Te interesa algún servicio en particular o prefieres ver negocios específicos?`;
-        return response;
-      } catch (error) {
-        return getFallbackResponse("list_services", "client");
-      }
-    }
-
-    case "list_businesses": {
-      try {
-        // Extraer tipo de negocio del mensaje
-        let category = null;
-        const lowerMessage = userMessage.toLowerCase();
-        
-        if (lowerMessage.includes('veterinaria') || lowerMessage.includes('veterinario') || lowerMessage.includes('clínica')) {
-          category = 'Veterinaria';
-        } else if (lowerMessage.includes('peluquería') || lowerMessage.includes('estética') || lowerMessage.includes('spa')) {
-          category = 'Estética';
-        } else if (lowerMessage.includes('guardería') || lowerMessage.includes('hotel') || lowerMessage.includes('cuidado')) {
-          category = 'Cuidado';
-        } else if (lowerMessage.includes('entrenamiento') || lowerMessage.includes('adiestramiento')) {
-          category = 'Entrenamiento';
-        }
-
-        const query = { status: "approved" };
-        if (category) query.category = category;
-
-        const businesses = await Business.find(query)
-          .select('name description category address city rating services businessHours')
-          .populate("services", "name")
-          .limit(8)
+        const businesses = await Business.find({ status: "approved" })
+          .select('name services description rating')
+          .limit(5)
           .lean();
 
         if (businesses.length === 0) {
-          return category 
-            ? `No encontré ${category.toLowerCase()}s aprobadas en este momento. Prueba con otra categoría o revisa más tarde.`
-            : `No hay negocios disponibles en este momento. Prueba más tarde.`;
+          return `Actualmente no hay negocios activos. Pronto tendremos nuevos proveedores.`;
         }
 
-        let response = category 
-          ? `🏥 **${category}s Disponibles (${businesses.length}):**\n\n`
-          : `🏢 **Negocios Disponibles (${businesses.length}):**\n\n`;
+        let response = `Encontré ${businesses.length} negocios aprobados:\n\n`;
         
         businesses.forEach((business, index) => {
-          response += `**${index + 1}. ${business.name}**\n`;
-          response += `   📍 ${business.address}, ${business.city}\n`;
-          response += `   🏷️ ${business.category}`;
-          if (business.rating) response += ` ⭐ ${business.rating}/5\n`;
-          if (business.services && business.services.length > 0) {
-            response += `   🛎️ Servicios: ${business.services.slice(0, 3).map(s => s.name).join(', ')}`;
-            if (business.services.length > 3) response += `, +${business.services.length - 3} más`;
-            response += `\n`;
+          response += `${index + 1}. **${business.name}**\n`;
+          if (business.services) {
+            const services = Array.isArray(business.services) ? 
+              business.services.slice(0, 3).join(', ') : 
+              business.services.substring(0, 60);
+            response += `   Servicios: ${services}\n`;
           }
+          if (business.rating) response += `   Valoración: ${business.rating} ⭐\n`;
           response += `\n`;
         });
 
-        response += `\n¿Quieres ver más detalles de algún negocio en particular?`;
+        response += `\n¿Te interesa algún negocio en particular?`;
         return response;
       } catch (error) {
-        console.error("Error list_businesses:", error);
-        return getFallbackResponse("list_businesses", "client");
-      }
-    }
-
-    case "search_business": {
-      try {
-        const searchTerm = userMessage.toLowerCase().replace(/buscar|negocio|empresa|proveedor/gi, '').trim();
-        
-        if (!searchTerm || searchTerm.length < 3) {
-          return `Por favor, especifica mejor tu búsqueda. Ejemplo: "buscar veterinaria en Caracas" o "peluquería canina".`;
-        }
-
-        const businesses = await Business.find({
-          status: "approved",
-          $or: [
-            { name: { $regex: searchTerm, $options: 'i' } },
-            { description: { $regex: searchTerm, $options: 'i' } },
-            { category: { $regex: searchTerm, $options: 'i' } },
-            { address: { $regex: searchTerm, $options: 'i' } },
-            { city: { $regex: searchTerm, $options: 'i' } }
-          ]
-        })
-        .select('name description category address city rating services')
-        .populate("services", "name price")
-        .limit(6)
-        .lean();
-
-        if (businesses.length === 0) {
-          return `🔍 No encontré negocios que coincidan con "${searchTerm}".\n\nPrueba con:\n• Otros términos de búsqueda\n• Una categoría específica (veterinaria, peluquería, etc.)\n• O ver todos los negocios disponibles`;
-        }
-
-        let response = `🔍 **Resultados para "${searchTerm}" (${businesses.length}):**\n\n`;
-        
-        businesses.forEach((business, index) => {
-          response += `**${index + 1}. ${business.name}**\n`;
-          response += `   📍 ${business.address}, ${business.city}\n`;
-          response += `   🏷️ ${business.category}`;
-          if (business.rating) response += ` ⭐ ${business.rating}/5\n`;
-          
-          if (business.services && business.services.length > 0) {
-            const serviceNames = business.services.slice(0, 2).map(s => s.name).join(', ');
-            response += `   🛎️ ${serviceNames}`;
-            if (business.services.length > 2) response += `, +${business.services.length - 2} más`;
-            response += `\n`;
-          }
-          response += `\n`;
-        });
-
-        response += `\n¿De cuál negocio te gustaría ver más detalles o servicios?`;
-        return response;
-      } catch (error) {
-        console.error("Error search_business:", error);
-        return `Lo siento, hubo un error en la búsqueda. Intenta nuevamente.`;
-      }
-    }
-
-    case "get_business_details": {
-      try {
-        // Extraer nombre del negocio
-        const businessName = userMessage.toLowerCase()
-          .replace(/(ver|detalles|información|servicios de|negocio)\s+/gi, '')
-          .trim();
-
-        if (!businessName || businessName.length < 3) {
-          return `Por favor, especifica el nombre del negocio que quieres ver.`;
-        }
-
-        const business = await Business.findOne({
-          status: "approved",
-          name: { $regex: businessName, $options: 'i' }
-        })
-        .populate({
-          path: "services",
-          select: 'name description basePrice duration',
-          match: { status: "active" }
-        })
-        .populate("owner", "name email phone")
-        .lean();
-
-        if (!business) {
-          return `No encontré el negocio "${businessName}". Verifica el nombre o prueba buscando de nuevo.`;
-        }
-
-        let response = `🏢 **${business.name}**\n\n`;
-        response += `📍 **Dirección:** ${business.address}, ${business.city}\n`;
-        if (business.phone) response += `📞 **Teléfono:** ${business.phone}\n`;
-        if (business.email) response += `📧 **Email:** ${business.email}\n`;
-        if (business.category) response += `🏷️ **Categoría:** ${business.category}\n`;
-        if (business.rating) response += `⭐ **Rating:** ${business.rating}/5\n`;
-        
-        if (business.description) {
-          response += `\n📝 **Descripción:**\n${business.description}\n`;
-        }
-
-        // Horarios
-        if (business.businessHours) {
-          response += `\n🕐 **Horarios:**\n`;
-          const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-          days.forEach(day => {
-            const dayLower = day.toLowerCase();
-            if (business.businessHours[dayLower]?.open) {
-              response += `   ${day}: ${business.businessHours[dayLower].open} - ${business.businessHours[dayLower].close || 'Cerrado'}\n`;
-            }
-          });
-        }
-
-        // Servicios
-        if (business.services && business.services.length > 0) {
-          response += `\n🛎️ **Servicios (${business.services.length}):**\n`;
-          business.services.forEach((service, index) => {
-            response += `\n${index + 1}. **${service.name}**\n`;
-            if (service.description) response += `   ${service.description}\n`;
-            if (service.basePrice) response += `   💰 Precio: $${service.basePrice}\n`;
-            if (service.duration) response += `   ⏱️ Duración: ${service.duration} minutos\n`;
-          });
-        } else {
-          response += `\nℹ️ Este negocio aún no tiene servicios publicados.`;
-        }
-
-        response += `\n\n¿Te gustaría agendar una cita con ${business.name} o ver otros negocios similares?`;
-        return response;
-      } catch (error) {
-        console.error("Error get_business_details:", error);
-        return `No pude cargar los detalles del negocio. Intenta nuevamente.`;
+        return `Usa el buscador de negocios para encontrar proveedores cerca de ti.`;
       }
     }
 
     case "get_user_appointments": {
       try {
         const appointments = await Appointment.find({ userId })
-          .populate("petId", "name")
           .populate({
             path: "serviceId",
+            select: "name",
             populate: {
-              path: "business",
+              path: "businessId",
               select: "name"
             }
           })
+          .populate("petId", "name")
+          .limit(3)
           .sort({ date: -1 })
-          .limit(5)
           .lean();
 
         if (appointments.length === 0) {
-          return `📅 No tienes citas agendadas.\n\n¿Te gustaría agendar tu primera cita? Puedo ayudarte a encontrar servicios o negocios.`;
+          return `No tienes citas agendadas. ¡Busca negocios y agenda tu primera cita!`;
         }
 
-        let response = `📅 **Tus últimas ${appointments.length} citas:**\n\n`;
+        let response = `Tus últimas citas:\n\n`;
         
         appointments.forEach((appt, index) => {
-          const apptDate = appt.date ? new Date(appt.date).toLocaleDateString('es-VE', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          }) : 'Fecha por confirmar';
-
-          response += `**${index + 1}. ${appt.serviceId?.name || 'Servicio'}**\n`;
-          response += `   🏢 ${appt.serviceId?.business?.name || 'Negocio no especificado'}\n`;
-          response += `   🐾 Mascota: ${appt.petId?.name || 'No especificada'}\n`;
-          response += `   📅 Fecha: ${apptDate}\n`;
-          if (appt.time) response += `   ⏰ Hora: ${appt.time}\n`;
-          response += `   📋 Estado: ${this.getStatusEmoji(appt.status)} ${appt.status}\n`;
-          response += `\n`;
+          const businessName = appt.serviceId?.businessId?.name || 'Negocio no disponible';
+          response += `${index + 1}. **${appt.serviceId?.name || 'Servicio'}**\n`;
+          response += `   Negocio: ${businessName}\n`;
+          response += `   Mascota: ${appt.petId?.name || 'No especificada'}\n`;
+          response += `   Estado: ${appt.status}\n\n`;
         });
 
-        response += `\nVe a "Mis Citas" en tu perfil para gestionarlas todas.`;
         return response;
       } catch (error) {
-        console.error("Error get_user_appointments:", error);
-        return `No pude cargar tus citas. Revisa en tu panel de usuario.`;
+        return `Revisa tus citas en el panel de usuario para información actualizada.`;
       }
     }
 
     case "get_user_pets": {
       try {
         const pets = await Pet.find({ owner: userId })
-          .select('name type breed age weight medicalNotes')
-          .sort({ createdAt: -1 })
-          .limit(5)
+          .select('name type breed')
+          .limit(4)
           .lean();
 
         if (pets.length === 0) {
-          return `🐾 No tienes mascotas registradas.\n\n¡Registra tu primera mascota! Ve a "Mis Mascotas" en tu perfil y haz clic en "Agregar Mascota".`;
+          return `¡Registra tu primera mascota para acceder a todos los servicios!`;
         }
 
-        let response = `🐾 **Tus ${pets.length} mascotas registradas:**\n\n`;
+        let response = `Tus mascotas registradas:\n\n`;
         
         pets.forEach((pet, index) => {
-          response += `**${index + 1}. ${pet.name}**\n`;
-          if (pet.type) response += `   🐕 Tipo: ${pet.type}\n`;
-          if (pet.breed) response += `   🧬 Raza: ${pet.breed}\n`;
-          if (pet.age) response += `   🎂 Edad: ${pet.age} años\n`;
-          if (pet.weight) response += `   ⚖️ Peso: ${pet.weight} kg\n`;
+          response += `${index + 1}. **${pet.name}**\n`;
+          response += `   Tipo: ${pet.type || 'No especificado'}\n`;
+          if (pet.breed) response += `   Raza: ${pet.breed}\n`;
           response += `\n`;
         });
 
-        response += `\nVe a "Mis Mascotas" para ver toda la información, agregar nuevas o editar las existentes.`;
+        response += `\n¿Quieres agendar una cita para alguna?`;
         return response;
       } catch (error) {
-        console.error("Error get_user_pets:", error);
-        return `No pude cargar la información de tus mascotas. Intenta desde tu perfil.`;
+        return `Gestiona tus mascotas desde "Mis Mascotas" en tu perfil.`;
       }
     }
 
     default:
-      return getFallbackResponse(intent, "client");
+      return getFallbackResponse(intent, "client", businessContext);
   }
 }
 
-async function generateProviderResponse(intent, user, userMessage) {
+async function generateProviderResponse(intent, user, businessContext) {
   const { name, _id: userId } = user;
   
   switch (intent) {
+    case "business_stats": {
+      try {
+        // Estadísticas del negocio
+        const business = await Business.findOne({ owner: userId }).lean();
+        
+        if (!business) {
+          return `Primero configura tu negocio para ver estadísticas. Ve a "Mi Negocio" en tu panel.`;
+        }
+
+        // Contar citas
+        const totalAppointments = await Appointment.countDocuments({
+          "serviceId.businessId": business._id
+        });
+        
+        const recentAppointments = await Appointment.countDocuments({
+          "serviceId.businessId": business._id,
+          createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } // Últimos 30 días
+        });
+
+        return `📊 **Estadísticas de ${business.name || 'tu negocio'}**\n\n` +
+               `• Citas totales: ${totalAppointments}\n` +
+               `• Citas (30 días): ${recentAppointments}\n` +
+               `• Estado: ${business.status === 'approved' ? '✅ Activo' : '⏳ Pendiente'}\n` +
+               `\nPara reportes detallados, ve a "Estadísticas" en tu panel.`;
+      } catch (error) {
+        return `Revisa las estadísticas en tu panel de proveedor para información actualizada.`;
+      }
+    }
+
     case "provider_today_appointments": {
       try {
         const today = new Date().toISOString().split('T')[0];
+        
+        // Obtener negocio del proveedor
+        const business = await Business.findOne({ owner: userId }).select('_id').lean();
+        
+        if (!business) {
+          return `Configura tu negocio primero para gestionar citas.`;
+        }
+
+        // Buscar citas a través de servicios del negocio
+        const services = await Service.find({ businessId: business._id }).select('_id');
+        const serviceIds = services.map(s => s._id);
+
         const appointments = await Appointment.find({
-          providerId: userId,
+          serviceId: { $in: serviceIds },
           date: today,
-          status: { $in: ['pending', 'confirmed', 'in_progress'] }
+          status: { $in: ['pending', 'confirmed'] }
         })
-          .populate("userId", "name email phone")
+          .populate("userId", "name")
           .populate("petId", "name")
-          .populate("serviceId", "name basePrice")
-          .sort({ time: 1 })
+          .populate("serviceId", "name")
+          .limit(8)
           .lean();
 
         if (appointments.length === 0) {
-          return `📅 No tienes citas agendadas para hoy.\n\nRecomendaciones:\n• Revisa tu disponibilidad\n• Actualiza tus servicios\n• Promociona tu negocio`;
+          return `No tienes citas agendadas para hoy. ¡Es buen momento para promocionar tus servicios!`;
         }
 
-        let response = `📅 **Tus citas de hoy (${appointments.length}):**\n\n`;
+        let response = `Tienes ${appointments.length} citas hoy:\n\n`;
         
         appointments.forEach((appt, index) => {
-          response += `**${index + 1}. ${appt.serviceId?.name || 'Servicio'}**\n`;
-          response += `   👤 Cliente: ${appt.userId?.name || 'No especificado'}\n`;
-          if (appt.userId?.phone) response += `   📞 Teléfono: ${appt.userId.phone}\n`;
-          response += `   🐾 Mascota: ${appt.petId?.name || 'No especificada'}\n`;
-          if (appt.time) response += `   ⏰ Hora: ${appt.time}\n`;
-          response += `   📋 Estado: ${this.getStatusEmoji(appt.status)} ${appt.status}\n`;
-          if (appt.serviceId?.basePrice) response += `   💰 Precio: $${appt.serviceId.basePrice}\n`;
-          response += `\n`;
+          response += `${index + 1}. **${appt.serviceId?.name || 'Servicio'}**\n`;
+          response += `   Cliente: ${appt.userId?.name || 'No especificado'}\n`;
+          response += `   Mascota: ${appt.petId?.name || 'No especificada'}\n`;
+          response += `   Hora: ${appt.time || 'Por confirmar'}\n\n`;
         });
 
-        response += `\nVe a tu panel de proveedor > Agenda para gestionar todas tus citas.`;
         return response;
       } catch (error) {
-        console.error("Error provider_today_appointments:", error);
-        return `No pude cargar tu agenda de hoy. Revisa en tu panel de proveedor.`;
-      }
-    }
-
-    case "provider_business_info": {
-      try {
-        const business = await Business.findOne({ owner: userId })
-          .select('name description category address status rating services createdAt')
-          .populate("services", "name basePrice status")
-          .lean();
-
-        if (!business) {
-          return `🏢 No tienes un negocio registrado.\n\nPara registrar tu negocio:\n1. Ve a tu panel de proveedor\n2. Haz clic en "Registrar Negocio"\n3. Completa el formulario\n4. Espera aprobación`;
-        }
-
-        let response = `🏢 **Tu Negocio: ${business.name}**\n\n`;
-        response += `📋 **Estado:** ${business.status === 'approved' ? '✅ Aprobado' : business.status === 'pending' ? '⏳ Pendiente' : '❌ Rechazado'}\n`;
-        response += `🏷️ **Categoría:** ${business.category || 'No especificada'}\n`;
-        response += `📍 **Dirección:** ${business.address || 'No especificada'}\n`;
-        if (business.rating) response += `⭐ **Rating:** ${business.rating}/5\n`;
-        response += `📅 **Registrado:** ${new Date(business.createdAt).toLocaleDateString('es-VE')}\n`;
-
-        if (business.description) {
-          response += `\n📝 **Descripción:**\n${business.description}\n`;
-        }
-
-        if (business.services && business.services.length > 0) {
-          const activeServices = business.services.filter(s => s.status === 'active');
-          const inactiveServices = business.services.filter(s => s.status !== 'active');
-          
-          response += `\n🛎️ **Servicios (${business.services.length}):**\n`;
-          response += `   ✅ Activos: ${activeServices.length}\n`;
-          response += `   ⏸️ Inactivos: ${inactiveServices.length}\n`;
-          
-          if (activeServices.length > 0) {
-            response += `\n**Servicios Activos:**\n`;
-            activeServices.slice(0, 5).forEach((service, index) => {
-              response += `${index + 1}. ${service.name}`;
-              if (service.basePrice) response += ` - $${service.basePrice}`;
-              response += `\n`;
-            });
-            if (activeServices.length > 5) response += `... y ${activeServices.length - 5} más\n`;
-          }
-        } else {
-          response += `\nℹ️ **No tienes servicios registrados.**\nAgrega servicios desde la gestión de tu negocio.`;
-        }
-
-        response += `\n\nVe a tu panel para editar información, agregar servicios o ver estadísticas.`;
-        return response;
-      } catch (error) {
-        console.error("Error provider_business_info:", error);
-        return `No pude cargar la información de tu negocio. Revisa en tu panel de proveedor.`;
+        return `Revisa tu agenda diaria en el panel de proveedor.`;
       }
     }
 
     default:
-      return getFallbackResponse(intent, "provider");
+      return getFallbackResponse(intent, "provider", businessContext);
   }
 }
 
-async function generateAdminResponse(intent, user, userMessage) {
-  const { name, _id: userId } = user;
-  
+async function generateAdminResponse(intent, user) {
   switch (intent) {
-    case "admin_list_businesses": {
+    case "business_approvals": {
       try {
-        const pendingCount = await Business.countDocuments({ status: "pending" });
-        const approvedCount = await Business.countDocuments({ status: "approved" });
-        const rejectedCount = await Business.countDocuments({ status: "rejected" });
-        const suspendedCount = await Business.countDocuments({ status: "suspended" });
+        const pendingBusinesses = await Business.countDocuments({ status: "pending" });
+        const activeBusinesses = await Business.countDocuments({ status: "approved" });
 
-        const recentBusinesses = await Business.find({})
-          .select('name category status createdAt')
-          .sort({ createdAt: -1 })
-          .limit(5)
-          .lean();
-
-        let response = `🏢 **Panel de Negocios - Admin**\n\n`;
-        response += `📊 **Estadísticas:**\n`;
-        response += `   ⏳ Pendientes: ${pendingCount}\n`;
-        response += `   ✅ Aprobados: ${approvedCount}\n`;
-        response += `   ❌ Rechazados: ${rejectedCount}\n`;
-        response += `   ⚠️ Suspendidos: ${suspendedCount}\n`;
-        response += `   📈 Total: ${pendingCount + approvedCount + rejectedCount + suspendedCount}\n\n`;
-
-        if (recentBusinesses.length > 0) {
-          response += `🆕 **Negocios Recientes:**\n`;
-          recentBusinesses.forEach((business, index) => {
-            const statusIcon = business.status === 'approved' ? '✅' : 
-                             business.status === 'pending' ? '⏳' : 
-                             business.status === 'rejected' ? '❌' : '⚠️';
-            response += `${index + 1}. ${statusIcon} ${business.name} (${business.category})\n`;
-          });
-        }
-
-        response += `\nVe al panel de administración > Negocios para gestionar aprobaciones, suspensiones y ver reportes completos.`;
-        return response;
+        return `🏢 **Gestión de Negocios**\n\n` +
+               `• Negocios pendientes: ${pendingBusinesses}\n` +
+               `• Negocios aprobados: ${activeBusinesses}\n` +
+               `\nRevisa "Negocios Pendientes" en el panel de administración.`;
       } catch (error) {
-        console.error("Error admin_list_businesses:", error);
-        return `No pude cargar las estadísticas de negocios. Revisa el panel de administración.`;
+        return `Accede al panel de administración para gestionar negocios.`;
       }
     }
 
-    case "admin_dashboard": {
+    case "system_reports": {
       try {
-        // Estadísticas generales
-        const userStats = await User.aggregate([
-          { $group: { _id: "$role", count: { $sum: 1 } } }
+        // Estadísticas rápidas
+        const [totalUsers, totalBusinesses, totalAppointments] = await Promise.all([
+          User.countDocuments(),
+          Business.countDocuments({ status: "approved" }),
+          Appointment.countDocuments()
         ]);
 
-        const appointmentStats = await Appointment.aggregate([
-          { 
-            $group: { 
-              _id: "$status", 
-              count: { $sum: 1 },
-              totalRevenue: { $sum: "$totalPrice" }
-            } 
-          }
-        ]);
-
-        const businessStats = await Business.aggregate([
-          { $group: { _id: "$status", count: { $sum: 1 } } }
-        ]);
-
-        let response = `📊 **Dashboard Administrativo**\n\n`;
-        
-        response += `👥 **Usuarios:**\n`;
-        userStats.forEach(stat => {
-          const roleName = stat._id === 'client' ? '👤 Clientes' : 
-                          stat._id === 'provider' ? '🏢 Proveedores' : 
-                          stat._id === 'admin' ? '👨‍💼 Admins' : '❓ Otros';
-          response += `   ${roleName}: ${stat.count}\n`;
-        });
-
-        response += `\n🏢 **Negocios:**\n`;
-        const businessMap = {};
-        businessStats.forEach(stat => businessMap[stat._id] = stat.count);
-        response += `   ⏳ Pendientes: ${businessMap.pending || 0}\n`;
-        response += `   ✅ Aprobados: ${businessMap.approved || 0}\n`;
-        response += `   ❌ Rechazados: ${businessMap.rejected || 0}\n`;
-
-        response += `\n📅 **Citas:**\n`;
-        const appointmentMap = {};
-        let totalRevenue = 0;
-        appointmentStats.forEach(stat => {
-          appointmentMap[stat._id] = stat.count;
-          totalRevenue += stat.totalRevenue || 0;
-        });
-        response += `   ✅ Completadas: ${appointmentMap.completed || 0}\n`;
-        response += `   ⏳ Pendientes: ${appointmentMap.pending || 0}\n`;
-        response += `   📅 Confirmadas: ${appointmentMap.confirmed || 0}\n`;
-        if (totalRevenue > 0) response += `   💰 Ingresos totales: $${totalRevenue}\n`;
-
-        response += `\n🔍 **Acciones rápidas:**\n`;
-        response += `• Revisar negocios pendientes\n`;
-        response += `• Ver reportes del sistema\n`;
-        response += `• Monitorear actividad\n`;
-        response += `• Configurar parámetros\n`;
-
-        return response;
+        return `📈 **Reporte Rápido del Sistema**\n\n` +
+               `• Usuarios totales: ${totalUsers}\n` +
+               `• Negocios activos: ${totalBusinesses}\n` +
+               `• Citas totales: ${totalAppointments}\n` +
+               `\nPara reportes detallados, genera exportaciones desde el panel de admin.`;
       } catch (error) {
-        console.error("Error admin_dashboard:", error);
-        return `No pude cargar el dashboard. Revisa el panel de administración.`;
+        return `Genera reportes completos desde el panel de administración.`;
       }
     }
 
     default:
       return getFallbackResponse(intent, "admin");
   }
-}
-
-// Función auxiliar para emojis de estado
-function getStatusEmoji(status) {
-  const emojis = {
-    pending: '⏳',
-    confirmed: '✅',
-    cancelled: '❌',
-    completed: '🏁',
-    in_progress: '🔄',
-    no_show: '🚫'
-  };
-  return emojis[status] || '📋';
 }
 
 // ============================================
@@ -834,58 +566,56 @@ function detectIntent(text, role = "client") {
   const lowerText = text.toLowerCase().trim();
 
   // Intents básicos
-  if (/(hola|buenos|buenas|saludos|hello|hi)/i.test(lowerText)) return "greeting";
-  if (/(gracias|thank|thanks|agradezco)/i.test(lowerText)) return "thanks";
-  if (/(adiós|chao|bye|nos vemos|hasta luego)/i.test(lowerText)) return "goodbye";
-  if (/(ayuda|help|soporte|asistencia)/i.test(lowerText)) return "help";
-  if (/(quién eres|qué eres|tu nombre|presentate)/i.test(lowerText)) return "about";
+  if (/(hola|buenos|buenas|saludos|hi|hello)/.test(lowerText)) return "greeting";
+  if (/(gracias|thank|thanks|agradecido)/.test(lowerText)) return "thanks";
+  if (/(adiós|chao|bye|hasta luego|nos vemos)/.test(lowerText)) return "goodbye";
+  if (/(ayuda|help|soporte|asistencia)/.test(lowerText)) return "help";
+  if (/(quién eres|qué eres|tu nombre|presentate)/.test(lowerText)) return "about";
 
-  // Intents de negocios
-  if (/(buscar|encontrar|ver|listar).*(negocio|empresa|proveedor|veterinaria|peluquería|guardería)/i.test(lowerText)) return "search_business";
-  if (/(negocio|empresa|proveedor).*(detalles|información|servicios|horarios)/i.test(lowerText) || 
-      /(ver|detalles de|información de).*(negocio|empresa)/i.test(lowerText)) return "get_business_details";
-  if (/(negocios|empresas|proveedores|veterinarias|peluquerías|guarderías)/i.test(lowerText) && 
-      !/(mi|mis|mío|mía)/i.test(lowerText)) return "list_businesses";
-
-  // Intents de servicios
-  if (/(servicios|qué ofrecen|qué hay|opciones).*(mascota|perro|gato)/i.test(lowerText) || 
-      /(tipos de|clases de).*servicio/i.test(lowerText)) return "list_services";
-
-  // Intents por rol
+  // Intents específicos por rol
   if (role === "client") {
-    if (/(mis citas|citas agendadas|próximas citas|historial.*citas)/i.test(lowerText)) return "get_user_appointments";
-    if (/(mis mascotas|mascotas registradas|mis perros|mis gatos)/i.test(lowerText)) return "get_user_pets";
-    if (/(agendar|reservar|solicitar).*(cita|consulta|servicio)/i.test(lowerText)) return "book_appointment";
+    if (/(mis citas|citas agendadas|próximas citas|reservas)/.test(lowerText)) return "get_user_appointments";
+    if (/(mis mascotas|mascotas registradas|animales)/.test(lowerText)) return "get_user_pets";
+    if (/(servicios|qué servicios|tipos de servicio)/.test(lowerText)) return "list_services";
+    if (/(negocios|proveedores|empresas|tiendas)/.test(lowerText)) return "find_business";
+    if (/(agendar cita|nueva cita|reservar|sacar hora)/.test(lowerText)) return "book_appointment";
   } 
   else if (role === "provider") {
-    if (/(citas hoy|agenda hoy|hoy tengo|hoy.*citas)/i.test(lowerText)) return "provider_today_appointments";
-    if (/(mi negocio|negocio mío|información.*negocio|datos.*empresa)/i.test(lowerText)) return "provider_business_info";
+    if (/(citas hoy|agenda hoy|hoy tengo|hoy agenda)/.test(lowerText)) return "provider_today_appointments";
+    if (/(mis servicios|servicios que ofrezco|mis ofertas)/.test(lowerText)) return "list_services";
+    if (/(negocio|mi negocio|empresa|mi empresa)/.test(lowerText)) return "business_stats";
+    if (/(estadísticas|métricas|reportes|analítica)/.test(lowerText)) return "business_stats";
+    if (/(gestionar|administrar|configurar)/.test(lowerText)) return "manage_services";
   }
   else if (role === "admin") {
-    if (/(negocios|proveedores).*(pendientes|aprobar|revisar)/i.test(lowerText)) return "admin_list_businesses";
-    if (/(dashboard|panel|estadísticas|métricas|reportes)/i.test(lowerText)) return "admin_dashboard";
+    if (/(negocios pendientes|aprobar negocios|solicitudes negocio)/.test(lowerText)) return "business_approvals";
+    if (/(usuarios|listar usuarios|clientes totales)/.test(lowerText)) return "admin_list_users";
+    if (/(reportes|estadísticas sistema|métricas globales)/.test(lowerText)) return "system_reports";
   }
 
   // Intents generales
-  if (/(precio|costos|tarifas|cuánto cuesta|valor)/i.test(lowerText)) return "prices";
-  if (/(emergencia|urgencia|accidente|enfermo|grave)/i.test(lowerText)) return "emergency";
-  if (/(contacto|teléfono|email|correo|ubicación)/i.test(lowerText)) return "contact";
-  if (/(cómo funciona|uso|utilizar|tutorial|guía)/i.test(lowerText)) return "how_to";
+  if (/(precios|costos|tarifas|cuánto cuesta|valor)/.test(lowerText)) return "prices";
+  if (/(emergencia|urgencia|veterinario|accidente)/.test(lowerText)) return "emergency";
+  if (/(contacto|teléfono|email|dirección|ubicación)/.test(lowerText)) return "contact";
 
   return "fallback";
 }
 
 // ============================================
-// 🚀 ENDPOINT PRINCIPAL - OPTIMIZADO PARA RENDER
+// 🚀 ENDPOINT PRINCIPAL OPTIMIZADO PARA RENDER
 // ============================================
 
 router.post("/", protect, async (req, res) => {
   const startTime = Date.now();
   
+  // Configurar timeout específico para Render
+  req.setTimeout(RENDER_TIMEOUT + 2000); // 12 segundos total
+
   try {
     const { message } = req.body;
     const { role, name, _id: userId } = req.user;
 
+    // Validación rápida
     if (!message || !message.trim()) {
       return res.json({
         success: false,
@@ -897,15 +627,15 @@ router.post("/", protect, async (req, res) => {
     const text = message.trim();
     const intent = detectIntent(text, role);
 
-    console.log(`💬 [${role}] ${name}: "${text.substring(0, 50)}..." → ${intent}`);
+    console.log(`💬 Chat [${role}] ${name}: "${text.substring(0, 30)}..." -> ${intent}`);
 
-    // Respuestas rápidas predefinidas
+    // Respuestas inmediatas (sin DB/API)
     const quickResponses = {
-      greeting: `¡Hola ${name}! 👋 Soy PetBot, tu asistente virtual de PetServices.\n\n¿En qué puedo ayudarte hoy?`,
-      thanks: `¡De nada! 😊 Es un placer ayudarte.\n\n¿Hay algo más en lo que pueda asistirte?`,
-      goodbye: `¡Hasta luego ${name}! Que tengas un excelente día. 🐾\n\nRecuerda que estoy aquí para ayudarte cuando lo necesites.`,
-      help: `¡Claro! Te ayudo con:\n\n📋 **Información:** Negocios, servicios, precios\n🐾 **Gestión:** Tus mascotas y citas\n🏢 **Negocios:** Búsqueda y detalles\n🚑 **Emergencias:** Contactos urgentes\n\n¿Qué necesitas específicamente?`,
-      about: `🤖 **Soy PetBot**, el asistente virtual de PetServices.\n\nMi propósito es ayudarte a:\n• Encontrar los mejores servicios para tus mascotas\n• Gestionar tus citas y mascotas\n• Conectar con negocios de confianza\n• Resolver dudas sobre el sistema\n\n¿En qué puedo asistirte?`
+      greeting: `¡Hola ${name}! 👋 ¿En qué puedo ayudarte?`,
+      thanks: `¡De nada! 😊 ¿Algo más en lo que pueda asistirte?`,
+      goodbye: `¡Hasta luego ${name}! Que tengas un excelente día. 👋`,
+      help: `¡Claro! Puedo ayudarte con información del sistema, gestión de negocios, citas y más. ¿Qué necesitas específicamente?`,
+      about: `Soy PetBot 🤖, tu asistente virtual para PetServices. Te ayudo con información del sistema, gestionar citas, encontrar negocios y más. ¿En qué te ayudo?`
     };
 
     if (quickResponses[intent]) {
@@ -914,23 +644,15 @@ router.post("/", protect, async (req, res) => {
         reply: quickResponses[intent],
         type: "text",
         intent,
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - startTime,
+        optimized: true
       });
     }
 
-    // Intents que requieren datos de la base de datos
-    const dataIntents = [
-      "list_services", 
-      "list_businesses", 
-      "search_business",
-      "get_business_details",
-      "get_user_appointments", 
-      "get_user_pets", 
-      "provider_today_appointments", 
-      "provider_business_info",
-      "admin_list_businesses",
-      "admin_dashboard"
-    ];
+    // Intents con datos de DB (optimizados)
+    const dataIntents = ["find_business", "get_user_appointments", "get_user_pets", 
+                         "provider_today_appointments", "business_stats", 
+                         "business_approvals", "system_reports"];
     
     if (dataIntents.includes(intent)) {
       try {
@@ -945,90 +667,73 @@ router.post("/", protect, async (req, res) => {
           responseTime: Date.now() - startTime
         });
       } catch (dbError) {
-        console.error("❌ Error DB:", dbError.message);
-        
-        // Respuesta de error amigable
-        let errorReply = `😔 Lo siento, hubo un problema al procesar tu solicitud.\n\n`;
-        errorReply += `**Posibles soluciones:**\n`;
-        errorReply += `• Intenta nuevamente en un momento\n`;
-        errorReply += `• Revisa tu conexión a internet\n`;
-        errorReply += `• Si el problema persiste, contacta a soporte\n`;
-        
+        console.error("❌ Error DB en chat:", dbError.message);
+        // Fallback rápido
         return res.json({
           success: true,
-          reply: errorReply,
-          type: "error",
+          reply: getFallbackResponse(intent, role, null),
+          type: "text",
           intent,
           responseTime: Date.now() - startTime
         });
       }
     }
 
-    // Intents que usan IA (respuesta inmediata + procesamiento async)
-    if (["book_appointment", "prices", "emergency", "contact", "how_to", "fallback"].includes(intent)) {
-      
-      // Respuesta inmediata
-      const initialResponse = {
+    // Intents que usan IA (manejo asíncrono para no bloquear)
+    if (["book_appointment", "prices", "emergency", "contact", "fallback"].includes(intent)) {
+      // Respuesta inmediata con procesamiento en segundo plano
+      const immediateResponse = {
         success: true,
-        reply: "🤔 **Procesando tu consulta...**\n\nUn momento mientras busco la mejor información para ti.",
+        reply: "🤖 Procesando tu consulta...",
         type: "processing",
         intent,
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - startTime,
+        willUpdate: true
       };
 
-      res.json(initialResponse);
+      res.json(immediateResponse);
 
-      // Procesamiento async en segundo plano
-      setTimeout(async () => {
+      // Procesamiento asíncrono (no bloquea la respuesta)
+      setImmediate(async () => {
         try {
-          const systemPrompt = `Eres PetBot, asistente virtual de PetServices. Usuario: ${name} (${role}). 
-Pregunta: "${text}"
-Contexto: Sistema de gestión para servicios de mascotas.
-
-Instrucciones:
-1. Responde en español, tono amigable pero profesional
-2. Máximo 3 párrafos
-3. Usa emojis relevantes 🐾🏥✂️
-4. Si no sabes algo, sugiere alternativas
-5. Evita información inventada
-
-Datos disponibles:
-• Sistema con clientes, proveedores y administradores
-• Negocios: veterinarias, peluquerías, guarderías
-• Servicios varían por negocio
-• Precios dependen del servicio y negocio`;
-
-          const aiReply = await callGeminiAPI(systemPrompt, role);
+          const businessContext = await getBusinessContext(userId, role);
+          const aiReply = await callGeminiAPI(
+            `Usuario (${role} ${name}) pregunta sobre "${text}"`,
+            role,
+            businessContext
+          );
           
-          console.log(`✅ IA completada para ${intent} (${Date.now() - startTime}ms)`);
+          console.log(`✅ IA procesada para ${name} en ${Date.now() - startTime}ms`);
+          
+          // Aquí podrías implementar WebSocket para enviar la actualización
+          // Por ahora solo se registra en logs para producción
           
         } catch (aiError) {
-          console.error("❌ Error IA async:", aiError.message);
+          console.error("❌ Error IA en background:", aiError.message);
         }
-      }, 0);
+      });
 
       return;
     }
 
-    // Fallback final
-    const fallbackReply = `🤔 No estoy seguro de entender completamente.\n\n**Puedo ayudarte con:**\n• 🔍 Búsqueda de negocios y servicios\n• 📅 Gestión de citas y mascotas\n• 💰 Información de precios\n• 🚑 Contactos de emergencia\n• 📋 Tutoriales y guías\n\n¿Podrías reformular tu pregunta o elegir una de estas opciones?`;
+    // Fallback final optimizado
+    const businessContext = await getBusinessContext(userId, role);
     
     return res.json({
       success: true,
-      reply: fallbackReply,
+      reply: getFallbackResponse("general", role, businessContext),
       type: "text",
       intent: "fallback",
       responseTime: Date.now() - startTime
     });
 
   } catch (error) {
-    console.error("❌ Error crítico en chat:", error);
+    console.error("❌ Error crítico en /chat:", error.message);
     
-    const errorReply = `😔 **Lo siento, ocurrió un error inesperado.**\n\n**Por favor:**\n1. Intenta nuevamente en unos minutos\n2. Verifica tu conexión a internet\n3. Si el problema persiste, contacta a soporte\n\n**Error técnico:** ${error.message.substring(0, 100)}`;
-    
+    // Respuesta de error amigable
     return res.json({
       success: false,
-      reply: errorReply,
+      reply: "😔 **Hubo un error temporal.** Por favor, intenta de nuevo en unos momentos o usa las funciones directas del sistema.",
       type: "error",
       responseTime: Date.now() - startTime
     });
@@ -1036,75 +741,60 @@ Datos disponibles:
 });
 
 // ============================================
-// 🔍 ENDPOINTS ADICIONALES
+// 📊 ENDPOINTS ADICIONALES OPTIMIZADOS
 // ============================================
 
-// Health check para Render
+// Health check optimizado para Render
 router.get("/health", protect, (req, res) => {
   res.json({
-    status: "healthy",
-    service: "PetBot Chat API",
-    version: "2.0.0",
-    environment: process.env.NODE_ENV || "development",
-    ai: {
-      provider: GEMINI_API_KEY ? "Google Gemini" : "Fallback Mode",
-      model: GEMINI_MODEL,
-      configured: !!GEMINI_API_KEY
-    },
-    features: ["Negocios", "Servicios", "Mascotas", "Citas", "IA"],
-    user: {
-      role: req.user.role,
-      name: req.user.name
-    },
+    status: "operational",
+    service: "PetBot Chat Service",
+    environment: NODE_ENV,
+    aiConfigured: !!GEMINI_API_KEY,
+    timeout: RENDER_TIMEOUT,
+    userRole: req.user.role,
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
 });
 
-// Diagnóstico del sistema
+// Endpoint de diagnóstico ligero
 router.get("/diagnostic", protect, async (req, res) => {
   try {
+    const businessContext = await getBusinessContext(req.user._id, req.user.role);
+    
     const stats = {
-      gemini: {
-        configured: !!GEMINI_API_KEY,
-        key_length: GEMINI_API_KEY ? GEMINI_API_KEY.length : 0,
-        model: GEMINI_MODEL
-      },
-      database: {
-        users: await User.countDocuments({}),
-        pets: await Pet.countDocuments({}),
-        businesses: await Business.countDocuments({}),
-        services: await Service.countDocuments({}),
-        appointments: await Appointment.countDocuments({})
-      },
-      system: {
-        node_version: process.version,
-        memory: process.memoryUsage(),
-        platform: process.platform,
-        uptime: process.uptime()
-      },
       user: {
-        id: req.user._id,
-        role: req.user.role,
-        name: req.user.name
+        name: req.user.name,
+        role: req.user.role
+      },
+      business: businessContext ? {
+        hasBusiness: true,
+        name: businessContext.name,
+        status: businessContext.status
+      } : { hasBusiness: false },
+      system: {
+        environment: NODE_ENV,
+        geminiConfigured: !!GEMINI_API_KEY,
+        timestamp: new Date().toISOString()
       }
     };
 
     res.json({
       success: true,
       data: stats,
-      timestamp: new Date().toISOString()
+      responseTime: Date.now() - Date.now()
     });
 
   } catch (error) {
     res.json({
       success: false,
-      error: error.message
+      error: "Diagnóstico no disponible"
     });
   }
 });
 
-// Endpoint para pruebas (sin autenticación)
+// Endpoint de prueba (sin autenticación para pruebas)
 router.post("/test", async (req, res) => {
   try {
     const { message, role = "client" } = req.body;
@@ -1112,59 +802,41 @@ router.post("/test", async (req, res) => {
     if (!message) {
       return res.json({
         success: false,
-        reply: "Por favor, incluye un mensaje en el cuerpo de la solicitud."
+        reply: "Mensaje requerido para prueba"
       });
     }
 
-    console.log(`🧪 Test: "${message.substring(0, 50)}..."`);
+    const reply = await callGeminiAPI(`Prueba [${role}]: ${message}`, role);
     
-    const testUser = {
-      _id: "test_user",
-      name: "Usuario de Prueba",
-      role: role,
-      email: "test@example.com"
-    };
-
-    const intent = detectIntent(message, role);
-    let reply;
-
-    if (intent === "greeting") {
-      reply = `¡Hola Usuario de Prueba! 👋 Soy PetBot en modo test.\n\nMensaje recibido: "${message}"\n\nIntención detectada: ${intent}`;
-    } else if (["list_services", "list_businesses"].includes(intent)) {
-      reply = `🔍 **Resultado de prueba para: "${message}"**\n\nEn un entorno real, buscaría en la base de datos:\n• Negocios aprobados\n• Servicios activos\n• Información detallada\n\nIntención detectada: ${intent}`;
-    } else {
-      const systemPrompt = `[MODO PRUEBA] Eres PetBot. Responde a: "${message}"
-Usuario: Usuario de Prueba (${role})
-Contexto: Sistema de prueba - no hay datos reales`;
-      
-      reply = await callGeminiAPI(systemPrompt, role);
-    }
-
     res.json({
       success: true,
       reply,
       test: true,
-      intent,
-      role,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      responseTime: Date.now() - Date.now()
     });
 
   } catch (error) {
     res.json({
       success: false,
-      reply: `❌ Error en prueba: ${error.message}`,
+      reply: `Error en prueba: ${error.message}`,
       test: true
     });
   }
 });
 
-// Endpoint simple para monitoreo (sin auth)
-router.get("/status", (req, res) => {
+// Webhook para recibir actualizaciones (útil para integraciones futuras)
+router.post("/webhook", express.json(), (req, res) => {
+  // Endpoint para recibir webhooks externos
+  const { type, data } = req.body;
+  
+  console.log(`🔔 Webhook recibido: ${type}`);
+  
+  // Respuesta inmediata
   res.json({
-    status: "online",
-    service: "PetBot Chat API",
-    time: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    received: true,
+    type,
+    timestamp: new Date().toISOString()
   });
 });
 
