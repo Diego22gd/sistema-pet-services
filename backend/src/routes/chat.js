@@ -17,9 +17,10 @@ if (!GEMINI_API_KEY) {
 }
 
 // Usar gemini-1.5-flash con v1alpha
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_MODEL ="models/gemini-1.5-flash-latest";
 // IMPORTANTE: gemini-1.5-flash requiere v1alpha en producción
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1alpha/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
 
 // ============================================
 // 🚀 FUNCIÓN PARA LLAMAR A GEMINI - CON FALLBACK
