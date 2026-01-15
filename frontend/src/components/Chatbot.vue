@@ -1,14 +1,37 @@
 <template>
   <!-- ChatBot Container -->
-  <div class="chatbot-container">
+  <div class="chatbot-container" ref="chatbotContainer">
+    <!-- Mensaje tipo nube sobre el botón flotante -->
+    <transition name="bubble">
+      <div 
+        v-if="!isOpen && showHelpBubble" 
+        class="help-bubble"
+        @click="toggleChat"
+      >
+        <div class="bubble-arrow"></div>
+        <div class="bubble-content">
+          <span class="bubble-text">¿Necesitas ayuda?</span>
+          <span class="bubble-subtext">Pregúntame lo que necesites</span>
+        </div>
+        <button 
+          @click.stop="hideBubble" 
+          class="bubble-close"
+          title="Cerrar"
+        >
+          ×
+        </button>
+      </div>
+    </transition>
+
     <!-- Botón flotante -->
     <button
       @click="toggleChat"
       class="chatbot-toggle"
-      :class="{ 'has-notification': !isOpen && hasNewMessage }"
+      :class="{ 'pulse-animation': !isOpen && hasNewMessage }"
+      ref="chatbotToggle"
     >
       <img 
-        :src="botAvatar"
+        src="/petbot.png"
         class="w-12 h-12 object-contain rounded-full"
         alt="PetBot"
       />
@@ -16,25 +39,22 @@
       <div v-if="!isOpen && hasNewMessage" class="notification-dot"></div>
     </button>
 
-    <!-- Ventana del Chat -->
+    <!-- Ventana del Chat - Posición más alta -->
     <transition name="chat-window">
       <div
         v-if="isOpen"
         class="chatbot-window"
       >
-        <!-- Header con info de negocio -->
+        <!-- Header -->
         <div class="chatbot-header">
           <img 
-            :src="botAvatar"
+            src="/petbot2.png"
             class="chatbot-avatar"
             alt="PetBot"
           />
           <div class="chatbot-info">
-            <h3>{{ botName }}</h3>
-            <p class="chatbot-subtitle">{{ getRoleDescription() }}</p>
-            <p v-if="businessInfo" class="chatbot-business">
-              <span class="business-badge">{{ businessInfo }}</span>
-            </p>
+            <h3>PetBot AI</h3>
+            <p>{{ getRoleDescription() }}</p>
           </div>
           <button 
             @click="toggleChat" 
@@ -47,21 +67,6 @@
 
         <!-- Área de mensajes -->
         <div ref="messagesContainer" class="chatbot-messages">
-          <!-- Mensaje de bienvenida solo al abrir -->
-          <div v-if="showWelcome" class="welcome-message">
-            <div class="welcome-bubble">
-              <h4>👋 ¡Hola {{ userName }}!</h4>
-              <p>{{ getWelcomeMessage() }}</p>
-              <div class="welcome-features">
-                <div v-for="feature in welcomeFeatures" :key="feature" class="feature-item">
-                  <span class="feature-icon">✓</span>
-                  <span>{{ feature }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Historial de mensajes -->
           <div
             v-for="(msg, index) in messages"
             :key="index"
@@ -92,28 +97,13 @@
                 <div class="dot"></div>
                 <div class="dot"></div>
               </div>
-              <span class="typing-text">{{ botName }} está escribiendo...</span>
-            </div>
-          </div>
-
-          <!-- Sugerencia rápida después de mensaje de bot -->
-          <div v-if="showSuggestion && !isLoading" class="suggestion-container">
-            <p class="suggestion-text">¿Te interesa alguna de estas opciones?</p>
-            <div class="suggestion-buttons">
-              <button
-                v-for="suggestion in quickSuggestions"
-                :key="suggestion"
-                @click="sendQuick(suggestion)"
-                class="suggestion-button"
-              >
-                {{ suggestion }}
-              </button>
+              <span class="typing-text">PetBot está escribiendo...</span>
             </div>
           </div>
         </div>
 
         <!-- Botones rápidos CON SCROLL HORIZONTAL -->
-        <div v-if="quickOptions.length > 0" class="quick-buttons-container">
+        <div class="quick-buttons-container">
           <div class="quick-buttons-wrapper">
             <div class="quick-buttons-scroll" ref="quickButtonsScroll">
               <button
@@ -151,49 +141,22 @@
           <input
             v-model="userInput"
             @keyup.enter="sendMessage"
-            @input="handleInput"
             :disabled="isLoading"
             :placeholder="getInputPlaceholder()"
             class="message-input"
             maxlength="500"
-            ref="messageInput"
           />
-          <div class="input-actions">
-            <button
-              v-if="userInput"
-              @click="clearInput"
-              class="clear-button"
-              title="Limpiar"
-            >
-              ✕
-            </button>
-            <button
-              @click="sendMessage"
-              :disabled="isLoading || !userInput.trim()"
-              class="send-button"
-              :class="{ 'loading': isLoading }"
-              title="Enviar mensaje"
-            >
-              <svg v-if="!isLoading" class="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-              </svg>
-              <div v-else class="loading-spinner"></div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Footer con info del sistema -->
-        <div class="chatbot-footer">
-          <div class="footer-info">
-            <span class="footer-text">
-              🤖 {{ botName }} v2.0 • 
-              <span class="status-dot" :class="connectionStatus"></span>
-              {{ connectionText }}
-            </span>
-            <span class="footer-text" v-if="businessInfo">
-              🏢 {{ businessInfo }}
-            </span>
-          </div>
+          <button
+            @click="sendMessage"
+            :disabled="isLoading || !userInput.trim()"
+            class="send-button"
+            title="Enviar mensaje"
+          >
+            <svg v-if="!isLoading" class="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+            </svg>
+            <div v-else class="loading-spinner"></div>
+          </button>
         </div>
       </div>
     </transition>
@@ -203,7 +166,6 @@
 <script>
 import axios from "axios";
 import { useUserStore } from "@/stores/userStore";
-import { useBusinessStore } from "@/stores/businessStore";
 
 export default {
   name: "ChatBot",
@@ -216,145 +178,75 @@ export default {
       hasNewMessage: false,
       showScrollArrows: false,
       userRole: "client",
-      userName: "",
-      businessInfo: "",
-      showWelcome: true,
-      showSuggestion: false,
-      connectionStatus: "connected", // connected, connecting, disconnected
-      connectionText: "Conectado",
-      quickSuggestions: [],
-      chatHistory: [],
-      botName: "PetBot AI",
-      botAvatar: "/petbot.png",
-      // Cache para respuestas rápidas
-      quickCache: {},
-      // Timeout para sugerencias
-      suggestionTimeout: null
+      showHelpBubble: true,
+      bubbleHidden: false,
+      clickOutsideHandler: null
     };
   },
   computed: {
     quickOptions() {
-      // Opciones diferentes según el rol del usuario
       const optionsByRole = {
         client: [
-          "Buscar negocios", 
+          "Buscar comercios", 
+          "Servicios disponibles", 
           "Mis citas", 
           "Mis mascotas", 
           "Agendar cita",
-          "Servicios disponibles",
+          "Precios generales",
           "Emergencias",
-          "Contactar negocio",
-          "Precios"
+          "Cómo funciona"
         ],
         provider: [
-          "Mi negocio",
+          "Mi comercio",
           "Citas hoy",
+          "Mi agenda",
           "Estadísticas",
-          "Agregar servicio",
+          "Mis ingresos",
           "Clientes recientes",
-          "Configurar horarios",
-          "Reportes",
-          "Promocionar"
+          "Actualizar servicios",
+          "Reportes"
         ],
         admin: [
-          "Negocios pendientes",
-          "Usuarios totales",
-          "Reportes sistema",
-          "Aprobar negocios",
+          "Comercios pendientes",
+          "Usuarios registrados",
+          "Todas las citas",
+          "Reportes del sistema",
           "Estadísticas globales",
+          "Aprobar comercios",
           "Monitoreo",
-          "Backup",
-          "Configuración"
+          "Soporte"
         ]
       };
       
       return optionsByRole[this.userRole] || optionsByRole.client;
     },
-    
-    welcomeFeatures() {
-      const features = {
-        client: [
-          "Buscar negocios locales",
-          "Agendar citas rápidas",
-          "Gestionar tus mascotas",
-          "Ver reseñas y valoraciones",
-          "Soporte 24/7 para emergencias"
-        ],
-        provider: [
-          "Gestión de citas automática",
-          "Estadísticas en tiempo real",
-          "Perfil de negocio personalizado",
-          "Comunicación con clientes",
-          "Reportes de ingresos"
-        ],
-        admin: [
-          "Panel de control completo",
-          "Gestión de usuarios y negocios",
-          "Reportes detallados",
-          "Sistema de aprobaciones",
-          "Monitoreo del sistema"
-        ]
-      };
-      return features[this.userRole] || features.client;
+
+    // ✅ URL dinámica para desarrollo y producción en Render
+    apiBaseUrl() {
+      // Si estamos en desarrollo local (localhost)
+      if (window.location.hostname === 'localhost' || 
+          window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:4000';
+      }
+      
+      // Si estamos en Render (mismo dominio para frontend y backend)
+      // Usamos URL relativa cuando están en el mismo dominio
+      if (window.location.hostname.includes('onrender.com')) {
+        return ''; // URL relativa - mismo dominio
+      }
+      
+      // Por defecto, usar el mismo dominio
+      return '';
     }
   },
   methods: {
-    async initializeChat() {
+    getUserRole() {
       try {
-        this.connectionStatus = "connecting";
-        this.connectionText = "Conectando...";
-        
         const userStore = useUserStore();
-        const businessStore = useBusinessStore();
-        
-        // Obtener información del usuario
-        this.userRole = userStore.user?.role || "client";
-        this.userName = userStore.user?.name || "Usuario";
-        
-        // Obtener información del negocio si es proveedor
-        if (this.userRole === "provider" && businessStore.currentBusiness) {
-          this.businessInfo = businessStore.currentBusiness.name;
-          this.botName = `${this.businessInfo} Assistant`;
-          this.botAvatar = businessStore.currentBusiness.logo || "/petbot2.png";
-        } else if (this.userRole === "admin") {
-          this.botName = "Admin PetBot";
-          this.botAvatar = "/admin-bot.png";
-        }
-        
-        // Cargar historial del chat si existe
-        this.loadChatHistory();
-        
-        // Verificar conexión
-        await this.checkConnection();
-        
-        this.connectionStatus = "connected";
-        this.connectionText = "Conectado";
-        
+        return userStore.user?.role || "client";
       } catch (error) {
-        console.error("Error inicializando chat:", error);
-        this.connectionStatus = "disconnected";
-        this.connectionText = "Modo offline";
-        this.showOfflineMessage();
-      }
-    },
-
-    async checkConnection() {
-      try {
-        // Verificar si estamos online
-        const online = navigator.onLine;
-        if (!online) {
-          throw new Error("Sin conexión a internet");
-        }
-        
-        // Verificar conexión con el backend
-        const response = await axios.get("/api/chat/health", {
-          timeout: 5000
-        });
-        
-        return response.data.status === "operational";
-      } catch (error) {
-        console.warn("Modo offline activado:", error.message);
-        return false;
+        console.error("Error obteniendo rol:", error);
+        return "client";
       }
     },
 
@@ -367,20 +259,11 @@ export default {
       return descriptions[this.userRole] || "Asistente virtual";
     },
 
-    getWelcomeMessage() {
-      const messages = {
-        client: `Bienvenido a PetServices. Encuentra los mejores servicios para tu mascota y agenda citas fácilmente.`,
-        provider: `Gestiona tu negocio de mascotas de manera eficiente. Controla citas, servicios y clientes desde un solo lugar.`,
-        admin: `Supervisa y gestiona toda la plataforma PetServices. Controla usuarios, negocios y configuración del sistema.`
-      };
-      return messages[this.userRole] || messages.client;
-    },
-
     getInputPlaceholder() {
       const placeholders = {
-        client: "Busca negocios, pregunta por servicios, agenda citas...",
-        provider: "Consulta tu negocio, citas, estadísticas...",
-        admin: "Gestiona usuarios, negocios, reportes..."
+        client: "Pregunta sobre comercios, servicios o tus mascotas...",
+        provider: "Consulta tu comercio, agenda o estadísticas...",
+        admin: "Consulta comercios, usuarios o reportes del sistema..."
       };
       return placeholders[this.userRole] || "Escribe tu mensaje...";
     },
@@ -391,105 +274,84 @@ export default {
         this.addWelcomeMessage();
       }
       this.hasNewMessage = false;
-      
+      this.showHelpBubble = false;
       this.$nextTick(() => {
         this.scrollToBottom();
         this.checkScrollButtons();
-        
-        // Enfocar el input cuando se abre
-        if (this.isOpen && this.$refs.messageInput) {
-          this.$refs.messageInput.focus();
-        }
       });
+    },
+
+    hideBubble() {
+      this.showHelpBubble = false;
+      this.bubbleHidden = true;
+      // Guardar preferencia en localStorage
+      localStorage.setItem('chatbot_bubble_hidden', 'true');
+    },
+
+    showBubble() {
+      if (!this.bubbleHidden && !this.isOpen) {
+        this.showHelpBubble = true;
+      }
     },
 
     addWelcomeMessage() {
       const welcomeMessages = {
-        client: `¡Hola ${this.userName}! 👋 Soy ${this.botName}, tu asistente personal para servicios de mascotas.
+        client: `¡Hola! 👋 Soy PetBot, tu asistente para servicios de mascotas. 
 
-**Como cliente, puedo ayudarte con:**
-• 🏢 Buscar negocios locales calificados
-• 📅 Agendar y gestionar citas fácilmente
-• 🐾 Registrar y cuidar la info de tus mascotas
-• ⭐ Ver reseñas y valoraciones de proveedores
-• 🆘 Soporte para emergencias veterinarias
+Como **cliente**, puedo ayudarte con:
+• 🏪 Buscar comercios cercanos  
+• 🛎️ Servicios disponibles
+• 📅 Tus citas y reservas
+• 🐾 Información de tus mascotas  
+• 💰 Precios y promociones
+• 🏥 Emergencias veterinarias
 
-¿En qué puedo asistirte hoy?`,
+¿En qué puedo ayudarte hoy?`,
 
-        provider: `¡Hola ${this.userName}! 💼 Soy ${this.botName}, tu asistente de negocio.
+        provider: `¡Hola! 💼 Soy PetBot, tu asistente para la gestión de tu comercio.
 
-**Para tu negocio "${this.businessInfo}", puedo ayudarte con:**
-• 📊 Estadísticas y reportes de rendimiento
-• 📅 Gestión automática de tu agenda de citas
-• 👥 Comunicación directa con tus clientes
-• 📈 Estrategias para promocionar tus servicios
-• 💰 Seguimiento de ingresos y pagos
+Como **proveedor**, puedo ayudarte con:
+• 📊 Gestión de tu perfil de comercio
+• 📅 Agenda y citas del día
+• 📈 Estadísticas de tu negocio
+• 👥 Información de clientes
+• 💰 Reportes de ingresos
+• ⭐ Reseñas y calificaciones
 
-¿Qué área de tu negocio quieres optimizar hoy?`,
+¿Qué área de tu negocio necesitas gestionar?`,
 
-        admin: `¡Hola ${this.userName}! 👨‍💼 Soy ${this.botName}, tu asistente administrativo.
+        admin: `¡Hola! 👨‍💼 Soy PetBot, tu asistente administrativo.
 
-**Como administrador, gestiono:**
-• 🏢 Aprobación y supervisión de negocios
-• 👥 Control completo de usuarios del sistema
-• 📈 Reportes detallados de toda la plataforma
-• ⚙️ Configuración y mantenimiento del sistema
-• 🔒 Seguridad y permisos de acceso
+Como **administrador**, puedo ayudarte con:
+• 🏪 Gestión de comercios registrados
+• 👥 Usuarios del sistema
+• ✅ Aprobación de solicitudes
+• 📊 Reportes y estadísticas globales
+• ⚙️ Monitoreo de la plataforma
+• 🛡️ Seguridad y soporte
 
 ¿Qué funcionalidad administrativa necesitas?`
       };
 
       const message = welcomeMessages[this.userRole] || welcomeMessages.client;
-      this.addMessage("bot", message);
-      
-      // Mostrar sugerencias después de 2 segundos
-      this.showSuggestion = true;
-      this.quickSuggestions = this.getQuickSuggestions();
-    },
-
-    getQuickSuggestions() {
-      const suggestions = {
-        client: ["¿Cómo encuentro negocios?", "Quiero agendar una cita", "Tengo una emergencia"],
-        provider: ["Ver citas de hoy", "Cómo mejorar mi perfil", "Agregar nuevo servicio"],
-        admin: ["Negocios pendientes", "Reporte de usuarios", "Estadísticas del mes"]
-      };
-      return suggestions[this.userRole] || suggestions.client;
-    },
-
-    showOfflineMessage() {
-      const offlineMessage = `⚠️ **Modo Offline Activado**
-
-Estás usando el modo offline. Algunas funciones pueden estar limitadas.
-
-Funciones disponibles:
-• Consulta información básica del sistema
-• Revisa tus mensajes guardados
-• Accede a guías y tutoriales
-
-**Consejo:** Conéctate a internet para funciones completas de IA.`;
-
-      this.addMessage("bot", offlineMessage);
+      this.messages.push({ 
+        sender: "bot", 
+        text: message,
+        time: this.getCurrentTime()
+      });
     },
 
     async sendMessage() {
       if (!this.userInput.trim() || this.isLoading) return;
 
       const text = this.userInput.trim();
-      this.addMessage("me", text);
+      this.messages.push({ 
+        sender: "me", 
+        text: text,
+        time: this.getCurrentTime()
+      });
       this.userInput = "";
       this.isLoading = true;
-      this.showSuggestion = false;
-
-      // Verificar cache primero
-      const cachedResponse = this.checkCache(text);
-      if (cachedResponse) {
-        setTimeout(() => {
-          this.addMessage("bot", cachedResponse);
-          this.isLoading = false;
-          this.showSuggestionsAfterResponse();
-        }, 500);
-        return;
-      }
 
       try {
         const token = localStorage.getItem("token");
@@ -498,15 +360,23 @@ Funciones disponibles:
           throw new Error("No hay token de autenticación");
         }
 
+        console.log('🌐 Conectando a API...');
+        console.log('Base URL:', this.apiBaseUrl || '(URL relativa)');
+        
+        // ✅ URL dinámica para Render
+        const apiUrl = this.apiBaseUrl 
+          ? `${this.apiBaseUrl}/api/chat`
+          : '/api/chat'; // URL relativa cuando están en el mismo dominio
+
         const res = await axios.post(
-          "/api/chat",
+          apiUrl,
           { message: text },
           { 
             headers: { 
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json"
             },
-            timeout: 15000 // 15 segundos timeout para producción
+            timeout: 30000
           }
         );
 
@@ -514,89 +384,59 @@ Funciones disponibles:
           throw new Error(res.data.error);
         }
 
-        // Guardar en cache si es respuesta útil
-        if (res.data.type === "text" && !res.data.reply.includes("Error")) {
-          this.addToCache(text, res.data.reply);
-        }
+        this.messages.push({
+          sender: "bot",
+          text: res.data.reply || "Lo siento, no pude generar una respuesta.",
+          time: this.getCurrentTime()
+        });
 
-        this.addMessage("bot", res.data.reply || "Lo siento, no pude generar una respuesta.");
-        
-        // Mostrar sugerencias después de la respuesta
-        this.showSuggestionsAfterResponse();
+        // Mostrar burbuja de ayuda después de un tiempo si no está abierto
+        if (!this.isOpen && !this.bubbleHidden) {
+          setTimeout(() => {
+            this.showBubble();
+          }, 5000);
+        }
 
       } catch (error) {
         console.error("Chat error:", error);
         
-        let errorMessage = "❌ Error al conectar con el servidor.";
+        let errorMessage = "❌ Error al conectar con PetBot.";
         
-        if (error.code === 'ECONNABORTED') {
-          errorMessage = "⏰ **Tiempo de espera agotado.** El servidor está tardando en responder. Intenta de nuevo o usa el modo offline.";
-        } else if (error.response?.status === 401) {
-          errorMessage = "🔐 **Sesión expirada.** Por favor, inicia sesión nuevamente.";
-        } else if (error.message.includes("network")) {
-          errorMessage = "🌐 **Sin conexión.** Activando modo offline. Algunas funciones están limitadas.";
-          this.connectionStatus = "disconnected";
-          this.connectionText = "Modo offline";
-        } else if (error.response?.status === 429) {
-          errorMessage = "🚫 **Demasiadas solicitudes.** Por favor, espera unos minutos antes de intentar de nuevo.";
+        if (error.response?.status === 401) {
+          errorMessage = "🔐 Por favor, inicia sesión nuevamente.";
+        } else if (error.response?.status === 400) {
+          errorMessage = "📝 Por favor, escribe un mensaje válido.";
+        } else if (error.code === 'ECONNABORTED') {
+          errorMessage = "⏰ El servicio está tardando en responder. Intenta nuevamente.";
+        } else if (error.message.includes("token")) {
+          errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
+        } else if (error.message.includes("Network Error") || error.code === 'ERR_NETWORK') {
+          errorMessage = `🌐 **Error de conexión.**\n\nVerifica tu conexión a internet o intenta más tarde.`;
         }
 
-        this.addMessage("bot", errorMessage);
-        
+        this.messages.push({
+          sender: "bot",
+          text: errorMessage,
+          time: this.getCurrentTime()
+        });
       } finally {
         this.isLoading = false;
         this.scrollToBottom();
-        this.saveChatHistory();
       }
-    },
-
-    addMessage(sender, text) {
-      const message = {
-        sender,
-        text,
-        time: this.getCurrentTime(),
-        timestamp: Date.now()
-      };
-      
-      this.messages.push(message);
-      this.hasNewMessage = !this.isOpen;
-      
-      // Auto-scroll
-      this.$nextTick(() => {
-        this.scrollToBottom();
-      });
     },
 
     sendQuick(text) {
       this.userInput = text;
       this.sendMessage();
-      
-      // Ocultar sugerencias
-      this.showSuggestion = false;
-      if (this.suggestionTimeout) {
-        clearTimeout(this.suggestionTimeout);
-      }
-    },
-
-    handleInput() {
-      // Mostrar sugerencias dinámicas basadas en input
-      if (this.userInput.length > 2 && !this.isLoading) {
-        // Podrías implementar sugerencias en tiempo real aquí
-      }
-    },
-
-    clearInput() {
-      this.userInput = "";
-      if (this.$refs.messageInput) {
-        this.$refs.messageInput.focus();
-      }
     },
 
     scrollToBottom() {
-      const container = this.$refs.messagesContainer;
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
+      this.$nextTick(() => {
+        const container = this.$refs.messagesContainer;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
     },
 
     scrollQuickButtons(distance) {
@@ -618,90 +458,90 @@ Funciones disponibles:
     getCurrentTime() {
       return new Date().toLocaleTimeString('es-VE', { 
         hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true
+        minute: '2-digit' 
       });
     },
 
     formatMessage(text) {
       if (!text) return '';
       
-      // Mejor formato para producción
       return text
         .replace(/\n/g, '<br>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-blue-700 dark:text-blue-300">$1</strong>')
-        .replace(/\!\!(.*?)\!\!/g, '<span class="text-red-600 font-medium">$1</span>')
-        .replace(/##(.*?)##/g, '<div class="bg-blue-50 dark:bg-blue-900/20 p-2 rounded my-2">$1</div>')
-        // Emojis como íconos
-        .replace(/👋/g, '<span class="inline-block mr-1 animate-wave">👋</span>')
-        .replace(/🏢/g, '<span class="inline-block mr-1">🏢</span>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+        .replace(/•/g, '•')
         .replace(/📅/g, '<span class="inline-block mr-1">📅</span>')
         .replace(/🐾/g, '<span class="inline-block mr-1">🐾</span>')
-        .replace(/⭐/g, '<span class="inline-block mr-1 text-yellow-500">⭐</span>')
-        .replace(/⚠️/g, '<span class="inline-block mr-1 text-yellow-500">⚠️</span>')
-        .replace(/❌/g, '<span class="inline-block mr-1 text-red-500">❌</span>')
-        .replace(/✅/g, '<span class="inline-block mr-1 text-green-500">✅</span>');
+        .replace(/🛎️/g, '<span class="inline-block mr-1">🛎️</span>')
+        .replace(/💰/g, '<span class="inline-block mr-1">💰</span>')
+        .replace(/🏥/g, '<span class="inline-block mr-1">🏥</span>')
+        .replace(/📊/g, '<span class="inline-block mr-1">📊</span>')
+        .replace(/👥/g, '<span class="inline-block mr-1">👥</span>')
+        .replace(/⚙️/g, '<span class="inline-block mr-1">⚙️</span>')
+        .replace(/🏪/g, '<span class="inline-block mr-1">🏪</span>')
+        .replace(/⭐/g, '<span class="inline-block mr-1">⭐</span>')
+        .replace(/🛡️/g, '<span class="inline-block mr-1">🛡️</span>');
     },
 
-    // Cache simple para respuestas frecuentes
-    checkCache(query) {
-      const normalized = query.toLowerCase().trim();
-      const cacheKey = Object.keys(this.quickCache).find(key => 
-        normalized.includes(key) || key.includes(normalized)
-      );
-      return cacheKey ? this.quickCache[cacheKey] : null;
+    // ✅ Manejar clic fuera de la burbuja
+    handleClickOutside(event) {
+      const chatbotContainer = this.$refs.chatbotContainer;
+      const helpBubble = chatbotContainer?.querySelector('.help-bubble');
+      const chatbotToggle = this.$refs.chatbotToggle;
+      
+      if (helpBubble && 
+          !helpBubble.contains(event.target) && 
+          chatbotToggle && 
+          !chatbotToggle.contains(event.target)) {
+        this.hideBubble();
+      }
     },
 
-    addToCache(query, response) {
-      const normalized = query.toLowerCase().trim();
-      // Solo cachear si la respuesta es útil y no es un error
-      if (response && !response.includes("Error") && !response.includes("Lo siento")) {
-        this.quickCache[normalized.substring(0, 50)] = response;
+    // ✅ Aplicar parche de emergencia para URLs incorrectas en Render
+    applyEmergencyPatch() {
+      if (window.CHATBOT_PATCH_APPLIED) return;
+      
+      console.log('🔧 Aplicando parche de emergencia para API...');
+      
+      const isProduction = window.location.hostname.includes('onrender.com') && 
+                          !window.location.hostname.includes('localhost');
+      
+      if (isProduction) {
+        console.log('🚀 Detectado entorno Render en producción');
         
-        // Limitar tamaño del cache
-        const keys = Object.keys(this.quickCache);
-        if (keys.length > 20) {
-          delete this.quickCache[keys[0]];
-        }
-      }
-    },
-
-    showSuggestionsAfterResponse() {
-      this.suggestionTimeout = setTimeout(() => {
-        this.showSuggestion = true;
-        this.quickSuggestions = this.getQuickSuggestions();
-      }, 1000);
-    },
-
-    // Guardar historial en localStorage
-    saveChatHistory() {
-      try {
-        const history = {
-          messages: this.messages.slice(-50), // Guardar últimas 50 mensajes
-          lastUpdated: Date.now(),
-          userRole: this.userRole
-        };
-        localStorage.setItem('petbot_chat_history', JSON.stringify(history));
-      } catch (error) {
-        console.warn("No se pudo guardar historial:", error);
-      }
-    },
-
-    loadChatHistory() {
-      try {
-        const saved = localStorage.getItem('petbot_chat_history');
-        if (saved) {
-          const history = JSON.parse(saved);
-          // Solo cargar si es del mismo rol y menos de 1 día
-          if (history.userRole === this.userRole && 
-              Date.now() - history.lastUpdated < 24 * 60 * 60 * 1000) {
-            this.messages = history.messages;
-            this.showWelcome = false; // No mostrar bienvenida si hay historial
+        const originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
+          if (typeof url === 'string') {
+            const originalUrl = url;
+            
+            if (url.includes('localhost:4000')) {
+              url = url.replace('http://localhost:4000', '');
+              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
+            }
+            
+            if (url.includes('localhost:10000')) {
+              url = url.replace('http://localhost:10000', '');
+              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
+            }
           }
-        }
-      } catch (error) {
-        console.warn("No se pudo cargar historial:", error);
+          return originalXHROpen.call(this, method, url, async, user, pass);
+        };
+        
+        console.log('✅ Parche de emergencia aplicado para producción');
       }
+      
+      window.CHATBOT_PATCH_APPLIED = true;
+    },
+
+    // Mostrar burbuja de ayuda después de un tiempo
+    scheduleHelpBubble() {
+      if (this.bubbleHidden) return;
+      
+      setTimeout(() => {
+        if (!this.isOpen && !this.bubbleHidden) {
+          this.showHelpBubble = true;
+        }
+      }, 3000); // Mostrar después de 3 segundos
     }
   },
 
@@ -711,14 +551,15 @@ Funciones disponibles:
         this.$nextTick(() => {
           this.scrollToBottom();
           this.checkScrollButtons();
-          
-          // Enfocar input cuando se abre
-          if (this.$refs.messageInput) {
-            setTimeout(() => {
-              this.$refs.messageInput.focus();
-            }, 300);
-          }
         });
+        this.showHelpBubble = false;
+      } else {
+        // Programar mostrar burbuja después de cerrar el chat
+        setTimeout(() => {
+          if (!this.bubbleHidden) {
+            this.scheduleHelpBubble();
+          }
+        }, 2000);
       }
     },
 
@@ -727,23 +568,30 @@ Funciones disponibles:
         this.$nextTick(() => {
           this.scrollToBottom();
         });
+        if (!this.isOpen && this.messages.length > 0) {
+          this.hasNewMessage = true;
+        }
       },
       deep: true
-    },
-
-    connectionStatus(newStatus) {
-      const statusTexts = {
-        connected: "✅ Conectado",
-        connecting: "🔄 Conectando...",
-        disconnected: "🌐 Modo offline"
-      };
-      this.connectionText = statusTexts[newStatus] || "Desconocido";
     }
   },
 
   mounted() {
-    // Inicializar chat
-    this.initializeChat();
+    // Obtener el rol del usuario al montar el componente
+    this.userRole = this.getUserRole();
+    
+    // Verificar si el usuario ocultó la burbuja anteriormente
+    const bubbleHidden = localStorage.getItem('chatbot_bubble_hidden');
+    if (bubbleHidden === 'true') {
+      this.bubbleHidden = true;
+      this.showHelpBubble = false;
+    }
+    
+    // ✅ Aplicar parche de emergencia para Render
+    this.applyEmergencyPatch();
+    
+    // Programar mostrar burbuja de ayuda
+    this.scheduleHelpBubble();
     
     // Verificar scroll después de que se rendericen los botones
     this.$nextTick(() => {
@@ -752,37 +600,20 @@ Funciones disponibles:
       }, 100);
     });
 
-    // Escuchar cambios de conexión
-    window.addEventListener('online', () => {
-      this.connectionStatus = "connected";
-      this.connectionText = "Conectado";
-    });
-    
-    window.addEventListener('offline', () => {
-      this.connectionStatus = "disconnected";
-      this.connectionText = "Modo offline";
-    });
-
     // También verificar cuando cambia el tamaño de la ventana
     window.addEventListener('resize', this.checkScrollButtons);
-    
-    // Escuchar tecla Escape para cerrar chat
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen) {
-        this.toggleChat();
-      }
-    });
+
+    // ✅ Configurar event listener para clic fuera de la burbuja
+    this.clickOutsideHandler = this.handleClickOutside.bind(this);
+    document.addEventListener('click', this.clickOutsideHandler);
   },
 
   beforeUnmount() {
     window.removeEventListener('resize', this.checkScrollButtons);
-    window.removeEventListener('online', () => {});
-    window.removeEventListener('offline', () => {});
-    document.removeEventListener('keydown', () => {});
     
-    // Limpiar timeouts
-    if (this.suggestionTimeout) {
-      clearTimeout(this.suggestionTimeout);
+    // ✅ Remover el event listener
+    if (this.clickOutsideHandler) {
+      document.removeEventListener('click', this.clickOutsideHandler);
     }
   }
 };
@@ -796,37 +627,128 @@ Funciones disponibles:
   z-index: 1000;
 }
 
+/* Mensaje tipo nube */
+.help-bubble {
+  position: absolute;
+  bottom: 75px;
+  left: 10px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  padding: 12px 16px;
+  width: 200px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  z-index: 1001;
+  animation: float 3s ease-in-out infinite;
+}
+
+.help-bubble:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  background: #f8fafc;
+}
+
+.bubble-arrow {
+  position: absolute;
+  bottom: -8px;
+  left: 20px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  transform: rotate(45deg);
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.bubble-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bubble-text {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.bubble-subtext {
+  font-size: 11px;
+  color: #6b7280;
+  opacity: 0.8;
+}
+
+.bubble-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.bubble-close:hover {
+  background: #ef4444;
+  color: white;
+}
+
+/* Animación flotante */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
 /* Botón flotante */
 .chatbot-toggle {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: white;
   border: 2px solid #e2e8f0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  cursor: pointer;
-  padding: 0;
 }
 
 .chatbot-toggle:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   border-color: #3b82f6;
 }
 
-.chatbot-toggle.has-notification {
+.chatbot-toggle.pulse-animation {
   animation: pulse-button 2s infinite;
 }
 
 @keyframes pulse-button {
-  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
 }
 
 .notification-dot {
@@ -842,12 +764,12 @@ Funciones disponibles:
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.7; }
-  100% { transform: scale(1); opacity: 1; }
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
-/* Ventana del chat */
+/* Ventana del chat - POSICIÓN MÁS ALTA */
 .chatbot-window {
   position: fixed;
   bottom: 90px;
@@ -861,18 +783,16 @@ Funciones disponibles:
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  backdrop-filter: blur(10px);
 }
 
-/* Header mejorado */
+/* Header */
 .chatbot-header {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
-  position: relative;
 }
 
 .chatbot-avatar {
@@ -880,49 +800,23 @@ Funciones disponibles:
   height: 40px;
   object-fit: contain;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: white;
-  padding: 2px;
+  border: 2px solid white;
 }
 
 .chatbot-info {
   flex: 1;
-  min-width: 0;
 }
 
 .chatbot-info h3 {
   font-weight: bold;
   font-size: 14px;
-  margin: 0 0 4px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
 }
 
-.chatbot-subtitle {
-  font-size: 11px;
+.chatbot-info p {
+  font-size: 12px;
   opacity: 0.9;
   margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.chatbot-business {
-  margin: 4px 0 0 0;
-}
-
-.business-badge {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
 }
 
 .close-btn {
@@ -939,7 +833,6 @@ Funciones disponibles:
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
 .close-btn:hover {
@@ -958,87 +851,9 @@ Funciones disponibles:
   gap: 12px;
 }
 
-/* Mensaje de bienvenida */
-.welcome-message {
-  margin-bottom: 8px;
-}
-
-.welcome-bubble {
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  border: 1px solid #c7d2fe;
-  border-radius: 12px;
-  padding: 16px;
-  animation: slide-in 0.3s ease-out;
-}
-
-@keyframes slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.welcome-bubble h4 {
-  margin: 0 0 8px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.welcome-bubble > p {
-  margin: 0 0 12px 0;
-  font-size: 13px;
-  color: #4b5563;
-  line-height: 1.4;
-}
-
-.welcome-features {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #374151;
-}
-
-.feature-icon {
-  width: 16px;
-  height: 16px;
-  background: #3b82f6;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  flex-shrink: 0;
-}
-
-/* Contenedor de mensajes */
 .message-container {
   display: flex;
   width: 100%;
-  animation: message-appear 0.2s ease-out;
-}
-
-@keyframes message-appear {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .message-right {
@@ -1054,16 +869,10 @@ Funciones disponibles:
   padding: 12px 16px;
   border-radius: 18px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  animation: bubble-appear 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes bubble-appear {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
 }
 
 .message-user {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
   border-bottom-right-radius: 6px;
 }
@@ -1109,12 +918,6 @@ Funciones disponibles:
   display: flex;
   align-items: center;
   gap: 12px;
-  animation: typing-pulse 1.5s infinite;
-}
-
-@keyframes typing-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
 }
 
 .typing-dots {
@@ -1154,61 +957,12 @@ Funciones disponibles:
   color: #6b7280;
 }
 
-/* Sugerencias */
-.suggestion-container {
-  margin-top: 8px;
-  animation: slide-up 0.3s ease-out;
-}
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.suggestion-text {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 8px;
-  text-align: center;
-}
-
-.suggestion-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-}
-
-.suggestion-button {
-  padding: 6px 12px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  font-size: 11px;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.suggestion-button:hover {
-  background: #e5e7eb;
-  transform: translateY(-1px);
-}
-
-/* Botones rápidos MEJORADOS */
+/* Botones rápidos MEJORADO CON SCROLL HORIZONTAL */
 .quick-buttons-container {
   padding: 12px 16px;
   border-top: 1px solid #e5e7eb;
   background: #f8fafc;
   position: relative;
-  flex-shrink: 0;
 }
 
 .quick-buttons-wrapper {
@@ -1247,20 +1001,17 @@ Funciones disponibles:
 }
 
 .quick-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: #3b82f6;
   color: white;
   border-color: #3b82f6;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-}
-
-.quick-button:active:not(:disabled) {
-  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .quick-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* Botones de scroll */
@@ -1298,7 +1049,7 @@ Funciones disponibles:
   right: -8px;
 }
 
-/* Input area mejorada */
+/* Input area */
 .input-container {
   display: flex;
   align-items: center;
@@ -1306,7 +1057,6 @@ Funciones disponibles:
   padding: 16px;
   border-top: 1px solid #e5e7eb;
   background: white;
-  flex-shrink: 0;
 }
 
 .message-input {
@@ -1318,7 +1068,6 @@ Funciones disponibles:
   outline: none;
   transition: all 0.2s ease;
   background: white;
-  min-width: 0;
 }
 
 .message-input:focus {
@@ -1331,36 +1080,10 @@ Funciones disponibles:
   cursor: not-allowed;
 }
 
-.input-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.clear-button {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-}
-
-.clear-button:hover {
-  background: #e5e7eb;
-  color: #374151;
-}
-
 .send-button {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   border: none;
   border-radius: 12px;
   color: white;
@@ -1369,16 +1092,11 @@ Funciones disponibles:
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
 }
 
 .send-button:hover:not(:disabled) {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.send-button.loading {
-  background: linear-gradient(135deg, #94a3b8, #cbd5e1);
 }
 
 .send-button:disabled {
@@ -1406,60 +1124,7 @@ Funciones disponibles:
   100% { transform: rotate(360deg); }
 }
 
-/* Footer */
-.chatbot-footer {
-  padding: 8px 16px;
-  border-top: 1px solid #e5e7eb;
-  background: #f8fafc;
-  flex-shrink: 0;
-}
-
-.footer-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.footer-text {
-  font-size: 10px;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.status-dot.connected {
-  background: #10b981;
-  animation: pulse-green 2s infinite;
-}
-
-@keyframes pulse-green {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.status-dot.connecting {
-  background: #f59e0b;
-  animation: pulse-yellow 1.5s infinite;
-}
-
-@keyframes pulse-yellow {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-
-.status-dot.disconnected {
-  background: #ef4444;
-}
-
-/* Animaciones de ventana */
+/* Animaciones */
 .chat-window-enter-active,
 .chat-window-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1473,6 +1138,17 @@ Funciones disponibles:
 .chat-window-leave-to {
   opacity: 0;
   transform: translateY(20px) scale(0.95);
+}
+
+.bubble-enter-active,
+.bubble-leave-active {
+  transition: all 0.3s ease;
+}
+
+.bubble-enter-from,
+.bubble-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
 /* Scroll personalizado */
@@ -1493,53 +1169,63 @@ Funciones disponibles:
   background: #94a3b8;
 }
 
-/* Animación wave para emoji */
-.animate-wave {
-  display: inline-block;
-  animation: wave 2s infinite;
-  transform-origin: 70% 70%;
-}
-
-@keyframes wave {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(14deg); }
-  20% { transform: rotate(-8deg); }
-  30% { transform: rotate(14deg); }
-  40% { transform: rotate(-4deg); }
-  50% { transform: rotate(10deg); }
-  60% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
-}
-
 /* Responsive */
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .chatbot-container {
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
+    bottom: 10px;
+    left: 10px;
   }
   
   .chatbot-window {
-    width: calc(100vw - 32px);
-    left: 16px;
-    right: 16px;
-    max-width: 400px;
-    margin: 0 auto;
+    width: calc(100vw - 40px);
+    max-width: 380px;
+    left: 10px;
+    bottom: 80px;
+    height: 500px;
   }
   
-  .chatbot-toggle {
-    width: 56px;
-    height: 56px;
-  }
-  
-  .chatbot-avatar {
-    width: 36px;
-    height: 36px;
+  .help-bubble {
+    width: 180px;
+    left: 0;
   }
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
+  .help-bubble {
+    background: #1f2937;
+    border-color: #374151;
+    color: white;
+  }
+  
+  .bubble-arrow {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .bubble-text {
+    color: #f9fafb;
+  }
+  
+  .bubble-subtext {
+    color: #d1d5db;
+  }
+  
+  .bubble-close {
+    background: #374151;
+    color: #d1d5db;
+  }
+  
+  .bubble-close:hover {
+    background: #ef4444;
+    color: white;
+  }
+  
+  .chatbot-toggle {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
   .chatbot-window {
     background: #1f2937;
     border-color: #374151;
@@ -1551,12 +1237,17 @@ Funciones disponibles:
   
   .message-bot {
     background: #374151;
+    border-color: #4b5563;
     color: #f9fafb;
+  }
+  
+  .typing-bubble {
+    background: #374151;
     border-color: #4b5563;
   }
   
-  .message-user {
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
+  .typing-text {
+    color: #d1d5db;
   }
   
   .quick-buttons-container {
@@ -1566,8 +1257,14 @@ Funciones disponibles:
   
   .quick-button {
     background: #374151;
-    color: #d1d5db;
     border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .scroll-button {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
   }
   
   .input-container {
@@ -1577,44 +1274,13 @@ Funciones disponibles:
   
   .message-input {
     background: #374151;
-    color: #f9fafb;
     border-color: #4b5563;
+    color: #f9fafb;
   }
   
   .message-input:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-  }
-  
-  .clear-button {
-    background: #374151;
-    color: #9ca3af;
-    border-color: #4b5563;
-  }
-  
-  .chatbot-footer {
-    background: #111827;
-    border-color: #374151;
-  }
-  
-  .footer-text {
-    color: #9ca3af;
-  }
-  
-  .welcome-bubble {
-    background: linear-gradient(135deg, #374151, #4b5563);
-    border-color: #4b5563;
-  }
-  
-  .suggestion-button {
-    background: #374151;
-    color: #d1d5db;
-    border-color: #4b5563;
-  }
-  
-  .typing-bubble {
-    background: #374151;
-    border-color: #4b5563;
   }
 }
 </style>
