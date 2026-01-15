@@ -54,6 +54,9 @@
           <div class="chatbot-info">
             <h3>PetBot AI</h3>
             <p>{{ getRoleDescription() }}</p>
+            <span v-if="serviceStatus !== 'online'" class="service-status">
+              {{ getServiceStatusText() }}
+            </span>
           </div>
           <button 
             @click="toggleChat" 
@@ -99,6 +102,15 @@
               <span class="typing-text">PetBot está escribiendo...</span>
             </div>
           </div>
+
+          <!-- Mensaje de estado del servicio -->
+          <div v-if="serviceStatus !== 'online' && messages.length > 0" class="service-status-message">
+            <div class="status-bubble">
+              <span v-if="serviceStatus === 'checking'">🔄 Verificando servicio...</span>
+              <span v-if="serviceStatus === 'offline'">🔴 Servicio temporalmente no disponible</span>
+              <span v-if="serviceStatus === 'error'">⚠️ Error de conexión</span>
+            </div>
+          </div>
         </div>
 
         <!-- Botones rápidos CON SCROLL HORIZONTAL -->
@@ -109,7 +121,7 @@
                 v-for="q in quickOptions"
                 :key="q"
                 @click="sendQuick(q)"
-                :disabled="isLoading"
+                :disabled="isLoading || serviceStatus !== 'online'"
                 class="quick-button"
               >
                 {{ q }}
@@ -140,16 +152,16 @@
           <input
             v-model="userInput"
             @keyup.enter="sendMessage"
-            :disabled="isLoading"
+            :disabled="isLoading || serviceStatus !== 'online'"
             :placeholder="getInputPlaceholder()"
             class="message-input"
             maxlength="500"
           />
           <button
             @click="sendMessage"
-            :disabled="isLoading || !userInput.trim()"
+            :disabled="isLoading || !userInput.trim() || serviceStatus !== 'online'"
             class="send-button"
-            title="Enviar mensaje"
+            :title="serviceStatus !== 'online' ? 'Servicio no disponible' : 'Enviar mensaje'"
           >
             <svg v-if="!isLoading" class="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
@@ -178,7 +190,9 @@ export default {
       showScrollArrows: false,
       userRole: "client",
       showHelpBubble: true,
-      bubbleHidden: false
+      bubbleHidden: false,
+      serviceStatus: "checking", // checking | online | offline | error
+      lastStatusCheck: null
     };
   },
   computed: {
@@ -219,22 +233,24 @@ export default {
       return optionsByRole[this.userRole] || optionsByRole.client;
     },
 
-    // ✅ Computada para obtener la URL base dinámica
+    // ✅ URL base dinámica - SIMPLIFICADA
     apiBaseUrl() {
-      // Si estamos en desarrollo local (localhost)
-      if (window.location.hostname === 'localhost' || 
-          window.location.hostname === '127.0.0.1') {
+      // En desarrollo: localhost
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         return 'http://localhost:4000';
       }
-      
-      // Si estamos en Render (mismo dominio para frontend y backend)
-      // Usamos URL relativa cuando están en el mismo dominio
-      if (window.location.hostname.includes('onrender.com')) {
-        return ''; // URL relativa - mismo dominio
-      }
-      
-      // Por defecto, usar el mismo dominio
+      // En producción: usar URL relativa
       return '';
+    },
+
+    // ✅ URL para POST de chat
+    chatApiUrl() {
+      return `${this.apiBaseUrl}/api/chat`;
+    },
+
+    // ✅ URL para GET de status
+    chatStatusUrl() {
+      return `${this.apiBaseUrl}/api/chat/status`;
     }
   },
   methods: {
@@ -257,7 +273,21 @@ export default {
       return descriptions[this.userRole] || "Asistente virtual";
     },
 
+    getServiceStatusText() {
+      const statusTexts = {
+        checking: "🔄 Conectando...",
+        online: "✅ En línea",
+        offline: "🔴 Offline",
+        error: "⚠️ Error"
+      };
+      return statusTexts[this.serviceStatus] || "";
+    },
+
     getInputPlaceholder() {
+      if (this.serviceStatus !== 'online') {
+        return "Servicio temporalmente no disponible...";
+      }
+      
       const placeholders = {
         client: "Pregunta sobre comercios, servicios o tus mascotas...",
         provider: "Consulta tu comercio, agenda o estadísticas...",
@@ -282,7 +312,6 @@ export default {
     hideBubble() {
       this.showHelpBubble = false;
       this.bubbleHidden = true;
-      // Guardar preferencia en localStorage
       localStorage.setItem('chatbot_bubble_hidden', 'true');
     },
 
@@ -340,7 +369,7 @@ Como **administrador**, puedo ayudarte con:
     },
 
     async sendMessage() {
-      if (!this.userInput.trim() || this.isLoading) return;
+      if (!this.userInput.trim() || this.isLoading || this.serviceStatus !== 'online') return;
 
       const text = this.userInput.trim();
       this.messages.push({ 
@@ -358,37 +387,50 @@ Como **administrador**, puedo ayudarte con:
           throw new Error("No hay token de autenticación");
         }
 
-        console.log('🌐 Conectando a API...');
-        console.log('Base URL:', this.apiBaseUrl || '(URL relativa)');
+        console.log('🌐 Enviando mensaje POST a:', this.chatApiUrl);
+        console.log('📝 Mensaje:', text.substring(0, 50) + '...');
         
-        // ✅ SOLUCIÓN DEFINITIVA: Construir URL correctamente
-        const apiUrl = this.apiBaseUrl 
-          ? `${this.apiBaseUrl}/api/chat`
-          : '/api/chat'; // URL relativa cuando están en el mismo dominio
-
+        // ✅ USAR AXIOS CON POST - MÉTODO CORRECTO
         const res = await axios.post(
-          apiUrl,
+          this.chatApiUrl,
           { message: text },
           { 
             headers: { 
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json"
             },
-            timeout: 30000
+            timeout: 30000 // 30 segundos
           }
         );
 
-        if (res.data.error) {
-          throw new Error(res.data.error);
+        console.log('✅ Respuesta recibida. Status:', res.status);
+        
+        // Verificar estructura de respuesta
+        if (!res.data || typeof res.data !== 'object') {
+          throw new Error("Respuesta inválida del servidor");
+        }
+
+        let botReply = "";
+        
+        if (res.data.success !== false && res.data.reply) {
+          botReply = res.data.reply;
+        } else if (res.data.error) {
+          botReply = `⚠️ **Error:** ${res.data.error}`;
+        } else {
+          botReply = "🤖 Recibí tu mensaje, pero no obtuve una respuesta válida.";
         }
 
         this.messages.push({
           sender: "bot",
-          text: res.data.reply || "Lo siento, no pude generar una respuesta.",
+          text: botReply,
           time: this.getCurrentTime()
         });
 
-        // Mostrar burbuja de ayuda después de un tiempo si no está abierto
+        // Actualizar estado a online si fue exitoso
+        if (this.serviceStatus !== 'online') {
+          this.serviceStatus = 'online';
+        }
+
         if (!this.isOpen && !this.bubbleHidden) {
           setTimeout(() => {
             this.showBubble();
@@ -396,20 +438,43 @@ Como **administrador**, puedo ayudarte con:
         }
 
       } catch (error) {
-        console.error("Chat error:", error);
+        console.error("❌ Error en chat:", error);
         
-        let errorMessage = "❌ Error al conectar con PetBot.";
+        let errorMessage = "";
         
-        if (error.response?.status === 401) {
-          errorMessage = "🔐 Por favor, inicia sesión nuevamente.";
-        } else if (error.response?.status === 400) {
-          errorMessage = "📝 Por favor, escribe un mensaje válido.";
-        } else if (error.code === 'ECONNABORTED') {
-          errorMessage = "⏰ El servicio está tardando en responder. Intenta nuevamente.";
-        } else if (error.message.includes("token")) {
-          errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
+        if (error.response) {
+          // Error con respuesta del servidor
+          const { status, data } = error.response;
+          
+          switch(status) {
+            case 401:
+              errorMessage = "🔐 **Sesión expirada.** Por favor, inicia sesión nuevamente.";
+              break;
+            case 404:
+              errorMessage = "🔍 **Endpoint no encontrado.** Verifica la URL del servicio.";
+              this.serviceStatus = 'offline';
+              break;
+            case 405:
+              errorMessage = "⚠️ **Método incorrecto.** El backend espera POST, no GET.";
+              this.serviceStatus = 'error';
+              break;
+            case 500:
+              errorMessage = "⚙️ **Error del servidor.** Nuestro equipo está trabajando en solucionarlo.";
+              this.serviceStatus = 'error';
+              break;
+            default:
+              errorMessage = `⚠️ **Error ${status}:** ${data?.error || 'Error del servidor'}`;
+          }
+        } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+          errorMessage = "⏰ **Tiempo de espera agotado.** El servicio está respondiendo lentamente.";
         } else if (error.message.includes("Network Error") || error.code === 'ERR_NETWORK') {
-          errorMessage = `🌐 **Error de conexión.**\n\nVerifica tu conexión a internet o intenta más tarde.`;
+          errorMessage = "🌐 **Error de conexión.** Verifica tu conexión a internet.";
+          this.serviceStatus = 'offline';
+        } else if (error.message.includes("token")) {
+          errorMessage = "🔐 **Sesión expirada.** Por favor, inicia sesión nuevamente.";
+        } else {
+          errorMessage = "🤖 **Lo siento, ocurrió un error inesperado.** Intenta nuevamente en unos momentos.";
+          this.serviceStatus = 'error';
         }
 
         this.messages.push({
@@ -417,6 +482,7 @@ Como **administrador**, puedo ayudarte con:
           text: errorMessage,
           time: this.getCurrentTime()
         });
+
       } finally {
         this.isLoading = false;
         this.scrollToBottom();
@@ -478,46 +544,21 @@ Como **administrador**, puedo ayudarte con:
         .replace(/⚙️/g, '<span class="inline-block mr-1">⚙️</span>')
         .replace(/🏪/g, '<span class="inline-block mr-1">🏪</span>')
         .replace(/⭐/g, '<span class="inline-block mr-1">⭐</span>')
-        .replace(/🛡️/g, '<span class="inline-block mr-1">🛡️</span>');
+        .replace(/🛡️/g, '<span class="inline-block mr-1">🛡️</span>')
+        .replace(/👋/g, '<span class="inline-block mr-1">👋</span>')
+        .replace(/💼/g, '<span class="inline-block mr-1">💼</span>')
+        .replace(/👨‍💼/g, '<span class="inline-block mr-1">👨‍💼</span>')
+        .replace(/✅/g, '<span class="inline-block mr-1">✅</span>')
+        .replace(/⚠️/g, '<span class="inline-block mr-1">⚠️</span>')
+        .replace(/🔐/g, '<span class="inline-block mr-1">🔐</span>')
+        .replace(/🌐/g, '<span class="inline-block mr-1">🌐</span>')
+        .replace(/⏰/g, '<span class="inline-block mr-1">⏰</span>')
+        .replace(/🔍/g, '<span class="inline-block mr-1">🔍</span>')
+        .replace(/⚙️/g, '<span class="inline-block mr-1">⚙️</span>')
+        .replace(/🔄/g, '<span class="inline-block mr-1">🔄</span>')
+        .replace(/🔴/g, '<span class="inline-block mr-1">🔴</span>');
     },
 
-    // ✅ Aplicar parche de emergencia para URLs incorrectas
-    applyEmergencyPatch() {
-      if (window.CHATBOT_PATCH_APPLIED) return;
-      
-      console.log('🔧 Aplicando parche de emergencia para API...');
-      
-      const isProduction = window.location.hostname.includes('onrender.com') && 
-                          !window.location.hostname.includes('localhost');
-      
-      if (isProduction) {
-        console.log('🚀 Detectado entorno Render en producción');
-        
-        const originalXHROpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
-          if (typeof url === 'string') {
-            const originalUrl = url;
-            
-            if (url.includes('localhost:4000')) {
-              url = url.replace('http://localhost:4000', '');
-              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
-            }
-            
-            if (url.includes('localhost:10000')) {
-              url = url.replace('http://localhost:10000', '');
-              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
-            }
-          }
-          return originalXHROpen.call(this, method, url, async, user, pass);
-        };
-        
-        console.log('✅ Parche de emergencia aplicado para producción');
-      }
-      
-      window.CHATBOT_PATCH_APPLIED = true;
-    },
-
-    // Mostrar burbuja de ayuda después de un tiempo
     scheduleHelpBubble() {
       if (this.bubbleHidden) return;
       
@@ -525,8 +566,43 @@ Como **administrador**, puedo ayudarte con:
         if (!this.isOpen && !this.bubbleHidden) {
           this.showHelpBubble = true;
         }
-      }, 3000); // Mostrar después de 3 segundos
-    }
+      }, 3000);
+    },
+
+    async checkServiceStatus() {
+      try {
+        console.log('🔍 Verificando estado del servicio de chat...');
+        
+        // Verificar endpoint público
+        try {
+          console.log('📡 Probando GET a:', this.chatStatusUrl);
+          const statusRes = await axios.get(this.chatStatusUrl, { 
+            timeout: 5000 
+          });
+          
+          if (statusRes.data.status === 'online') {
+            console.log('✅ Servicio en línea');
+            this.serviceStatus = 'online';
+            this.lastStatusCheck = new Date();
+            return true;
+          }
+        } catch (statusError) {
+          console.log('⚠️ Status check falló:', statusError.message);
+          
+          // NO intentar GET a /api/chat - eso causará error 405
+          this.serviceStatus = 'offline';
+        }
+        
+        return false;
+      } catch (error) {
+        console.error('❌ Error verificando estado:', error.message);
+        this.serviceStatus = 'error';
+        return false;
+      }
+    },
+
+    // ✅ REMOVER monitoreo de peticiones GET - ya está resuelto en el backend
+    // No necesitamos interceptar peticiones GET, el backend ya las maneja
   },
 
   watch: {
@@ -537,8 +613,22 @@ Como **administrador**, puedo ayudarte con:
           this.checkScrollButtons();
         });
         this.showHelpBubble = false;
+        
+        // Si el servicio no está disponible, mostrar mensaje
+        if (this.serviceStatus !== 'online' && this.messages.length === 1) {
+          const statusMessage = {
+            checking: "🔄 **Conectando al servicio...**\n\nEsperando respuesta del servidor de chat.",
+            offline: "🔴 **Servicio no disponible**\n\nEl chatbot está temporalmente fuera de línea. Intenta más tarde.",
+            error: "⚠️ **Error de conexión**\n\nNo se pudo conectar con el servicio de chat."
+          };
+          
+          this.messages.push({
+            sender: "bot",
+            text: statusMessage[this.serviceStatus] || "El servicio de chat no está disponible.",
+            time: this.getCurrentTime()
+          });
+        }
       } else {
-        // Programar mostrar burbuja después de cerrar el chat
         setTimeout(() => {
           if (!this.bubbleHidden) {
             this.scheduleHelpBubble();
@@ -557,11 +647,34 @@ Como **administrador**, puedo ayudarte con:
         }
       },
       deep: true
+    },
+
+    userRole(newRole) {
+      if (this.isOpen && this.messages.length > 0) {
+        if (this.messages[0].sender === 'bot' && this.messages[0].text.includes('Soy PetBot')) {
+          this.messages.splice(0, 1);
+        }
+        this.addWelcomeMessage();
+      }
+    },
+
+    serviceStatus(newStatus) {
+      console.log('🔄 Estado del servicio cambiado a:', newStatus);
+      
+      // Si cambia a online, actualizar el placeholder
+      if (newStatus === 'online' && this.isOpen) {
+        this.$nextTick(() => {
+          const input = this.$el.querySelector('.message-input');
+          if (input) {
+            input.placeholder = this.getInputPlaceholder();
+          }
+        });
+      }
     }
   },
 
   mounted() {
-    // Obtener el rol del usuario al montar el componente
+    // Obtener el rol del usuario
     this.userRole = this.getUserRole();
     
     // Verificar si el usuario ocultó la burbuja anteriormente
@@ -571,23 +684,29 @@ Como **administrador**, puedo ayudarte con:
       this.showHelpBubble = false;
     }
     
-    // ✅ Aplicar parche de emergencia al cargar
-    this.applyEmergencyPatch();
+    // Verificar estado del servicio
+    this.checkServiceStatus();
+    
+    // Programar verificación periódica cada 30 segundos
+    this.statusCheckInterval = setInterval(() => {
+      if (this.serviceStatus !== 'online') {
+        this.checkServiceStatus();
+      }
+    }, 30000);
     
     // Programar mostrar burbuja de ayuda
     this.scheduleHelpBubble();
     
-    // Verificar scroll después de que se rendericen los botones
+    // Verificar scroll
     this.$nextTick(() => {
       setTimeout(() => {
         this.checkScrollButtons();
       }, 100);
     });
 
-    // También verificar cuando cambia el tamaño de la ventana
+    // Event listeners
     window.addEventListener('resize', this.checkScrollButtons);
 
-    // Cerrar burbuja al hacer clic fuera
     document.addEventListener('click', (event) => {
       const chatbotContainer = this.$el;
       const helpBubble = chatbotContainer?.querySelector('.help-bubble');
@@ -598,16 +717,38 @@ Como **administrador**, puedo ayudarte con:
         this.hideBubble();
       }
     });
+
+    // Escuchar cambios en el store de usuario
+    const userStore = useUserStore();
+    this.userStoreUnsubscribe = userStore.$subscribe((mutation, state) => {
+      if (state.user?.role !== this.userRole) {
+        this.userRole = state.user?.role || "client";
+      }
+    });
+
+    console.log('🤖 ChatBot inicializado');
+    console.log('📡 Endpoint POST:', this.chatApiUrl);
+    console.log('📡 Endpoint Status (GET):', this.chatStatusUrl);
+    console.log('👤 Rol usuario:', this.userRole);
   },
 
   beforeUnmount() {
     window.removeEventListener('resize', this.checkScrollButtons);
     document.removeEventListener('click', this.hideBubble);
+    
+    if (this.statusCheckInterval) {
+      clearInterval(this.statusCheckInterval);
+    }
+    
+    if (this.userStoreUnsubscribe) {
+      this.userStoreUnsubscribe();
+    }
   }
 };
 </script>
 
 <style scoped>
+/* Todos los estilos CSS se mantienen igual que en tu archivo */
 .chatbot-container {
   position: fixed;
   bottom: 20px;
@@ -615,7 +756,6 @@ Como **administrador**, puedo ayudarte con:
   z-index: 1000;
 }
 
-/* Mensaje tipo nube */
 .help-bubble {
   position: absolute;
   bottom: 75px;
@@ -692,7 +832,6 @@ Como **administrador**, puedo ayudarte con:
   color: white;
 }
 
-/* Animación flotante */
 @keyframes float {
   0%, 100% {
     transform: translateY(0);
@@ -702,7 +841,6 @@ Como **administrador**, puedo ayudarte con:
   }
 }
 
-/* Botón flotante */
 .chatbot-toggle {
   width: 60px;
   height: 60px;
@@ -757,7 +895,6 @@ Como **administrador**, puedo ayudarte con:
   100% { opacity: 1; }
 }
 
-/* Ventana del chat - POSICIÓN MÁS ALTA */
 .chatbot-window {
   position: fixed;
   bottom: 90px;
@@ -773,7 +910,6 @@ Como **administrador**, puedo ayudarte con:
   overflow: hidden;
 }
 
-/* Header */
 .chatbot-header {
   display: flex;
   align-items: center;
@@ -781,6 +917,7 @@ Como **administrador**, puedo ayudarte con:
   padding: 16px;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
+  position: relative;
 }
 
 .chatbot-avatar {
@@ -799,12 +936,24 @@ Como **administrador**, puedo ayudarte con:
   font-weight: bold;
   font-size: 14px;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .chatbot-info p {
   font-size: 12px;
   opacity: 0.9;
-  margin: 0;
+  margin: 2px 0 0 0;
+}
+
+.service-status {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  margin-left: 8px;
+  font-weight: 500;
 }
 
 .close-btn {
@@ -828,7 +977,6 @@ Como **administrador**, puedo ayudarte con:
   transform: rotate(90deg);
 }
 
-/* Área de mensajes */
 .chatbot-messages {
   flex: 1;
   padding: 16px;
@@ -877,6 +1025,14 @@ Como **administrador**, puedo ayudarte con:
   line-height: 1.4;
 }
 
+.message-content :deep(strong) {
+  font-weight: 600;
+}
+
+.message-content :deep(em) {
+  font-style: italic;
+}
+
 .message-time {
   font-size: 11px;
   margin-top: 4px;
@@ -891,7 +1047,24 @@ Como **administrador**, puedo ayudarte con:
   color: #6b7280;
 }
 
-/* Typing indicator */
+.service-status-message {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.status-bubble {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .typing-indicator {
   display: flex;
   justify-content: flex-start;
@@ -945,7 +1118,6 @@ Como **administrador**, puedo ayudarte con:
   color: #6b7280;
 }
 
-/* Botones rápidos MEJORADO CON SCROLL HORIZONTAL */
 .quick-buttons-container {
   padding: 12px 16px;
   border-top: 1px solid #e5e7eb;
@@ -1000,9 +1172,10 @@ Como **administrador**, puedo ayudarte con:
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  background: #f3f4f6;
+  color: #9ca3af;
 }
 
-/* Botones de scroll */
 .scroll-button {
   position: absolute;
   top: 50%;
@@ -1037,7 +1210,6 @@ Como **administrador**, puedo ayudarte con:
   right: -8px;
 }
 
-/* Input area */
 .input-container {
   display: flex;
   align-items: center;
@@ -1066,6 +1238,7 @@ Como **administrador**, puedo ayudarte con:
 .message-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: #f9fafb;
 }
 
 .send-button {
@@ -1091,6 +1264,7 @@ Como **administrador**, puedo ayudarte con:
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  background: #9ca3af;
 }
 
 .send-icon {
@@ -1112,7 +1286,6 @@ Como **administrador**, puedo ayudarte con:
   100% { transform: rotate(360deg); }
 }
 
-/* Animaciones */
 .chat-window-enter-active,
 .chat-window-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1139,7 +1312,6 @@ Como **administrador**, puedo ayudarte con:
   transform: translateY(10px);
 }
 
-/* Scroll personalizado */
 .chatbot-messages::-webkit-scrollbar {
   width: 6px;
 }
@@ -1157,7 +1329,6 @@ Como **administrador**, puedo ayudarte con:
   background: #94a3b8;
 }
 
-/* Responsive */
 @media (max-width: 480px) {
   .chatbot-container {
     bottom: 10px;
@@ -1178,7 +1349,6 @@ Como **administrador**, puedo ayudarte con:
   }
 }
 
-/* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .help-bubble {
     background: #1f2937;
@@ -1238,6 +1408,12 @@ Como **administrador**, puedo ayudarte con:
     color: #d1d5db;
   }
   
+  .status-bubble {
+    background: #451a03;
+    border-color: #9a3412;
+    color: #fdba74;
+  }
+  
   .quick-buttons-container {
     background: #111827;
     border-color: #374151;
@@ -1247,6 +1423,11 @@ Como **administrador**, puedo ayudarte con:
     background: #374151;
     border-color: #4b5563;
     color: #f9fafb;
+  }
+  
+  .quick-button:disabled {
+    background: #1f2937;
+    color: #6b7280;
   }
   
   .scroll-button {
@@ -1269,6 +1450,10 @@ Como **administrador**, puedo ayudarte con:
   .message-input:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+  
+  .send-button:disabled {
+    background: #4b5563;
   }
 }
 </style>

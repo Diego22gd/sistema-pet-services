@@ -169,7 +169,7 @@ app.use("/api/appointments", appointmentsRoutes);
 app.use("/api/providers", providerRoutes);
 app.use("/api/provider/reports", providerReportsRoutes);
 
-// Chat
+// Chat - ✅ IMPORTANTE: Estas rutas deben estar ANTES del catch-all
 app.use("/api/chat", chatRoutes);
 app.use("/api/chatbot/admin", chatAdminRoutes);
 
@@ -205,6 +205,12 @@ app.get("/api/info", (req, res) => {
   });
 });
 
+// Debug: Middleware para verificar rutas
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
+  next();
+});
+
 // ============ SERVIR FRONTEND VUE.JS EN PRODUCCIÓN ============
 if (process.env.NODE_ENV === 'production') {
   const frontendBuildPath = path.join(__dirname, '..', 'frontend', 'dist');
@@ -233,26 +239,36 @@ if (process.env.NODE_ENV === 'production') {
     });
     
     // Para rutas como /admin/dashboard, /provider/profile, etc.
-    // Usamos una expresión regular SEGURA en lugar de *
-    app.get(/^\/(admin|provider)\/.+$/, (req, res) => {
+    // Usamos rutas específicas en lugar de *
+    app.get('/admin/*', (req, res) => {
       res.sendFile(path.join(frontendBuildPath, 'index.html'));
     });
     
-    // Catch-all para Vue Router - USANDO EXPRESIÓN REGULAR CORRECTA
-    // Esta regex captura todo EXCEPTO rutas que comienzan con /api, /uploads, o tienen extensión de archivo
-    app.get(/^\/[^.]*$/, (req, res, next) => {
-      // Excluir rutas que ya manejamos
-      if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-        return next();
+    app.get('/provider/*', (req, res) => {
+      res.sendFile(path.join(frontendBuildPath, 'index.html'));
+    });
+    
+    // Catch-all para Vue Router - CORREGIDO
+    // Esta es la solución segura: verificación explícita
+    app.get('*', (req, res, next) => {
+      // Rutas que deben ser manejadas por Express (NO por Vue)
+      const expressRoutes = ['/api', '/uploads', '/favicon.ico'];
+      
+      // Verificar si la ruta debe ser manejada por Express
+      for (const route of expressRoutes) {
+        if (req.path.startsWith(route)) {
+          return next(); // Pasar a Express (y eventualmente al 404 si no existe)
+        }
       }
       
-      // Verificar si es un archivo estático
+      // Verificar si es un archivo estático (imagen, CSS, JS)
       const staticFile = path.join(frontendBuildPath, req.path);
+      
       if (fs.existsSync(staticFile) && !fs.lstatSync(staticFile).isDirectory()) {
         return res.sendFile(staticFile);
       }
       
-      // Para SPA Vue.js
+      // Si no es una ruta de API ni un archivo estático, es una ruta de Vue SPA
       res.sendFile(path.join(frontendBuildPath, 'index.html'));
     });
     
@@ -285,7 +301,8 @@ if (process.env.NODE_ENV !== 'production') {
         health: "/api/health",
         users: "/api/users",
         services: "/api/services",
-        businesses: "/api/businesses"
+        businesses: "/api/businesses",
+        chat: "/api/chat (POST para mensajes)"
       }
     });
   });
@@ -300,7 +317,9 @@ app.use((req, res, next) => {
     res.status(404).json({
       error: 'Endpoint no encontrado',
       path: req.path,
-      method: req.method
+      method: req.method,
+      timestamp: new Date().toISOString(),
+      note: 'Para /api/chat, usa POST en lugar de GET'
     });
   } else {
     next(); // Para rutas no-API, pasar al siguiente middleware
@@ -354,7 +373,13 @@ const startServer = async () => {
 📌 URLs:
    • API: http://localhost:${PORT}/api
    • Health: http://localhost:${PORT}/api/health
+   • Chat API: http://localhost:${PORT}/api/chat (POST)
+   • Chat Status: http://localhost:${PORT}/api/chat/status
    • Uploads: http://localhost:${PORT}/uploads/
+   
+📢 IMPORTANTE:
+   • /api/chat solo acepta POST
+   • Para GET usa /api/chat/status o /api/chat/health
    
 🚀 ¡Servidor listo!
 ===============================================
