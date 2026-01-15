@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <div class="px-6 max-w-7xl mx-auto w-full pt-8">
+    <div class="px-6 max-w-7xl mx-auto w-full pt-8 mt-12">
       <!-- Header de la página -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-neutral-dark mb-2">Gestión de Usuarios</h1>

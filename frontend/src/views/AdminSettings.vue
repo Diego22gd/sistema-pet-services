@@ -1,8 +1,8 @@
 <template>
   <AdminLayout>
-    <div class="px-6 max-w-6xl mx-auto w-full pt-6">
+    <div class="px-6 max-w-6xl mx-auto w-full pt-6 mt-8">
       <!-- Header -->
-      <div class="mb-8">
+      <div class="mb-8 mt-12">
         <h1 class="text-3xl font-bold text-neutral-dark mb-2">Configuración de la Plataforma</h1>
         <p class="text-neutral-medium">Gestiona la configuración general y planes de la plataforma</p>
       </div>

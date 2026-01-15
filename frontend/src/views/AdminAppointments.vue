@@ -4,7 +4,7 @@
     <Chatbot />
     
     <!-- Hero Section -->
-    <section class="relative bg-gradient-to-br from-purple-50 to-indigo-50 overflow-hidden">
+    <section class="relative bg-gradient-to-br from-purple-50 to-indigo-50 overflow-hidden mt-12">
       <div class="absolute inset-0 opacity-5">
         <div class="absolute top-10 left-10 w-32 h-32 rounded-full bg-purple-300"></div>
         <div class="absolute bottom-10 right-10 w-48 h-48 rounded-full bg-indigo-300"></div>
@@ -14,7 +14,7 @@
       <div class="relative container mx-auto px-4 py-20 md:py-32">
         <div class="text-center max-w-4xl mx-auto fade-up">
           <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg mb-8">
-            <span class="text-4xl">👑</span>
+            
           </div>
           <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             Panel de Administración
