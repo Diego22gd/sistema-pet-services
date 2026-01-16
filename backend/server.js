@@ -31,14 +31,12 @@ import petRoutes from "./src/routes/petRoutes.js";
 import clientServiceRoutes from "./src/routes/clientServiceRoutes.js";
 import appointmentsRoutes from "./src/routes/appointmentRoutes.js";
 import providerRoutes from "./src/routes/providerRoutes.js";
+import chatRoutes from "./src/routes/chat.js";
+import chatAdminRoutes from "./src/routes/chatAdmin.js";
 import notificationRoutes from "./src/routes/notificationsRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import businessRoutes from "./src/routes/businessRoutes.js";
 import uploadRoutes from "./src/routes/uploadRoutes.js";
-// Añadir estas líneas en tu archivo server principal
-import chatbotRoutes from './src/routes/chatbotRoutes.js';
-
-// Después de otras rutas, agregar:
 
 // Configuración de ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -172,8 +170,8 @@ app.use("/api/providers", providerRoutes);
 app.use("/api/provider/reports", providerReportsRoutes);
 
 // Chat
-
-app.use('/api/chatbot', chatbotRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/chatbot/admin", chatAdminRoutes);
 
 // Negocios
 app.use("/api/businesses", businessRoutes);
