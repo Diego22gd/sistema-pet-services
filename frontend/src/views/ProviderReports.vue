@@ -1,45 +1,61 @@
 <template>
   <ProviderLayout>
-    <div class="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full pt-6">
-      <!-- Header con animación -->
+    <!-- Contenedor principal ajustado -->
+    <div class="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full pt-4 pb-8">
+      
+      <!-- Header optimizado -->
       <div class="fade-up" :class="{ show: animated }">
-        <div class="mb-8">
-          <h1 class="text-4xl font-bold text-gray-900 mb-2">Reportes del Negocio</h1>
-          <p class="text-gray-600 text-lg">Analiza el rendimiento y crecimiento de tu negocio con métricas detalladas</p>
+        <div class="mb-6 sm:mb-8">
+          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+            Reportes del Negocio
+          </h1>
+          <p class="text-sm sm:text-base text-gray-600">
+            Analiza el rendimiento y crecimiento de tu negocio con métricas detalladas
+          </p>
         </div>
       </div>
 
       <!-- Filtros de fecha - Card Modern -->
-      <div class="fade-up card-modern mb-8" :class="{ show: animated }">
-        <div class="p-6">
-          <div class="flex flex-col lg:flex-row gap-6 items-center justify-between">
-            <div class="flex flex-col flex-1">
-              <h2 class="text-xl font-semibold text-gray-900">Filtrar por período</h2>
-              <p class="text-gray-500 mt-1 text-sm">Selecciona un rango de fechas para generar reportes personalizados</p>
+      <div class="fade-up card-modern mb-6" :class="{ show: animated }">
+        <div class="p-4 sm:p-6">
+          <div class="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center justify-between">
+            <div class="flex flex-col flex-1 w-full">
+              <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Filtrar por período</h2>
+              <p class="text-gray-500 mt-1 text-xs sm:text-sm">
+                Selecciona un rango de fechas para generar reportes personalizados
+              </p>
             </div>
-            <div class="flex flex-col sm:flex-row gap-4">
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div class="flex items-center gap-2">
-                <label class="text-sm font-medium text-gray-700 whitespace-nowrap">Desde:</label>
+                <label class="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">
+                  Desde:
+                </label>
                 <input 
                   type="date" 
                   v-model="filters.startDate"
-                  class="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white shadow-sm"
+                  class="px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white shadow-sm w-full"
                 />
               </div>
+              
               <div class="flex items-center gap-2">
-                <label class="text-sm font-medium text-gray-700 whitespace-nowrap">Hasta:</label>
+                <label class="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">
+                  Hasta:
+                </label>
                 <input 
                   type="date" 
                   v-model="filters.endDate"
-                  class="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white shadow-sm"
+                  class="px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 bg-white shadow-sm w-full"
                 />
               </div>
             </div>
           </div>
           
           <!-- Períodos rápidos -->
-          <div class="mt-6">
-            <p class="text-sm font-medium text-gray-700 mb-3">Períodos rápidos:</p>
+          <div class="mt-4 sm:mt-6">
+            <p class="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">
+              Períodos rápidos:
+            </p>
             <div class="flex flex-wrap gap-2">
               <button 
                 v-for="period in quickPeriods"
@@ -47,7 +63,7 @@
                 @click="setQuickPeriod(period)"
                 :disabled="loading"
                 :class="[
-                  'px-4 py-2 text-sm rounded-xl transition-all duration-200 font-medium',
+                  'px-3 py-1.5 text-xs sm:text-sm rounded-xl transition-all duration-200 font-medium',
                   filters.quickPeriod === period.value 
                     ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-500' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-transparent'
@@ -59,11 +75,11 @@
           </div>
 
           <!-- Botones de acción -->
-          <div class="flex flex-wrap gap-3 mt-6">
+          <div class="flex flex-wrap gap-3 mt-4 sm:mt-6">
             <button 
               @click="loadReports"
               :disabled="loading"
-              class="btn-primary px-6 py-3 rounded-xl"
+              class="btn-primary px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base"
             >
               <span v-if="loading" class="flex items-center gap-2">
                 <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -73,7 +89,6 @@
                 <span>Procesando...</span>
               </span>
               <span v-else class="flex items-center gap-2">
-                
                 <span>Aplicar Filtros</span>
               </span>
             </button>
@@ -81,10 +96,9 @@
             <button 
               @click="resetFilters"
               :disabled="loading"
-              class="btn-modal-ghost px-6 py-3 rounded-xl"
+              class="btn-modal-ghost px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base"
             >
               <span class="flex items-center gap-2">
-                
                 <span>Limpiar Filtros</span>
               </span>
             </button>
@@ -92,8 +106,8 @@
         </div>
       </div>
 
-      <!-- Tarjetas resumen con animaciones -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Tarjetas resumen con animaciones - Espaciado ajustado -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <div 
           v-for="(stat, index) in summaryCards"
           :key="stat.title"
@@ -101,19 +115,22 @@
           :class="{ show: animated }"
           :style="{ animationDelay: `${index * 100}ms` }"
         >
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-900">{{ stat.title }}</h3>
-              <div :class="stat.iconBg" class="w-12 h-12 rounded-2xl flex items-center justify-center">
-                <span :class="stat.iconColor" class="text-xl">{{ stat.icon }}</span>
+          <div class="p-4 sm:p-6">
+            <div class="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 class="text-base sm:text-lg font-semibold text-gray-900">{{ stat.title }}</h3>
+              <div :class="stat.iconBg" class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center">
+                <span :class="stat.iconColor" class="text-lg sm:text-xl">{{ stat.icon }}</span>
               </div>
             </div>
-            <p :class="stat.valueColor" class="text-3xl font-bold mb-2">{{ stat.value }}</p>
-            <p class="text-sm text-gray-500">{{ stat.description }}</p>
+            <p :class="stat.valueColor" class="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
+              {{ stat.value }}
+            </p>
+            <p class="text-xs sm:text-sm text-gray-500">{{ stat.description }}</p>
             
             <!-- Indicador de cambio si aplica -->
-            <div v-if="stat.change" class="mt-3 flex items-center gap-1">
-              <span :class="stat.change > 0 ? 'text-emerald-600' : 'text-red-600'" class="text-sm font-medium">
+            <div v-if="stat.change" class="mt-2 sm:mt-3 flex items-center gap-1">
+              <span :class="stat.change > 0 ? 'text-emerald-600' : 'text-red-600'" 
+                    class="text-xs sm:text-sm font-medium">
                 {{ stat.change > 0 ? '+' : '' }}{{ stat.change }}%
               </span>
               <span class="text-gray-400 text-xs">vs período anterior</span>
@@ -123,17 +140,17 @@
       </div>
 
       <!-- Gráficos y métricas -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
         <!-- Gráfico principal -->
         <div class="lg:col-span-2 fade-up card-modern" :class="{ show: animated }">
-          <div class="p-6">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-              <h2 class="text-xl font-semibold text-gray-900">Evolución de Citas</h2>
+          <div class="p-4 sm:p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
+              <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Evolución de Citas</h2>
               <div class="flex gap-2">
                 <button 
                   @click="setChartType('monthly')"
                   :class="[
-                    'px-4 py-2 text-sm rounded-xl transition-all duration-200 font-medium',
+                    'px-3 py-1.5 text-xs sm:text-sm rounded-xl transition-all duration-200 font-medium',
                     chartType === 'monthly' 
                       ? 'bg-emerald-500 text-white' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -144,7 +161,7 @@
                 <button 
                   @click="setChartType('weekly')"
                   :class="[
-                    'px-4 py-2 text-sm rounded-xl transition-all duration-200 font-medium',
+                    'px-3 py-1.5 text-xs sm:text-sm rounded-xl transition-all duration-200 font-medium',
                     chartType === 'weekly' 
                       ? 'bg-emerald-500 text-white' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -154,23 +171,23 @@
                 </button>
               </div>
             </div>
-            <div class="h-80">
+            <div class="h-60 sm:h-80">
               <canvas id="appointmentsChart"></canvas>
             </div>
             
             <!-- Leyenda del gráfico -->
-            <div class="flex flex-wrap gap-4 mt-6">
+            <div class="flex flex-wrap gap-3 sm:gap-4 mt-4 sm:mt-6">
               <div class="flex items-center gap-2">
                 <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-                <span class="text-sm text-gray-600">Citas Completadas</span>
+                <span class="text-xs sm:text-sm text-gray-600">Citas Completadas</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                <span class="text-sm text-gray-600">Citas Canceladas</span>
+                <span class="text-xs sm:text-sm text-gray-600">Citas Canceladas</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-3 h-3 rounded-full bg-amber-500"></div>
-                <span class="text-sm text-gray-600">Citas Pendientes</span>
+                <span class="text-xs sm:text-sm text-gray-600">Citas Pendientes</span>
               </div>
             </div>
           </div>
@@ -178,20 +195,22 @@
 
         <!-- Métricas clave -->
         <div class="fade-up card-modern" :class="{ show: animated }">
-          <div class="p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">Métricas Clave</h2>
-            <div class="space-y-6">
+          <div class="p-4 sm:p-6">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Métricas Clave</h2>
+            <div class="space-y-4 sm:space-y-6">
               <div 
                 v-for="metric in keyMetrics"
                 :key="metric.title"
-                class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors duration-200"
+                class="flex justify-between items-center p-3 sm:p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors duration-200"
               >
                 <div>
-                  <p class="text-sm text-gray-500">{{ metric.title }}</p>
-                  <p :class="metric.valueClass" class="text-2xl font-bold mt-1">{{ metric.value }}</p>
+                  <p class="text-xs sm:text-sm text-gray-500">{{ metric.title }}</p>
+                  <p :class="metric.valueClass" class="text-xl sm:text-2xl font-bold mt-1">
+                    {{ metric.value }}
+                  </p>
                 </div>
-                <div :class="metric.iconBg" class="w-14 h-14 rounded-2xl flex items-center justify-center">
-                  <span :class="metric.iconColor" class="text-2xl">{{ metric.icon }}</span>
+                <div :class="metric.iconBg" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center">
+                  <span :class="metric.iconColor" class="text-xl sm:text-2xl">{{ metric.icon }}</span>
                 </div>
               </div>
             </div>
@@ -201,20 +220,24 @@
 
       <!-- Exportar reportes -->
       <div class="fade-up card-modern mb-4" :class="{ show: animated }">
-        <div class="p-6">
-          <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
+        <div class="p-4 sm:p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sm:gap-6">
             <div class="flex-1">
-              <h2 class="text-xl font-semibold text-gray-900 mb-2">Exportar Reportes</h2>
-              <p class="text-gray-500">Descarga un reporte detallado de las citas en el período seleccionado</p>
+              <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">
+                Exportar Reportes
+              </h2>
+              <p class="text-xs sm:text-sm text-gray-500">
+                Descarga un reporte detallado de las citas en el período seleccionado
+              </p>
               
               <!-- Resumen del período -->
-              <div v-if="hasData" class="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+              <div v-if="hasData" class="mt-3 sm:mt-4 p-3 sm:p-4 bg-emerald-50 rounded-xl border border-emerald-200">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                    <span class="text-emerald-600">📋</span>
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <span class="text-emerald-600 text-sm sm:text-base">📋</span>
                   </div>
                   <div>
-                    <p class="text-sm font-medium text-emerald-700">
+                    <p class="text-xs sm:text-sm font-medium text-emerald-700">
                       {{ appointments.length }} citas encontradas
                     </p>
                     <p class="text-xs text-emerald-600">
@@ -225,11 +248,11 @@
               </div>
             </div>
             
-            <div class="flex flex-col sm:flex-row gap-3">
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button 
                 @click="exportReport('pdf')"
                 :disabled="loading || !hasData"
-                class="btn-modal-complete px-6 py-3 rounded-xl flex items-center gap-2"
+                class="btn-modal-complete px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl flex items-center gap-2 justify-center text-sm sm:text-base"
               >
                 <span>📊</span>
                 <span>Exportar PDF</span>
@@ -237,7 +260,7 @@
               <button 
                 @click="exportReport('excel')"
                 :disabled="loading || !hasData"
-                class="btn-modal-confirm px-6 py-3 rounded-xl flex items-center gap-2"
+                class="btn-modal-confirm px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl flex items-center gap-2 justify-center text-sm sm:text-base"
               >
                 <span>📄</span>
                 <span>Exportar Excel</span>
@@ -246,24 +269,28 @@
           </div>
           
           <!-- Información del reporte -->
-          <div v-if="hasData" class="mt-6 pt-6 border-t border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-3">Resumen del Reporte</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div class="text-center p-3 bg-gray-50 rounded-xl">
-                <p class="text-2xl font-bold text-gray-900">{{ stats.total }}</p>
-                <p class="text-sm text-gray-500">Total Citas</p>
+          <div v-if="hasData" class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">
+              Resumen del Reporte
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              <div class="text-center p-2 sm:p-3 bg-gray-50 rounded-xl">
+                <p class="text-xl sm:text-2xl font-bold text-gray-900">{{ stats.total }}</p>
+                <p class="text-xs sm:text-sm text-gray-500">Total Citas</p>
               </div>
-              <div class="text-center p-3 bg-emerald-50 rounded-xl">
-                <p class="text-2xl font-bold text-emerald-700">{{ stats.completed }}</p>
-                <p class="text-sm text-emerald-600">Completadas</p>
+              <div class="text-center p-2 sm:p-3 bg-emerald-50 rounded-xl">
+                <p class="text-xl sm:text-2xl font-bold text-emerald-700">{{ stats.completed }}</p>
+                <p class="text-xs sm:text-sm text-emerald-600">Completadas</p>
               </div>
-              <div class="text-center p-3 bg-red-50 rounded-xl">
-                <p class="text-2xl font-bold text-red-700">{{ stats.cancelled }}</p>
-                <p class="text-sm text-red-600">Canceladas</p>
+              <div class="text-center p-2 sm:p-3 bg-red-50 rounded-xl">
+                <p class="text-xl sm:text-2xl font-bold text-red-700">{{ stats.cancelled }}</p>
+                <p class="text-xs sm:text-sm text-red-600">Canceladas</p>
               </div>
-              <div class="text-center p-3 bg-blue-50 rounded-xl">
-                <p class="text-2xl font-bold text-blue-700">${{ formatCurrency(stats.revenue) }}</p>
-                <p class="text-sm text-blue-600">Ingresos</p>
+              <div class="text-center p-2 sm:p-3 bg-blue-50 rounded-xl">
+                <p class="text-xl sm:text-2xl font-bold text-blue-700">
+                  ${{ formatCurrency(stats.revenue) }}
+                </p>
+                <p class="text-xs sm:text-sm text-blue-600">Ingresos</p>
               </div>
             </div>
           </div>
@@ -274,25 +301,26 @@
       <div v-if="showLoadingModal" class="modal-overlay">
         <div class="modal-modern-box max-w-md">
           <div class="modal-modern-header">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 sm:gap-4">
               <div class="avatar-modern-lg">
-                <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
-                  <span class="text-emerald-600 text-2xl">📈</span>
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                  <span class="text-emerald-600 text-xl sm:text-2xl">📈</span>
                 </div>
               </div>
               <div>
-                <h3 class="text-xl font-bold text-gray-900">Generando Reporte</h3>
-                <p class="text-gray-500">Procesando los datos, por favor espera...</p>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900">Generando Reporte</h3>
+                <p class="text-xs sm:text-sm text-gray-500">Procesando los datos, por favor espera...</p>
               </div>
             </div>
           </div>
           
           <div class="modal-section">
-            <div class="text-center py-8">
-              <div class="animate-spin w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p class="text-gray-600">{{ loadingProgress }}</p>
-              <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4">
-                <div class="bg-emerald-600 h-2.5 rounded-full transition-all duration-300" :style="{ width: progressWidth }"></div>
+            <div class="text-center py-6 sm:py-8">
+              <div class="animate-spin w-12 h-12 sm:w-16 sm:h-16 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-3 sm:mb-4"></div>
+              <p class="text-sm text-gray-600">{{ loadingProgress }}</p>
+              <div class="w-full bg-gray-200 rounded-full h-2 sm:h-2.5 mt-3 sm:mt-4">
+                <div class="bg-emerald-600 h-full rounded-full transition-all duration-300" 
+                     :style="{ width: progressWidth }"></div>
               </div>
             </div>
           </div>

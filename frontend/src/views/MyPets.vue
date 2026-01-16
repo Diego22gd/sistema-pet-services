@@ -4,11 +4,11 @@
     <Chatbot />
     
     <!-- Contenido principal -->
-    <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
+    <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 mt-12">
       <div class="container mx-auto px-4 py-8 md:py-12">
         <!-- Header de la página -->
-        <div class="mb-8 md:mb-12 text-center">
-          <div class="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-white shadow-lg mb-4 md:mb-6">
+        <div class="mb-8 md:mb-12 text-center ">
+          <div class="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-white shadow-lg mb-4 md:mb-6 mt-12">
             <span class="text-3xl md:text-4xl">🐾</span>
           </div>
           <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">

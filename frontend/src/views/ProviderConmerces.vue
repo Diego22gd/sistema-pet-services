@@ -1,9 +1,9 @@
 <template>
   <ProviderLayout>
-    <div class="px-6 max-w-7xl mx-auto w-full pt-6">
+    <div class="px-6 max-w-7xl mx-auto w-full pt-6 mt-12">
       <!-- Header con estilo moderno -->
       <div class="mb-10 fade-up">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200 mt-12">
           <span class="text-2xl text-emerald-600">🏬</span>
         </div>
         <h1 class="text-4xl font-bold text-gray-900 mb-3">Mis Comercios</h1>

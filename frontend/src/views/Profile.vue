@@ -1,13 +1,15 @@
 <template>
   <Layout>
-    <div class="px-6 max-w-4xl mx-auto w-full pt-6">
+    
+    <div class="px-6 max-w-4xl mx-auto w-full pt-12 mt-12 ">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-neutral-dark mb-2">Mi Perfil</h1>
+      <div class="mb-8 ">
+        <h1 class="mb-2">  </h1>
+        <h1 class="text-3xl font-bold text-neutral-dark mb-2 pt-4 ">Mi Perfil</h1>
         <p class="text-neutral-medium">Gestiona tu información personal y preferencias</p>
       </div>
 
-      <!-- Información Personal -->
+    
       <div class="bg-white rounded-2xl shadow-sm border border-neutral-light p-6 mb-8">
         <div class="flex items-center gap-3 mb-6">
           <div class="w-2 h-8 bg-primary-mint rounded-full"></div>

@@ -1,27 +1,18 @@
 <template>
   <!-- ChatBot Container -->
   <div class="chatbot-container">
-    <!-- Mensaje tipo nube sobre el botón flotante -->
-    <transition name="bubble">
-      <div 
-        v-if="!isOpen && showHelpBubble" 
-        class="help-bubble"
-        @click="toggleChat"
-      >
-        <div class="bubble-arrow"></div>
-        <div class="bubble-content">
-          <span class="bubble-text">¿Necesitas ayuda?</span>
-          <span class="bubble-subtext">Pregúntame lo que necesites</span>
-        </div>
-        <button 
-          @click.stop="hideBubble" 
-          class="bubble-close"
-          title="Cerrar"
-        >
-          ×
-        </button>
+    <!-- Mensaje FIJO arriba del botón (Siempre visible cuando el chat está cerrado) -->
+    <div 
+      v-if="!isOpen" 
+      class="fixed-help-message"
+      @click="toggleChat"
+    >
+      <div class="fixed-message-content">
+        <span class="fixed-text">¿Necesitas ayuda?</span>
+        <span class="fixed-subtext">¡Haz clic para chatear!</span>
       </div>
-    </transition>
+      <div class="fixed-arrow"></div>
+    </div>
 
     <!-- Botón flotante -->
     <button
@@ -137,25 +128,30 @@
 
         <!-- Área de input -->
         <div class="input-container">
-          <input
-            v-model="userInput"
-            @keyup.enter="sendMessage"
-            :disabled="isLoading"
-            :placeholder="getInputPlaceholder()"
-            class="message-input"
-            maxlength="500"
-          />
-          <button
-            @click="sendMessage"
-            :disabled="isLoading || !userInput.trim()"
-            class="send-button"
-            title="Enviar mensaje"
-          >
-            <svg v-if="!isLoading" class="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-            </svg>
-            <div v-else class="loading-spinner"></div>
-          </button>
+          <div class="input-wrapper">
+            <input
+              v-model="userInput"
+              @keyup.enter="sendMessage"
+              :disabled="isLoading"
+              :placeholder="getInputPlaceholder()"
+              class="message-input"
+              maxlength="500"
+            />
+            <button
+              @click="sendMessage"
+              :disabled="isLoading || !userInput.trim()"
+              class="send-button"
+              title="Enviar mensaje"
+            >
+              <svg v-if="!isLoading" class="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+              </svg>
+              <div v-else class="loading-spinner"></div>
+            </button>
+          </div>
+          <div v-if="userInput.length > 0" class="char-counter">
+            {{ userInput.length }}/500
+          </div>
         </div>
       </div>
     </transition>
@@ -176,9 +172,7 @@ export default {
       isLoading: false,
       hasNewMessage: false,
       showScrollArrows: false,
-      userRole: "client",
-      showHelpBubble: true,
-      bubbleHidden: false
+      userRole: "client"
     };
   },
   computed: {
@@ -219,21 +213,16 @@ export default {
       return optionsByRole[this.userRole] || optionsByRole.client;
     },
 
-    // ✅ Computada para obtener la URL base dinámica
     apiBaseUrl() {
-      // Si estamos en desarrollo local (localhost)
       if (window.location.hostname === 'localhost' || 
           window.location.hostname === '127.0.0.1') {
         return 'http://localhost:4000';
       }
       
-      // Si estamos en Render (mismo dominio para frontend y backend)
-      // Usamos URL relativa cuando están en el mismo dominio
       if (window.location.hostname.includes('onrender.com')) {
-        return ''; // URL relativa - mismo dominio
+        return '';
       }
       
-      // Por defecto, usar el mismo dominio
       return '';
     }
   },
@@ -272,24 +261,10 @@ export default {
         this.addWelcomeMessage();
       }
       this.hasNewMessage = false;
-      this.showHelpBubble = false;
       this.$nextTick(() => {
         this.scrollToBottom();
         this.checkScrollButtons();
       });
-    },
-
-    hideBubble() {
-      this.showHelpBubble = false;
-      this.bubbleHidden = true;
-      // Guardar preferencia en localStorage
-      localStorage.setItem('chatbot_bubble_hidden', 'true');
-    },
-
-    showBubble() {
-      if (!this.bubbleHidden && !this.isOpen) {
-        this.showHelpBubble = true;
-      }
     },
 
     addWelcomeMessage() {
@@ -358,13 +333,9 @@ Como **administrador**, puedo ayudarte con:
           throw new Error("No hay token de autenticación");
         }
 
-        console.log('🌐 Conectando a API...');
-        console.log('Base URL:', this.apiBaseUrl || '(URL relativa)');
-        
-        // ✅ SOLUCIÓN DEFINITIVA: Construir URL correctamente
         const apiUrl = this.apiBaseUrl 
           ? `${this.apiBaseUrl}/api/chat`
-          : '/api/chat'; // URL relativa cuando están en el mismo dominio
+          : '/api/chat';
 
         const res = await axios.post(
           apiUrl,
@@ -387,13 +358,6 @@ Como **administrador**, puedo ayudarte con:
           text: res.data.reply || "Lo siento, no pude generar una respuesta.",
           time: this.getCurrentTime()
         });
-
-        // Mostrar burbuja de ayuda después de un tiempo si no está abierto
-        if (!this.isOpen && !this.bubbleHidden) {
-          setTimeout(() => {
-            this.showBubble();
-          }, 5000);
-        }
 
       } catch (error) {
         console.error("Chat error:", error);
@@ -481,7 +445,6 @@ Como **administrador**, puedo ayudarte con:
         .replace(/🛡️/g, '<span class="inline-block mr-1">🛡️</span>');
     },
 
-    // ✅ Aplicar parche de emergencia para URLs incorrectas
     applyEmergencyPatch() {
       if (window.CHATBOT_PATCH_APPLIED) return;
       
@@ -491,41 +454,21 @@ Como **administrador**, puedo ayudarte con:
                           !window.location.hostname.includes('localhost');
       
       if (isProduction) {
-        console.log('🚀 Detectado entorno Render en producción');
-        
         const originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
           if (typeof url === 'string') {
-            const originalUrl = url;
-            
             if (url.includes('localhost:4000')) {
               url = url.replace('http://localhost:4000', '');
-              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
             }
-            
             if (url.includes('localhost:10000')) {
               url = url.replace('http://localhost:10000', '');
-              console.log('🔧 URL corregida:', originalUrl, '→', url || '(URL relativa)');
             }
           }
           return originalXHROpen.call(this, method, url, async, user, pass);
         };
-        
-        console.log('✅ Parche de emergencia aplicado para producción');
       }
       
       window.CHATBOT_PATCH_APPLIED = true;
-    },
-
-    // Mostrar burbuja de ayuda después de un tiempo
-    scheduleHelpBubble() {
-      if (this.bubbleHidden) return;
-      
-      setTimeout(() => {
-        if (!this.isOpen && !this.bubbleHidden) {
-          this.showHelpBubble = true;
-        }
-      }, 3000); // Mostrar después de 3 segundos
     }
   },
 
@@ -536,14 +479,6 @@ Como **administrador**, puedo ayudarte con:
           this.scrollToBottom();
           this.checkScrollButtons();
         });
-        this.showHelpBubble = false;
-      } else {
-        // Programar mostrar burbuja después de cerrar el chat
-        setTimeout(() => {
-          if (!this.bubbleHidden) {
-            this.scheduleHelpBubble();
-          }
-        }, 2000);
       }
     },
 
@@ -561,48 +496,21 @@ Como **administrador**, puedo ayudarte con:
   },
 
   mounted() {
-    // Obtener el rol del usuario al montar el componente
     this.userRole = this.getUserRole();
     
-    // Verificar si el usuario ocultó la burbuja anteriormente
-    const bubbleHidden = localStorage.getItem('chatbot_bubble_hidden');
-    if (bubbleHidden === 'true') {
-      this.bubbleHidden = true;
-      this.showHelpBubble = false;
-    }
-    
-    // ✅ Aplicar parche de emergencia al cargar
     this.applyEmergencyPatch();
     
-    // Programar mostrar burbuja de ayuda
-    this.scheduleHelpBubble();
-    
-    // Verificar scroll después de que se rendericen los botones
     this.$nextTick(() => {
       setTimeout(() => {
         this.checkScrollButtons();
       }, 100);
     });
 
-    // También verificar cuando cambia el tamaño de la ventana
     window.addEventListener('resize', this.checkScrollButtons);
-
-    // Cerrar burbuja al hacer clic fuera
-    document.addEventListener('click', (event) => {
-      const chatbotContainer = this.$el;
-      const helpBubble = chatbotContainer?.querySelector('.help-bubble');
-      
-      if (helpBubble && 
-          !helpBubble.contains(event.target) && 
-          !chatbotContainer.querySelector('.chatbot-toggle').contains(event.target)) {
-        this.hideBubble();
-      }
-    });
   },
 
   beforeUnmount() {
     window.removeEventListener('resize', this.checkScrollButtons);
-    document.removeEventListener('click', this.hideBubble);
   }
 };
 </script>
@@ -615,85 +523,63 @@ Como **administrador**, puedo ayudarte con:
   z-index: 1000;
 }
 
-/* Mensaje tipo nube */
-.help-bubble {
+/* =========================================== */
+/* MENSAJE FIJO ARRIBA DEL BOTÓN (NUNCA DESAPARECE) */
+/* =========================================== */
+.fixed-help-message {
   position: absolute;
   bottom: 75px;
   left: 10px;
-  background: white;
-  border-radius: 18px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  padding: 12px 16px;
-  width: 200px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  padding: 14px 18px;
+  width: 220px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   z-index: 1001;
-  animation: float 3s ease-in-out infinite;
+  animation: fixed-float 3s ease-in-out infinite;
 }
 
-.help-bubble:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  background: #f8fafc;
+.fixed-help-message:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
 }
 
-.bubble-arrow {
-  position: absolute;
-  bottom: -8px;
-  left: 20px;
-  width: 16px;
-  height: 16px;
-  background: white;
-  transform: rotate(45deg);
-  border-right: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.bubble-content {
+.fixed-message-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
-.bubble-text {
-  font-weight: 600;
-  font-size: 13px;
-  color: #1f2937;
+.fixed-text {
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.bubble-subtext {
-  font-size: 11px;
-  color: #6b7280;
-  opacity: 0.8;
+.fixed-subtext {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 0.9;
 }
 
-.bubble-close {
+.fixed-arrow {
   position: absolute;
-  top: 6px;
-  right: 8px;
+  bottom: -10px;
+  left: 25px;
   width: 20px;
   height: 20px;
-  border-radius: 50%;
-  background: #f3f4f6;
-  border: none;
-  color: #6b7280;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+  background: #3b82f6;
+  transform: rotate(45deg);
+  border-bottom-right-radius: 4px;
 }
 
-.bubble-close:hover {
-  background: #ef4444;
-  color: white;
-}
-
-/* Animación flotante */
-@keyframes float {
+/* Animación para el mensaje fijo */
+@keyframes fixed-float {
   0%, 100% {
     transform: translateY(0);
   }
@@ -704,23 +590,24 @@ Como **administrador**, puedo ayudarte con:
 
 /* Botón flotante */
 .chatbot-toggle {
-  width: 60px;
-  height: 60px;
+  width: 65px;
+  height: 65px;
   border-radius: 50%;
   background: white;
-  border: 2px solid #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  border: 3px solid #3b82f6;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: hidden;
 }
 
 .chatbot-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  border-color: #3b82f6;
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+  border-color: #1d4ed8;
 }
 
 .chatbot-toggle.pulse-animation {
@@ -729,35 +616,35 @@ Como **administrador**, puedo ayudarte con:
 
 @keyframes pulse-button {
   0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7), 0 6px 20px rgba(0, 0, 0, 0.2);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 12px rgba(59, 130, 246, 0), 0 6px 20px rgba(0, 0, 0, 0.2);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0), 0 6px 20px rgba(0, 0, 0, 0.2);
   }
 }
 
 .notification-dot {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 12px;
-  height: 12px;
-  background: #ef4444;
+  top: 4px;
+  right: 4px;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   border-radius: 50%;
   border: 2px solid white;
-  animation: pulse 2s infinite;
+  animation: pulse 1.5s infinite;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
 }
 
-/* Ventana del chat - POSICIÓN MÁS ALTA */
+/* Ventana del chat */
 .chatbot-window {
   position: fixed;
   bottom: 90px;
@@ -765,12 +652,13 @@ Como **administrador**, puedo ayudarte con:
   width: 380px;
   height: 520px;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
   border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 
 /* Header */
@@ -778,17 +666,20 @@ Como **administrador**, puedo ayudarte con:
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 18px;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .chatbot-avatar {
-  width: 40px;
-  height: 40px;
+  width: 45px;
+  height: 45px;
   object-fit: contain;
   border-radius: 50%;
-  border: 2px solid white;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  background: white;
+  padding: 2px;
 }
 
 .chatbot-info {
@@ -797,35 +688,38 @@ Como **administrador**, puedo ayudarte con:
 
 .chatbot-info h3 {
   font-weight: bold;
-  font-size: 14px;
+  font-size: 16px;
   margin: 0;
+  letter-spacing: 0.5px;
 }
 
 .chatbot-info p {
   font-size: 12px;
   opacity: 0.9;
-  margin: 0;
+  margin: 2px 0 0 0;
+  font-weight: 400;
 }
 
 .close-btn {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(5px);
 }
 
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.3);
-  transform: rotate(90deg);
+  transform: rotate(90deg) scale(1.1);
 }
 
 /* Área de mensajes */
@@ -836,7 +730,7 @@ Como **administrador**, puedo ayudarte con:
   background: linear-gradient(to bottom, #f8fafc, #ffffff);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .message-container {
@@ -853,38 +747,54 @@ Como **administrador**, puedo ayudarte con:
 }
 
 .message-bubble {
-  max-width: 85%;
-  padding: 12px 16px;
-  border-radius: 18px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 82%;
+  padding: 14px 18px;
+  border-radius: 22px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  position: relative;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .message-user {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
-  border-bottom-right-radius: 6px;
+  border-bottom-right-radius: 8px;
+  margin-left: auto;
 }
 
 .message-bot {
   background: white;
   color: #1f2937;
   border: 1px solid #e5e7eb;
-  border-bottom-left-radius: 6px;
+  border-bottom-left-radius: 8px;
+  margin-right: auto;
 }
 
 .message-content {
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.message-content >>> strong {
+  font-weight: 600;
+}
+
+.message-content >>> em {
+  font-style: italic;
 }
 
 .message-time {
   font-size: 11px;
-  margin-top: 4px;
+  margin-top: 6px;
   text-align: right;
+  opacity: 0.7;
+  font-weight: 500;
 }
 
 .message-time-user {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .message-time-bot {
@@ -895,28 +805,30 @@ Como **administrador**, puedo ayudarte con:
 .typing-indicator {
   display: flex;
   justify-content: flex-start;
+  margin-top: 4px;
 }
 
 .typing-bubble {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  border-bottom-left-radius: 6px;
-  padding: 12px 16px;
+  border-radius: 22px;
+  border-bottom-left-radius: 8px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .typing-dots {
   display: flex;
-  gap: 4px;
+  gap: 5px;
 }
 
 .dot {
-  width: 6px;
-  height: 6px;
-  background: #6b7280;
+  width: 7px;
+  height: 7px;
+  background: #3b82f6;
   border-radius: 50%;
   animation: typing-bounce 1.4s infinite ease-in-out;
 }
@@ -935,22 +847,24 @@ Como **administrador**, puedo ayudarte con:
     opacity: 0.4;
   }
   30% {
-    transform: translateY(-4px);
+    transform: translateY(-5px);
     opacity: 1;
   }
 }
 
 .typing-text {
-  font-size: 12px;
+  font-size: 13px;
   color: #6b7280;
+  font-weight: 500;
 }
 
-/* Botones rápidos MEJORADO CON SCROLL HORIZONTAL */
+/* Botones rápidos */
 .quick-buttons-container {
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-top: 1px solid #e5e7eb;
   background: #f8fafc;
   position: relative;
+  flex-shrink: 0;
 }
 
 .quick-buttons-wrapper {
@@ -961,7 +875,7 @@ Como **administrador**, puedo ayudarte con:
 
 .quick-buttons-scroll {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   overflow-x: auto;
   padding-bottom: 4px;
   scroll-behavior: smooth;
@@ -975,29 +889,30 @@ Como **administrador**, puedo ayudarte con:
 
 .quick-button {
   flex-shrink: 0;
-  padding: 8px 12px;
+  padding: 10px 16px;
   background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 500;
+  border: 1.5px solid #d1d5db;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
   color: #374151;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   min-width: max-content;
+  letter-spacing: 0.3px;
 }
 
 .quick-button:hover:not(:disabled) {
   background: #3b82f6;
   color: white;
   border-color: #3b82f6;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .quick-button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
 }
@@ -1007,104 +922,131 @@ Como **administrador**, puedo ayudarte con:
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background: white;
-  border: 1px solid #d1d5db;
+  border: 1.5px solid #d1d5db;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: bold;
   color: #374151;
   cursor: pointer;
   z-index: 10;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
+  backdrop-filter: blur(5px);
 }
 
 .scroll-button:hover {
   background: #3b82f6;
   color: white;
   border-color: #3b82f6;
+  transform: translateY(-50%) scale(1.1);
 }
 
 .scroll-left {
-  left: -8px;
+  left: -12px;
 }
 
 .scroll-right {
-  right: -8px;
+  right: -12px;
 }
 
 /* Input area */
 .input-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   padding: 16px;
   border-top: 1px solid #e5e7eb;
   background: white;
+  flex-shrink: 0;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
 }
 
 .message-input {
   flex: 1;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
+  padding: 14px 16px;
+  padding-right: 50px;
+  border: 2px solid #d1d5db;
+  border-radius: 16px;
   font-size: 14px;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
 }
 
 .message-input:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
 .message-input:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+  background: #f9fafb;
 }
 
 .send-button {
-  width: 48px;
-  height: 48px;
+  position: absolute;
+  right: 8px;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   border: none;
   border-radius: 12px;
   color: white;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .send-button:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+}
+
+.send-button:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
 .send-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  background: #9ca3af;
 }
 
 .send-icon {
   width: 20px;
   height: 20px;
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+
+.send-button:hover:not(:disabled) .send-icon {
+  transform: rotate(-5deg);
 }
 
 .loading-spinner {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border: 2px solid white;
   border-top: 2px solid transparent;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -1112,31 +1054,29 @@ Como **administrador**, puedo ayudarte con:
   100% { transform: rotate(360deg); }
 }
 
+.char-counter {
+  font-size: 11px;
+  color: #6b7280;
+  text-align: right;
+  margin-top: 6px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
 /* Animaciones */
 .chat-window-enter-active,
 .chat-window-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .chat-window-enter-from {
   opacity: 0;
-  transform: translateY(20px) scale(0.95);
+  transform: translateY(30px) scale(0.9);
 }
 
 .chat-window-leave-to {
   opacity: 0;
-  transform: translateY(20px) scale(0.95);
-}
-
-.bubble-enter-active,
-.bubble-leave-active {
-  transition: all 0.3s ease;
-}
-
-.bubble-enter-from,
-.bubble-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(30px) scale(0.9);
 }
 
 /* Scroll personalizado */
@@ -1146,6 +1086,7 @@ Como **administrador**, puedo ayudarte con:
 
 .chatbot-messages::-webkit-scrollbar-track {
   background: transparent;
+  border-radius: 10px;
 }
 
 .chatbot-messages::-webkit-scrollbar-thumb {
@@ -1160,63 +1101,77 @@ Como **administrador**, puedo ayudarte con:
 /* Responsive */
 @media (max-width: 480px) {
   .chatbot-container {
-    bottom: 10px;
-    left: 10px;
+    bottom: 15px;
+    left: 15px;
+  }
+  
+  .fixed-help-message {
+    width: 200px;
+    left: 5px;
+    bottom: 70px;
+    padding: 12px 16px;
   }
   
   .chatbot-window {
     width: calc(100vw - 40px);
     max-width: 380px;
-    left: 10px;
+    left: 15px;
     bottom: 80px;
     height: 500px;
+    border-radius: 18px;
   }
   
-  .help-bubble {
-    width: 180px;
-    left: 0;
+  .chatbot-toggle {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .message-bubble {
+    max-width: 88%;
+    padding: 12px 16px;
+  }
+  
+  .quick-button {
+    padding: 9px 14px;
+    font-size: 11px;
+  }
+  
+  .message-input {
+    padding: 12px 14px;
+    padding-right: 46px;
+    font-size: 13px;
+  }
+  
+  .send-button {
+    width: 36px;
+    height: 36px;
+    right: 6px;
   }
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-  .help-bubble {
-    background: #1f2937;
-    border-color: #374151;
-    color: white;
+  .fixed-help-message {
+    background: linear-gradient(135deg, #1e40af, #1e3a8a);
+    border-color: rgba(255, 255, 255, 0.1);
   }
   
-  .bubble-arrow {
-    background: #1f2937;
-    border-color: #374151;
-  }
-  
-  .bubble-text {
-    color: #f9fafb;
-  }
-  
-  .bubble-subtext {
-    color: #d1d5db;
-  }
-  
-  .bubble-close {
-    background: #374151;
-    color: #d1d5db;
-  }
-  
-  .bubble-close:hover {
-    background: #ef4444;
-    color: white;
+  .fixed-arrow {
+    background: #1e40af;
   }
   
   .chatbot-toggle {
     background: #1f2937;
-    border-color: #374151;
+    border-color: #3b82f6;
   }
   
   .chatbot-window {
     background: #1f2937;
     border-color: #374151;
+  }
+  
+  .chatbot-header {
+    background: linear-gradient(135deg, #1e40af, #1e3a8a);
   }
   
   .chatbot-messages {
@@ -1249,6 +1204,11 @@ Como **administrador**, puedo ayudarte con:
     color: #f9fafb;
   }
   
+  .quick-button:hover:not(:disabled) {
+    background: #3b82f6;
+    border-color: #3b82f6;
+  }
+  
   .scroll-button {
     background: #374151;
     border-color: #4b5563;
@@ -1268,7 +1228,19 @@ Como **administrador**, puedo ayudarte con:
   
   .message-input:focus {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+  }
+  
+  .char-counter {
+    color: #9ca3af;
+  }
+  
+  .chatbot-messages::-webkit-scrollbar-thumb {
+    background: #4b5563;
+  }
+  
+  .chatbot-messages::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
   }
 }
 </style>

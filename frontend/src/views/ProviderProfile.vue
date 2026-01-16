@@ -140,58 +140,8 @@
         </div>
       </div>
 
-      <!-- Horarios de Atención -->
-      <div
-        v-if="provider"
-        class="bg-white rounded-2xl shadow-sm border border-neutral-light p-6 mt-8"
-      >
-        <div class="flex items-center gap-3 mb-6">
-          <div class="w-2 h-8 bg-yellow-500 rounded-full"></div>
-          <h2 class="text-xl font-semibold text-neutral-dark">Horarios de Atención</h2>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div
-            v-for="day in weekDays"
-            :key="day"
-            class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-neutral-bg rounded-lg border border-neutral-light hover:border-primary-mint transition-colors duration-200"
-          >
-            <label class="w-28 font-medium text-neutral-dark text-sm sm:text-base">{{ day }}</label>
-            
-            <div class="flex items-center gap-3 flex-1">
-              <div class="flex items-center gap-2 flex-1">
-                <span class="text-neutral-medium text-sm">Apertura:</span>
-                <input
-                  type="time"
-                  v-model="provider.profile.schedule[day].open"
-                  class="flex-1 px-3 py-2 border border-neutral-medium rounded-lg focus:ring-2 focus:ring-primary-mint focus:border-primary-mint transition-colors duration-200 bg-white text-sm"
-                />
-              </div>
-              
-              <span class="text-neutral-medium mx-2">-</span>
-              
-              <div class="flex items-center gap-2 flex-1">
-                <span class="text-neutral-medium text-sm">Cierre:</span>
-                <input
-                  type="time"
-                  v-model="provider.profile.schedule[day].close"
-                  class="flex-1 px-3 py-2 border border-neutral-medium rounded-lg focus:ring-2 focus:ring-primary-mint focus:border-primary-mint transition-colors duration-200 bg-white text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Nota sobre horarios -->
-        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div class="flex items-start gap-3">
-            <span class="text-blue-500 text-lg">💡</span>
-            <div>
-              <p class="text-sm text-blue-800 font-medium">Configura tus horarios de atención</p>
-              <p class="text-xs text-blue-600 mt-1">Los clientes podrán ver estos horarios al solicitar tus servicios</p>
-            </div>
-          </div>
-        </div>
+        
       </div>
 
       <!-- Botones de Acción -->
@@ -224,7 +174,7 @@
           <p class="text-neutral-medium">Espera un momento por favor</p>
         </div>
       </div>
-    </div>
+    
     <Chatbot />
   </ProviderLayout>
 </template>

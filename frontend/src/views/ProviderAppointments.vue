@@ -4,7 +4,7 @@
     <Chatbot />
     
     <!-- Hero Section -->
-    <section class="relative bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden">
+    <section class="relative bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden mt-8">
       <div class="absolute inset-0 opacity-5">
         <div class="absolute top-10 left-10 w-32 h-32 rounded-full bg-emerald-300"></div>
         <div class="absolute bottom-10 right-10 w-48 h-48 rounded-full bg-teal-300"></div>

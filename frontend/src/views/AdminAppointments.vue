@@ -2,29 +2,19 @@
   <AdminLayout>
     <!-- Chatbot Component -->
     <Chatbot />
-    
-    <!-- Hero Section -->
-    <section class="relative bg-gradient-to-br from-purple-50 to-indigo-50 overflow-hidden mt-12">
-      <div class="absolute inset-0 opacity-5">
-        <div class="absolute top-10 left-10 w-32 h-32 rounded-full bg-purple-300"></div>
-        <div class="absolute bottom-10 right-10 w-48 h-48 rounded-full bg-indigo-300"></div>
-        <div class="absolute top-1/2 left-1/4 w-16 h-16 rounded-full bg-purple-400"></div>
-      </div>
-
-      <div class="relative container mx-auto px-4 py-20 md:py-32">
-        <div class="text-center max-w-4xl mx-auto fade-up">
-          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg mb-8">
-            
-          </div>
-          <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Panel de Administración
-          </h1>
-          <p class="text-xl text-gray-700 mb-10 max-w-3xl mx-auto">
-            Gestiona todas las citas del sistema con control total
-          </p>
+    <div class="px-6 max-w-7xl mx-auto w-full pt-6">
+      <!-- Header con estilo moderno -->
+      <div class="mb-10 fade-up">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200">
+          <span class="text-2xl text-emerald-600">🏬</span>
         </div>
+        <h1 class="text-4xl font-bold text-neutral-dark mb-3">Gestión de Citas</h1>
+        <p class="text-lg text-gray-700 max-w-3xl">
+          Administra y gestiona todas las citas en PetServices
+        </p>
       </div>
-    </section>
+      </div>
+    <!-- Hero Section -->
 
     <!-- Contenido principal -->
     <section class="py-16 bg-white">

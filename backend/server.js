@@ -1,5 +1,68 @@
 import dotenv from "dotenv";
-dotenv.config();
+
+// 🔧 1. CARGAR VARIABLES DE ENTORNO - CON DIAGNÓSTICO
+console.log('🔍 ======= DIAGNÓSTICO SERVER =======');
+console.log('Directorio actual:', process.cwd());
+
+// Intentar diferentes ubicaciones del .env
+const envPaths = [
+  '.env',                         // Raíz del proyecto
+  './.env',                       // Relativo
+  `${process.cwd()}/.env`,        // Absoluto desde directorio actual
+  '../.env',                      // Un nivel arriba
+  '../../.env'                    // Dos niveles arriba
+];
+
+let envLoaded = false;
+for (const envPath of envPaths) {
+  try {
+    const result = dotenv.config({ path: envPath });
+    if (result.parsed && result.parsed.GEMINI_API_KEY) {
+      console.log(`✅ .env cargado desde: ${envPath}`);
+      console.log(`🔑 GEMINI_API_KEY encontrada: ${result.parsed.GEMINI_API_KEY.substring(0, 10)}...`);
+      envLoaded = true;
+      break;
+    }
+  } catch (error) {
+    console.log(`⚠️  No se pudo cargar desde ${envPath}: ${error.message}`);
+  }
+}
+
+// Si no se cargó, intentar método por defecto
+if (!envLoaded) {
+  console.log('🔄 Intentando carga por defecto...');
+  dotenv.config();
+  
+  if (process.env.GEMINI_API_KEY) {
+    console.log(`✅ .env cargado por defecto`);
+    envLoaded = true;
+  }
+}
+
+// Mostrar diagnóstico de variables
+console.log('\n📋 VARIABLES CARGADAS:');
+console.log('   PORT:', process.env.PORT || 'No definido (default: 4000)');
+console.log('   NODE_ENV:', process.env.NODE_ENV || 'development');
+console.log('   GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? `✅ ${process.env.GEMINI_API_KEY.length} chars` : '❌ NO CONFIGURADA');
+console.log('   GEMINI_MODEL:', process.env.GEMINI_MODEL || 'gemini-pro (default)');
+console.log('   MONGO_URI:', process.env.MONGO_URI ? '✅ Configurada' : '❌ NO CONFIGURADA');
+
+// 🚨 SI NO HAY API KEY, CONFIGURAR UNA POR DEFECTO DE EMERGENCIA
+if (!process.env.GEMINI_API_KEY) {
+  console.warn('\n⚠️  ⚠️  ⚠️  ADVERTENCIA CRÍTICA ⚠️  ⚠️  ⚠️');
+  console.warn('   GEMINI_API_KEY no está configurada en .env');
+  console.warn('   El chatbot funcionará en MODO FALLBACK');
+  console.warn('   Para usar IA, configura GEMINI_API_KEY en tu .env');
+  
+  // Establecer una variable de entorno por defecto
+  process.env.GEMINI_API_KEY = '';
+  process.env.GEMINI_MODEL = 'gemini-pro';
+  
+  console.log('\n🔧 Configuración de emergencia aplicada');
+  console.log('   MODO: Fallback (sin IA)');
+}
+
+console.log('🔍 ======= FIN DIAGNÓSTICO =======\n');
 
 import express from "express";
 import cors from "cors";
@@ -169,9 +232,21 @@ app.use("/api/appointments", appointmentsRoutes);
 app.use("/api/providers", providerRoutes);
 app.use("/api/provider/reports", providerReportsRoutes);
 
-// Chat
-app.use("/api/chat", chatRoutes);
-app.use("/api/chatbot/admin", chatAdminRoutes);
+// Chat - IMPORTANTE: Verificar que las rutas existan
+console.log('\n📦 CARGANDO RUTAS DE CHAT...');
+try {
+  app.use("/api/chat", chatRoutes);
+  console.log('✅ Ruta /api/chat cargada correctamente');
+} catch (error) {
+  console.error('❌ Error cargando /api/chat:', error.message);
+}
+
+try {
+  app.use("/api/chatbot/admin", chatAdminRoutes);
+  console.log('✅ Ruta /api/chatbot/admin cargada correctamente');
+} catch (error) {
+  console.error('❌ Error cargando /api/chatbot/admin:', error.message);
+}
 
 // Negocios
 app.use("/api/businesses", businessRoutes);
@@ -179,9 +254,9 @@ app.use("/api/businesses", businessRoutes);
 // Upload de archivos
 app.use("/api/upload", uploadRoutes);
 
-// ============ RUTAS DE DIAGNÓSTICO ============
+// ============ RUTAS DE DIAGNÓSTICO MEJORADAS ============
 
-// Health check
+// Health check mejorado
 app.get("/api/health", (req, res) => {
   const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
   
@@ -192,8 +267,96 @@ app.get("/api/health", (req, res) => {
     environment: process.env.NODE_ENV || 'development',
     mongoDB: mongoStatus,
     nodeVersion: process.version,
-    uploadsPath: UPLOADS_PATH
+    uploadsPath: UPLOADS_PATH,
+    geminiApi: {
+      configured: !!process.env.GEMINI_API_KEY,
+      model: process.env.GEMINI_MODEL || 'gemini-pro',
+      status: process.env.GEMINI_API_KEY ? 'ready' : 'not_configured'
+    },
+    system: {
+      uptime: process.uptime(),
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB'
+      }
+    }
   });
+});
+
+// Endpoint para verificar variables de entorno (SIN información sensible)
+app.get("/api/env-check", (req, res) => {
+  res.json({
+    success: true,
+    timestamp: new Date().toISOString(),
+    environment: {
+      node_env: process.env.NODE_ENV || 'development',
+      port: process.env.PORT || 4000
+    },
+    services: {
+      mongo: !!process.env.MONGO_URI,
+      gemini: !!process.env.GEMINI_API_KEY,
+      gemini_model: process.env.GEMINI_MODEL || 'gemini-pro',
+      jwt: !!process.env.JWT_SECRET
+    },
+    status: {
+      mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      server: 'running'
+    }
+  });
+});
+
+// Test específico de Gemini
+app.get("/api/test-gemini", async (req, res) => {
+  try {
+    const API_KEY = process.env.GEMINI_API_KEY;
+    
+    if (!API_KEY || API_KEY.trim() === '') {
+      return res.json({
+        success: false,
+        error: "GEMINI_API_KEY no configurada en variables de entorno",
+        suggestion: "Agrega GEMINI_API_KEY=tu_clave_aqui a tu archivo .env"
+      });
+    }
+    
+    const model = process.env.GEMINI_MODEL || 'gemini-pro';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+    
+    console.log(`🧪 Probando Gemini con modelo: ${model}`);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: "Responde solo con 'OK'" }]
+        }]
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      res.json({
+        success: true,
+        message: "✅ Gemini API funciona correctamente",
+        model: model,
+        response: data?.candidates?.[0]?.content?.parts?.[0]?.text || 'OK'
+      });
+    } else {
+      const errorText = await response.text();
+      res.json({
+        success: false,
+        error: `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
+        suggestion: "Verifica tu API Key y que Gemini API esté habilitada en Google Cloud"
+      });
+    }
+    
+  } catch (error) {
+    res.json({
+      success: false,
+      error: error.message,
+      suggestion: "Error de conexión. Verifica tu internet y firewall."
+    });
+  }
 });
 
 // Info
@@ -201,7 +364,21 @@ app.get("/api/info", (req, res) => {
   res.json({
     app: "Pet Services API",
     version: "1.0.0",
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    features: [
+      "Authentication",
+      "User Management", 
+      "Pet Management",
+      "Business Directory",
+      "Appointments",
+      "Chatbot AI",
+      "Notifications",
+      "File Uploads"
+    ],
+    chatbot: {
+      status: process.env.GEMINI_API_KEY ? "AI Enabled" : "Fallback Mode",
+      model: process.env.GEMINI_MODEL || "gemini-pro"
+    }
   });
 });
 
@@ -266,7 +443,8 @@ if (process.env.NODE_ENV === 'production') {
         app: 'Pet Services Backend',
         status: 'online',
         frontend: 'not available',
-        api: 'available at /api/*'
+        api: 'available at /api/*',
+        chatbot: process.env.GEMINI_API_KEY ? 'AI enabled' : 'Fallback mode'
       });
     });
   }
@@ -279,13 +457,17 @@ if (process.env.NODE_ENV !== 'production') {
       message: "API Pet Services funcionando 🐾",
       version: "1.0.0",
       environment: "development",
+      chatbot: process.env.GEMINI_API_KEY ? "🤖 AI Enabled" : "📝 Fallback Mode",
       frontend: "http://localhost:5173",
       api: "http://localhost:4000/api",
       endpoints: {
         health: "/api/health",
+        env_check: "/api/env-check",
+        test_gemini: "/api/test-gemini",
         users: "/api/users",
         services: "/api/services",
-        businesses: "/api/businesses"
+        businesses: "/api/businesses",
+        chat: "/api/chat"
       }
     });
   });
@@ -300,7 +482,8 @@ app.use((req, res, next) => {
     res.status(404).json({
       error: 'Endpoint no encontrado',
       path: req.path,
-      method: req.method
+      method: req.method,
+      timestamp: new Date().toISOString()
     });
   } else {
     next(); // Para rutas no-API, pasar al siguiente middleware
@@ -348,12 +531,17 @@ const startServer = async () => {
 ✅ Servidor corriendo en puerto: ${PORT}
 🌐 Entorno: ${process.env.NODE_ENV || 'development'}
 📁 Uploads: ${UPLOADS_PATH}
-🔧 Health check: /api/health
-🔗 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Conectado' : '❌ Desconectado'}
 
-📌 URLs:
-   • API: http://localhost:${PORT}/api
-   • Health: http://localhost:${PORT}/api/health
+🤖 CHATBOT STATUS: ${process.env.GEMINI_API_KEY ? '🤖 AI ENABLED' : '📝 FALLBACK MODE'}
+   Modelo: ${process.env.GEMINI_MODEL || 'gemini-pro'}
+   API Key: ${process.env.GEMINI_API_KEY ? '✅ Configurada' : '❌ No configurada'}
+
+🔧 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Conectado' : '❌ Desconectado'}
+
+📌 ENDPOINTS DE DIAGNÓSTICO:
+   • API Health: http://localhost:${PORT}/api/health
+   • Env Check: http://localhost:${PORT}/api/env-check
+   • Test Gemini: http://localhost:${PORT}/api/test-gemini
    • Uploads: http://localhost:${PORT}/uploads/
    
 🚀 ¡Servidor listo!

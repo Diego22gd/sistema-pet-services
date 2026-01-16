@@ -6,7 +6,7 @@
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200">
           <span class="text-2xl text-emerald-600">🏬</span>
         </div>
-        <h1 class="text-4xl font-bold text-gray-900 mb-3">Gestión de Comercios</h1>
+        <h1 class="text-4xl font-bold text-neutral-dark mb-3">Gestión de Comercios</h1>
         <p class="text-lg text-gray-700 max-w-3xl">
           Administra y gestiona todos los comercios registrados en PetServices
         </p>
@@ -112,25 +112,7 @@
         </div>
       </div>
 
-      <!-- Tarjetas de estadísticas modernas -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10 fade-up">
-        <div class="card-modern text-center">
-          <div class="text-3xl font-bold text-emerald-600">{{ stats.total || 0 }}</div>
-          <div class="text-sm text-gray-600 mt-2">Total Comercios</div>
-        </div>
-        <div class="card-modern text-center">
-          <div class="text-3xl font-bold text-teal-600">{{ stats.pending || 0 }}</div>
-          <div class="text-sm text-gray-600 mt-2">Pendientes</div>
-        </div>
-        <div class="card-modern text-center">
-          <div class="text-3xl font-bold text-amber-600">{{ stats.active || 0 }}</div>
-          <div class="text-sm text-gray-600 mt-2">Activos</div>
-        </div>
-        <div class="card-modern text-center">
-          <div class="text-3xl font-bold text-rose-600">{{ stats.inactive || 0 }}</div>
-          <div class="text-sm text-gray-600 mt-2">Inactivos</div>
-        </div>
-      </div>
+      
 
       <!-- Mensajes de estado -->
       <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">

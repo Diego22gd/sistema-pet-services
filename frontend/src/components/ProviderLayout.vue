@@ -126,78 +126,20 @@
     </header>
 
     <!-- Contenido de la vista -->
-    <main class="flex-1 pt-20 md:pt-24">
+    <main class="flex-1 pt-20 md:pt-24 pb-12">
       <slot />
     </main>
 
-    <!-- Footer Moderno Verde (ESTILO LANDING) -->
-    <footer class="bg-emerald-600 text-white py-12 mt-auto">
-      <div class="container mx-auto max-w-6xl px-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div class="flex items-center space-x-3 mb-4">
-              <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center">
-                <span class="text-xl text-emerald-600">🐾</span>
-              </div>
-              <div class="text-2xl font-bold text-white">
-                PetServices
-              </div>
-            </div>
-            <p class="text-emerald-100 mb-6">Cuidando de tus mascotas desde 2023 con servicios de calidad y profesionales verificados.</p>
-            <div class="flex space-x-4">
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">🌐</span>
-              </a>
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">📱</span>
-              </a>
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">📷</span>
-              </a>
-              <a href="#" class="social-icon-modern hover:bg-emerald-700">
-                <span class="text-white">📹</span>
-              </a>
-            </div>
-          </div>
-          
-          <div>
-            <h3 class="font-bold text-lg text-white mb-4">Servicios</h3>
-            <ul class="space-y-3">
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Veterinaria</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Peluquería</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Guardería</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Entrenamiento</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Paseadores</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 class="font-bold text-lg text-white mb-4">Empresa</h3>
-            <ul class="space-y-3">
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Sobre nosotros</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Trabaja con nosotros</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Para negocios</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Blog</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Prensa</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 class="font-bold text-lg text-white mb-4">Soporte</h3>
-            <ul class="space-y-3">
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Centro de ayuda</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Contacto</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Política de privacidad</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Términos de servicio</a></li>
-              <li><a href="#" class="text-emerald-100 hover:text-white transition-colors duration-300 hover:translate-x-2 inline-block">Cookies</a></li>
-            </ul>
-          </div>
-        </div>
+    <!-- Footer Minimalista (Igual al AdminLayout) -->
+    <footer class="bg-neutral-light text-neutral-medium py-6 text-center mt-auto shadow-inner">
+      <div class="container mx-auto px-6">
+        <p class="text-base md:text-lg">© 2025 PetServices Provider - Todos los derechos reservados</p>
+        <p class="text-sm mt-2 text-neutral-medium/80">
+          Panel exclusivo para proveedores autorizados
+        </p>
         
-        <div class="border-t border-emerald-500 mt-8 pt-8 text-center text-emerald-100">
-          <p class="mb-2">© 2025 PetServices. Todos los derechos reservados.</p>
-          <p class="text-sm">Creado con ❤️ para mascotas felices</p>
-        </div>
+        <!-- Enlaces rápidos -->
+        
       </div>
     </footer>
   </div>
@@ -260,6 +202,7 @@ export default {
       this.closeMobileMenu();
       
       localStorage.removeItem('user');
+      localStorage.removeItem('token');
       this.$router.push('/login');
     }
   },
@@ -273,6 +216,24 @@ export default {
     if (user && user.email) {
       this.userEmail = user.email;
     }
+    
+    // Verificar autenticación
+    const token = localStorage.getItem('token');
+    
+    if (!user || !token) {
+      console.warn('⚠️ Usuario no autenticado, redirigiendo...');
+      this.$router.push('/login');
+      return;
+    }
+    
+    // Verificar que sea provider
+    if (user.role !== 'provider') {
+      console.warn('⚠️ Usuario no es proveedor, redirigiendo...');
+      this.$router.push('/');
+      return;
+    }
+    
+    console.log('✅ Proveedor autenticado:', user.email);
   },
   beforeUnmount() {
     // Asegurarse de restaurar el scroll
@@ -317,31 +278,26 @@ nav a:hover, nav button:hover {
   box-shadow: 0 10px 15px -3px rgba(220, 38, 38, 0.25);
 }
 
-/* Footer */
-footer {
-  background-color: #059669 !important; /* emerald-600 */
+/* Footer (Igual al AdminLayout) */
+.bg-neutral-light {
+  background-color: #f5f5f5;
 }
 
-footer .text-emerald-100 {
-  color: #d1fae5 !important; /* emerald-100 */
+.text-neutral-medium {
+  color: #737373;
 }
 
-.social-icon-modern {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+.shadow-inner {
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
 }
 
-.social-icon-modern:hover {
-  transform: translateY(-3px) scale(1.1);
-  border-color: currentColor;
-  background: rgba(255, 255, 255, 0.2);
+/* Efectos hover para enlaces del footer */
+footer a {
+  transition: all 0.2s ease;
+}
+
+footer a:hover {
+  transform: translateY(-1px);
 }
 
 /* Animación de entrada para header */
@@ -403,25 +359,6 @@ nav a.bg-emerald-700::after {
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  nav {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-  
-  nav a, nav button {
-    margin: 0.125rem;
-    padding: 0.5rem 1rem !important;
-    font-size: 0.875rem;
-  }
-}
-
 @media (max-width: 768px) {
   /* Ajustar padding del main para header móvil */
   main {
@@ -440,11 +377,6 @@ nav a.bg-emerald-700::after {
   
   .w-px {
     display: none;
-  }
-  
-  .grid.grid-cols-1.md\\:grid-cols-4 {
-    grid-template-columns: 1fr;
-    gap: 2rem;
   }
   
   /* Mejorar visibilidad del menú móvil */
@@ -606,5 +538,18 @@ header {
 nav a, nav button {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+/* Responsive para el footer */
+@media (max-width: 768px) {
+  footer {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  
+  .flex.justify-center.space-x-6 {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
 }
 </style>

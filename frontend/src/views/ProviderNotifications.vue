@@ -1,16 +1,16 @@
 <template>
   <ProviderLayout>
-    <!-- Header -->
+    <!-- Encabezado -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center px-6 pt-16 pb-6 max-w-7xl mx-auto mt-8 gap-4">
       <div>
-        <h1 class="text-3xl font-extrabold text-neutral-dark">Notifications</h1>
-        <p class="text-neutral-medium mt-2">Manage your appointment alerts and updates</p>
+        <h1 class="text-3xl font-extrabold text-neutral-dark">Notificaciones</h1>
+        <p class="text-neutral-medium mt-2">Administra tus alertas y actualizaciones de citas</p>
       </div>
       
       <div class="flex items-center space-x-4">
         <!-- Contador de no leídas -->
         <div class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg font-semibold">
-          {{ unreadCount }} unread
+          {{ unreadCount }} sin leer
         </div>
         
         <!-- Botón marcar todas como leídas -->
@@ -20,8 +20,8 @@
           class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
           :disabled="isMarkingAll"
         >
-          <span v-if="isMarkingAll">Processing...</span>
-          <span v-else>Mark All as Read</span>
+          <span v-if="isMarkingAll">Procesando...</span>
+          <span v-else>Marcar todas como leídas</span>
         </button>
       </div>
     </div>
@@ -45,7 +45,7 @@
       <!-- Estado de carga -->
       <div v-if="isLoading" class="mt-6 text-center">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-        <p class="text-gray-600 mt-2">Loading notifications...</p>
+        <p class="text-gray-600 mt-2">Cargando notificaciones...</p>
       </div>
     </div>
 
@@ -55,8 +55,8 @@
       <div v-if="!isLoading && filteredNotifications.length === 0" 
            class="text-center py-12 bg-white rounded-2xl shadow">
         <div class="text-6xl mb-4">🔔</div>
-        <h3 class="text-xl font-semibold text-gray-700 mb-2">No notifications</h3>
-        <p class="text-gray-500">You're all caught up!</p>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">No hay notificaciones</h3>
+        <p class="text-gray-500">¡Estás al día!</p>
       </div>
 
       <!-- Lista de notificaciones -->
@@ -92,7 +92,7 @@
                     <div class="flex items-center space-x-2">
                       <span class="text-gray-500">📅</span>
                       <div>
-                        <p class="text-sm text-gray-600">Date & Time</p>
+                        <p class="text-sm text-gray-600">Fecha y Hora</p>
                         <p class="font-medium">{{ formatDateTime(notification.appointmentId) }}</p>
                       </div>
                     </div>
@@ -100,7 +100,7 @@
                     <div class="flex items-center space-x-2">
                       <span class="text-gray-500">💼</span>
                       <div>
-                        <p class="text-sm text-gray-600">Service</p>
+                        <p class="text-sm text-gray-600">Servicio</p>
                         <p class="font-medium">{{ notification.appointmentId.serviceName }}</p>
                       </div>
                     </div>
@@ -108,18 +108,18 @@
                     <div class="flex items-center space-x-2">
                       <span class="text-gray-500">👤</span>
                       <div>
-                        <p class="text-sm text-gray-600">Client</p>
-                        <p class="font-medium">{{ notification.userId?.name || 'Client' }}</p>
+                        <p class="text-sm text-gray-600">Cliente</p>
+                        <p class="font-medium">{{ notification.userId?.name || 'Cliente' }}</p>
                       </div>
                     </div>
                     
                     <div class="flex items-center space-x-2">
                       <span class="text-gray-500">📋</span>
                       <div>
-                        <p class="text-sm text-gray-600">Status</p>
+                        <p class="text-sm text-gray-600">Estado</p>
                         <span class="px-2 py-1 rounded text-xs font-medium"
                               :class="getStatusClass(notification.appointmentId.status)">
-                          {{ notification.appointmentId.status }}
+                          {{ translateStatus(notification.appointmentId.status) }}
                         </span>
                       </div>
                     </div>
@@ -131,7 +131,7 @@
                     @click="viewAppointment(notification.appointmentId._id)"
                     class="mt-3 text-emerald-600 hover:text-emerald-700 font-medium flex items-center space-x-1"
                   >
-                    <span>View Appointment Details</span>
+                    <span>Ver detalles de la cita</span>
                     <span>→</span>
                   </button>
                 </div>
@@ -158,7 +158,7 @@
                 :class="notification.read 
                   ? 'bg-gray-200 text-gray-600 hover:bg-gray-300' 
                   : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'"
-                :title="notification.read ? 'Mark as unread' : 'Mark as read'"
+                :title="notification.read ? 'Marcar como no leída' : 'Marcar como leída'"
               >
                 {{ notification.read ? '👁️' : '👁️‍🗨️' }}
               </button>
@@ -171,7 +171,7 @@
           
           <!-- Tipo y hora -->
           <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-            <span class="text-sm text-gray-500 capitalize">{{ notification.type.replace('_', ' ') }}</span>
+            <span class="text-sm text-gray-500 capitalize">{{ translateNotificationType(notification.type) }}</span>
             <span class="text-sm text-gray-500">{{ formatExactTime(notification.createdAt) }}</span>
           </div>
         </div>
@@ -184,7 +184,7 @@
           @click="loadMore"
           class="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
         >
-          Load More
+          Cargar más
         </button>
       </div>
     </div>
@@ -207,10 +207,10 @@ export default {
       unreadCount: 0,
       activeFilter: 'all',
       filters: [
-        { label: 'All', value: 'all' },
-        { label: 'Unread', value: 'unread' },
-        { label: 'Appointments', value: 'appointment' },
-        { label: 'System', value: 'system' }
+        { label: 'Todas', value: 'all' },
+        { label: 'No leídas', value: 'unread' },
+        { label: 'Citas', value: 'appointment' },
+        { label: 'Sistema', value: 'system' }
       ]
     };
   },
@@ -245,11 +245,11 @@ export default {
         
         if (response.data.success) {
           this.notifications = response.data.notifications;
-          console.log(`✅ Loaded ${this.notifications.length} notifications`);
+          console.log(`✅ Cargadas ${this.notifications.length} notificaciones`);
         }
       } catch (error) {
-        console.error('❌ Error fetching notifications:', error);
-        this.$toast.error('Failed to load notifications');
+        console.error('❌ Error al cargar notificaciones:', error);
+        this.$toast.error('No se pudieron cargar las notificaciones');
       } finally {
         this.isLoading = false;
       }
@@ -272,7 +272,7 @@ export default {
           this.unreadCount = response.data.unreadCount;
         }
       } catch (error) {
-        console.error('❌ Error fetching unread count:', error);
+        console.error('❌ Error al contar notificaciones no leídas:', error);
       }
     },
     
@@ -290,16 +290,16 @@ export default {
           
           notification.read = true;
           this.unreadCount = Math.max(0, this.unreadCount - 1);
-          this.$toast.success('Marked as read');
+          this.$toast.success('Marcada como leída');
         } else {
           // Marcar como no leída (simulado en frontend ya que el backend no tiene esta función)
           notification.read = false;
           this.unreadCount += 1;
-          this.$toast.info('Marked as unread');
+          this.$toast.info('Marcada como no leída');
         }
       } catch (error) {
-        console.error('❌ Error toggling read status:', error);
-        this.$toast.error('Failed to update notification');
+        console.error('❌ Error al cambiar estado de lectura:', error);
+        this.$toast.error('No se pudo actualizar la notificación');
       }
     },
     
@@ -310,7 +310,7 @@ export default {
         const user = JSON.parse(localStorage.getItem('user'));
         
         if (!user || !user._id) {
-          this.$toast.error('User not found');
+          this.$toast.error('Usuario no encontrado');
           return;
         }
         
@@ -327,11 +327,11 @@ export default {
           });
           
           this.unreadCount = 0;
-          this.$toast.success(`Marked ${response.data.modifiedCount} notifications as read`);
+          this.$toast.success(`${response.data.modifiedCount} notificaciones marcadas como leídas`);
         }
       } catch (error) {
-        console.error('❌ Error marking all as read:', error);
-        this.$toast.error('Failed to mark all as read');
+        console.error('❌ Error al marcar todas como leídas:', error);
+        this.$toast.error('No se pudieron marcar todas como leídas');
       } finally {
         this.isMarkingAll = false;
       }
@@ -345,7 +345,7 @@ export default {
     
     loadMore() {
       // Implementar paginación si el backend la soporta
-      this.$toast.info('Load more feature coming soon');
+      this.$toast.info('Función de cargar más disponible pronto');
     },
     
     // Métodos auxiliares
@@ -395,13 +395,13 @@ export default {
     
     formatDateTime(appointment) {
       if (!appointment) return '';
-      return `${appointment.date} at ${appointment.time}`;
+      return `${appointment.date} a las ${appointment.time}`;
     },
     
     formatExactTime(timestamp) {
       if (!timestamp) return '';
       const date = new Date(timestamp);
-      return date.toLocaleTimeString('en-US', {
+      return date.toLocaleTimeString('es-VE', {
         hour: '2-digit',
         minute: '2-digit',
         hour12: true
@@ -409,20 +409,73 @@ export default {
     },
     
     formatKey(key) {
-      // Convertir camelCase o snake_case a texto legible
+      // Convertir camelCase o snake_case a texto legible en español
+      const translations = {
+        'appointmentId': 'ID de Cita',
+        'userId': 'ID de Usuario',
+        'serviceId': 'ID de Servicio',
+        'status': 'Estado',
+        'createdAt': 'Creado el',
+        'updatedAt': 'Actualizado el',
+        'paymentStatus': 'Estado de Pago',
+        'amount': 'Monto',
+        'duration': 'Duración',
+        'notes': 'Notas'
+      };
+      
+      if (translations[key]) return translations[key];
+      
+      // Si no hay traducción específica, convertir a español genérico
       return key
         .replace(/_/g, ' ')
         .replace(/([A-Z])/g, ' $1')
         .replace(/^./, str => str.toUpperCase());
     },
     
+    translateNotificationType(type) {
+      const translations = {
+        'appointment_created': 'cita creada',
+        'appointment_cancelled': 'cita cancelada',
+        'appointment_rescheduled': 'cita reprogramada',
+        'appointment_updated': 'cita actualizada',
+        'appointment_confirmed': 'cita confirmada',
+        'appointment_completed': 'cita completada',
+        'system': 'sistema',
+        'info': 'información',
+        'warning': 'advertencia',
+        'success': 'éxito',
+        'payment_received': 'pago recibido',
+        'review_received': 'reseña recibida'
+      };
+      
+      return translations[type] || type.replace(/_/g, ' ');
+    },
+    
+    translateStatus(status) {
+      const translations = {
+        'pending': 'pendiente',
+        'confirmed': 'confirmada',
+        'cancelled': 'cancelada',
+        'completed': 'completada',
+        'rescheduled': 'reprogramada',
+        'in_progress': 'en progreso',
+        'awaiting_payment': 'esperando pago',
+        'paid': 'pagada'
+      };
+      
+      return translations[status?.toLowerCase()] || status;
+    },
+    
     getStatusClass(status) {
       const classes = {
         'pending': 'bg-yellow-100 text-yellow-800',
         'confirmed': 'bg-green-100 text-green-800',
-        'cancelada': 'bg-red-100 text-red-800',
+        'cancelled': 'bg-red-100 text-red-800',
         'completed': 'bg-blue-100 text-blue-800',
-        'reprogramada': 'bg-purple-100 text-purple-800'
+        'rescheduled': 'bg-purple-100 text-purple-800',
+        'in_progress': 'bg-orange-100 text-orange-800',
+        'awaiting_payment': 'bg-amber-100 text-amber-800',
+        'paid': 'bg-emerald-100 text-emerald-800'
       };
       return classes[status?.toLowerCase()] || 'bg-gray-100 text-gray-800';
     }

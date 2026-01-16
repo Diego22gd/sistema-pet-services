@@ -1,8 +1,8 @@
 <template>
   <ProviderLayout>
-    <!-- Header con notificaciones -->
+    <!-- Encabezado con notificaciones -->
     <div class="flex justify-between items-center px-6 pt-8 pb-6 max-w-7xl mx-auto">
-      <h1 class="text-3xl font-extrabold text-neutral-dark">Provider Dashboard</h1>
+      <h1 class="text-3xl font-extrabold text-neutral-dark">Panel del Proveedor</h1>
       
       <!-- Botón de notificaciones -->
       <button 
@@ -17,17 +17,46 @@
       </button>
     </div>
 
-    <!-- Grid con 4 cards -->
+    <!-- Grid con 4 tarjetas -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-6 max-w-7xl mx-auto pb-10">
+      <!-- Tarjeta 1: Mis Servicios -->
       <div 
-        v-for="card in cards" 
-        :key="card.title" 
         class="bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center text-center transform hover:-translate-y-2 hover:shadow-xl transition cursor-pointer"
-        @click="navigate(card.route)"
+        @click="navigate('/provider/services')"
       >
-        <div class="text-5xl mb-4">{{ card.icon }}</div>
-        <h2 class="font-bold text-xl text-neutral-dark mb-2">{{ card.title }}</h2>
-        <p class="text-neutral-medium text-sm">{{ card.description }}</p>
+        <div class="text-5xl mb-4">🛠️</div>
+        <h2 class="font-bold text-xl text-neutral-dark mb-2">Mis Servicios</h2>
+        <p class="text-neutral-medium text-sm">Administra y edita los servicios que ofreces</p>
+      </div>
+
+      <!-- Tarjeta 2: Citas Programadas -->
+      <div 
+        class="bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center text-center transform hover:-translate-y-2 hover:shadow-xl transition cursor-pointer"
+        @click="navigate('/provider/appointments')"
+      >
+        <div class="text-5xl mb-4">📅</div>
+        <h2 class="font-bold text-xl text-neutral-dark mb-2">Citas Programadas</h2>
+        <p class="text-neutral-medium text-sm">Revisa y gestiona tus próximas citas</p>
+      </div>
+
+      <!-- Tarjeta 3: Reportes -->
+      <div 
+        class="bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center text-center transform hover:-translate-y-2 hover:shadow-xl transition cursor-pointer"
+        @click="navigate('/provider/reports')"
+      >
+        <div class="text-5xl mb-4">📊</div>
+        <h2 class="font-bold text-xl text-neutral-dark mb-2">Reportes</h2>
+        <p class="text-neutral-medium text-sm">Analiza el rendimiento de tu negocio</p>
+      </div>
+
+      <!-- Tarjeta 4: Perfil -->
+      <div 
+        class="bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center text-center transform hover:-translate-y-2 hover:shadow-xl transition cursor-pointer"
+        @click="navigate('/provider/profile')"
+      >
+        <div class="text-5xl mb-4">👤</div>
+        <h2 class="font-bold text-xl text-neutral-dark mb-2">Mi Perfil</h2>
+        <p class="text-neutral-medium text-sm">Actualiza tu información personal y profesional</p>
       </div>
     </div>
     <Chatbot />
