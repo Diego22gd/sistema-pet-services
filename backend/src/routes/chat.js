@@ -107,28 +107,6 @@ Basándote en el contexto y tu conocimiento sobre mascotas, proporciona una resp
 
     return await this.generateText(fullPrompt, systemPrompt, 0.3);
   }
-
-  // Método específico para visitantes
-  static async analyzeForGuest(userMessage) {
-    const systemPrompt = `Eres PetBot, el asistente virtual inteligente de PetServices. Estás conversando con un visitante en la landing page que aún no está registrado.
-
-INSTRUCCIONES:
-1. Sé extremadamente amable, acogedor y motivador
-2. Explica claramente los beneficios de PetServices
-3. Guía al usuario en el proceso de registro y login
-4. Destaca las características principales de la plataforma
-5. Usa emojis apropiados (🐕 🐈 🏥 🛁 🏪 ⭐ 📱 ✨)
-6. Fomenta la acción (registrarse, explorar, contactar)
-7. Mantén un tono optimista y servicial
-
-RESPONDE EN ESPAÑOL y usa markdown simple para formato.`;
-
-    const fullPrompt = `Visitante dice: "${userMessage}"
-
-Proporciona una respuesta útil que explique PetServices, sus beneficios y cómo puede comenzar a usarlo.`;
-
-    return await this.generateText(fullPrompt, systemPrompt, 0.4);
-  }
 }
 
 // ============================================
@@ -391,8 +369,8 @@ class DataManager {
     }
   }
 
-  // Buscar comercios (versión pública para visitantes)
-  static async searchBusinessesPublic(query, filters = {}) {
+  // Buscar comercios
+  static async searchBusinesses(query, filters = {}) {
     try {
       const searchFilters = {
         status: 'active',
@@ -409,50 +387,28 @@ class DataManager {
             { description: { $regex: query, $options: 'i' } }
           ]
         })
-        .select('name categories description rating averageServicePrice location address')
-        .limit(5)
+        .select('name categories description rating averageServicePrice')
+        .limit(10)
         .lean();
       } else {
         return await Business.find(searchFilters)
-          .select('name categories description rating averageServicePrice location address')
+          .select('name categories description rating averageServicePrice')
           .sort({ rating: -1 })
-          .limit(5)
+          .limit(10)
           .lean();
       }
     } catch (error) {
-      console.error('❌ Error en searchBusinessesPublic:', error);
+      console.error('❌ Error en searchBusinesses:', error);
       return [];
-    }
-  }
-
-  // Obtener estadísticas públicas para visitantes
-  static async getPublicStats() {
-    try {
-      const [
-        totalBusinesses,
-        totalAppointments
-      ] = await Promise.all([
-        Business.countDocuments({ status: 'active', approved: true }),
-        Appointment.countDocuments({ status: 'completada' })
-      ]);
-      
-      return {
-        totalBusinesses: totalBusinesses || 0,
-        totalAppointments: totalAppointments || 0,
-        averageRating: 4.8 // Puedes calcular esto si quieres
-      };
-    } catch (error) {
-      console.error('❌ Error en getPublicStats:', error);
-      return {};
     }
   }
 }
 
 // ============================================
-// 🎯 DETECCIÓN DE INTENCIONES (MODIFICADA)
+// 🎯 DETECCIÓN DE INTENCIONES
 // ============================================
 
-function detectIntent(text, role = "guest") {
+function detectIntent(text, role = "client") {
   if (!text || typeof text !== 'string') return "fallback";
   
   const lowerText = text.toLowerCase().trim();
@@ -463,38 +419,6 @@ function detectIntent(text, role = "guest") {
   if (/(adiós|chao|bye)/i.test(lowerText)) return "goodbye";
   if (/(ayuda|help|soporte)/i.test(lowerText)) return "help";
   if (/(qu[ií]n eres|qu[eé] eres)/i.test(lowerText)) return "about";
-
-  // Intenciones específicas para visitantes (usuarios sin rol)
-  if (role === 'guest') {
-    if (/(registro|registrarse|crear cuenta|nuevo usuario)/i.test(lowerText)) 
-      return "guest_register";
-    if (/(iniciar sesi[oó]n|login|loguearse|acceder)/i.test(lowerText)) 
-      return "guest_login";
-    if (/(servicios|ofrece|funciona)/i.test(lowerText)) 
-      return "guest_services";
-    if (/(cómo funciona|funciona|explicar)/i.test(lowerText)) 
-      return "guest_how_it_works";
-    if (/(precios|costos|tarifas|cu[aá]nto)/i.test(lowerText)) 
-      return "guest_pricing";
-    if (/(veterinarias|peluquer[íi]as|guarder[íi]as|tiendas)/i.test(lowerText)) 
-      return "guest_businesses";
-    if (/(información|informaci[oó]n|m[aá]s informaci[oó]n)/i.test(lowerText)) 
-      return "guest_info";
-    if (/(comenzar|empezar|iniciar)/i.test(lowerText)) 
-      return "guest_get_started";
-    if (/(beneficios|ventajas)/i.test(lowerText)) 
-      return "guest_benefits";
-    if (/(seguro|seguridad|confiable)/i.test(lowerText)) 
-      return "guest_security";
-    if (/(app|aplicaci[oó]n|m[oó]vil|dispositivo)/i.test(lowerText)) 
-      return "guest_app";
-    if (/(contacto|cont[aá]ctenos|soporte)/i.test(lowerText)) 
-      return "guest_contact";
-    if (/(emergencia|urgencia|accidente)/i.test(lowerText)) 
-      return "guest_emergency";
-    if (/(mascota|perro|gato|animal)/i.test(lowerText)) 
-      return "guest_pets";
-  }
 
   // Intenciones de cliente
   if (role === 'client') {
@@ -543,7 +467,7 @@ function detectIntent(text, role = "guest") {
 }
 
 // ============================================
-// 🤖 GENERADOR DE RESPUESTAS HÍBRIDO (MODIFICADO)
+// 🤖 GENERADOR DE RESPUESTAS HÍBRIDO
 // ============================================
 
 class ResponseGenerator {
@@ -555,16 +479,11 @@ class ResponseGenerator {
       if (intent === "gemini_analysis") {
         console.log(`🧠 Usando Gemini para análisis de: "${message.substring(0, 50)}..."`);
         
-        let geminiResponse;
-        if (role === 'guest') {
-          geminiResponse = await GeminiClient.analyzeForGuest(message);
-        } else {
-          geminiResponse = await GeminiClient.analyzeWithContext(
-            message,
-            userData,
-            role
-          );
-        }
+        const geminiResponse = await GeminiClient.analyzeWithContext(
+          message,
+          userData,
+          role
+        );
         
         if (geminiResponse) {
           return geminiResponse;
@@ -578,18 +497,12 @@ class ResponseGenerator {
       // Intenciones que manejan respuestas locales rápidas
       switch (intent) {
         case "greeting":
-          if (role === 'guest') {
-            return `¡Hola ${name}! 👋 Soy PetBot, tu asistente inteligente de **PetServices**.\n\n🎯 Soy tu guía para descubrir todo lo que ofrecemos:\n• 🏥 Servicios veterinarios\n• 🛁 Peluquería canina\n• 🏪 Guarderías para mascotas\n• 💰 Precios competitivos\n\n**¿En qué puedo ayudarte hoy?**`;
-          }
           return `¡Hola ${name}! 👋 Soy PetBot, tu asistente inteligente de PetServices. ¿En qué puedo ayudarte hoy?`;
         
         case "thanks":
           return `¡De nada ${name}! 😊 Es un placer ayudarte. Siempre estoy aquí para lo que necesites.`;
         
         case "goodbye":
-          if (role === 'guest') {
-            return `¡Hasta luego ${name}! 🐾\n\n✨ **Recuerda:**\n• Regístrate para acceder a todos los beneficios\n• Explora nuestros servicios para mascotas\n• ¡Vuelve pronto para más información!`;
-          }
           return `¡Hasta luego ${name}! 🐾 Que tengas un excelente día. ¡Vuelve pronto!`;
         
         case "help":
@@ -598,50 +511,7 @@ class ResponseGenerator {
         case "about":
           return `🤖 **Soy PetBot**, el asistente virtual inteligente de PetServices.\n\nEstoy potenciado por Gemini AI para brindarte:\n• 🏪 Recomendaciones personalizadas de comercios\n• 📅 Asistencia inteligente para citas\n• 🐾 Consejos personalizados para tus mascotas\n• 💰 Análisis de precios y servicios\n• 🚨 Guía en emergencias veterinarias\n\n¡Pregúntame lo que quieras!`;
         
-        // RESPUESTAS ESPECÍFICAS PARA VISITANTES
-        case "guest_register":
-          return `📝 **¡Regístrate en PetServices!** ✨\n\n**Beneficios al registrarte:**\n✅ Acceso a cientos de servicios para mascotas\n✅ Agenda citas fácilmente\n✅ Guarda tus comercios favoritos\n✅ Gestiona el perfil de tus mascotas\n✅ Recibe promociones exclusivas\n\n**Pasos para registrarte:**\n1. Haz clic en "Registrarse" en la parte superior\n2. Completa tus datos personales\n3. Elige tu rol (cliente o proveedor)\n4. ¡Listo! Empieza a disfrutar de PetServices\n\n💡 **Consejo:** ¡Es 100% gratuito registrarse!`;
-        
-        case "guest_login":
-          return `🔐 **Iniciar Sesión en PetServices**\n\n**Si ya tienes cuenta:**\n1. Haz clic en "Iniciar Sesión"\n2. Ingresa tu email y contraseña\n3. ¡Accede a tu cuenta personalizada!\n\n**¿Olvidaste tu contraseña?**\n• Usa la opción "¿Olvidaste tu contraseña?"\n• Recibirás un email para restablecerla\n\n**¿No tienes cuenta aún?**\n• Regístrate en solo 2 minutos\n• Es completamente gratuito\n• ¡Empieza a disfrutar de todos los beneficios!`;
-        
-        case "guest_services":
-          return `🏥 **Servicios que ofrece PetServices:**\n\n**Para dueños de mascotas:**\n• 🐕 **Veterinarias:** Consultas, vacunas, emergencias\n• ✂️ **Peluquería canina:** Baño, corte, estética\n• 🏪 **Guarderías:** Cuidado diurno y nocturno\n• 🛒 **Tiendas:** Alimentos, juguetes, accesorios\n• 🐾 **Entrenadores:** Adiestramiento profesional\n• 🚗 **Transporte:** Traslado seguro de mascotas\n\n**Para proveedores:**\n• 📊 Gestión completa de tu negocio\n• 📅 Sistema de agendamiento\n• ⭐ Sistema de reseñas y calificaciones\n• 💰 Control de pagos y facturación\n• 📈 Herramientas de crecimiento\n\n**¡Regístrate para acceder a todos!** ✨`;
-        
-        case "guest_how_it_works":
-          return `⚙️ **¿Cómo funciona PetServices?**\n\n**Para Clientes:**\n1. 🔍 **Busca:** Encuentra servicios cerca de ti\n2. 📅 **Reserva:** Agenda citas fácilmente\n3. ⭐ **Califica:** Deja tu opinión después del servicio\n4. 💾 **Guarda:** Añade tus favoritos para después\n\n**Para Proveedores:**\n1. 📋 **Registra tu negocio:** Completa tu perfil\n2. 🛎️ **Publica servicios:** Ofrece lo que haces mejor\n3. 📅 **Gestiona citas:** Organiza tu agenda\n4. 📈 **Crece:** Atrae más clientes\n\n**¡Es rápido, fácil y seguro!** 🔒`;
-        
-        case "guest_pricing":
-          return `💰 **Precios en PetServices:**\n\n**Para Clientes:**\n• 📱 **Plataforma:** 100% GRATIS\n• 🔍 **Buscar servicios:** GRATIS\n• 📅 **Agendar citas:** GRATIS\n• ⭐ **Dejar reseñas:** GRATIS\n\n**Para Proveedores:**\n• 💼 **Plan Básico:** GRATIS (hasta 10 citas/mes)\n• 🚀 **Plan Pro:** $29.99/mes (citas ilimitadas + funciones premium)\n• 📈 **Plan Empresa:** $79.99/mes (múltiples sucursales + soporte premium)\n\n**Los precios de servicios varían según:**\n• 🐕 Tipo y tamaño de mascota\n• 🏢 Tipo de servicio\n• 📍 Ubicación\n• ⭐ Calificación del proveedor\n\n💡 **Consejo:** ¡Regístrate para ver precios específicos!`;
-        
-        case "guest_businesses":
-          return await this.generateGuestBusinessesResponse(message);
-        
-        case "guest_info":
-          return `📋 **Información sobre PetServices:**\n\n**¿Qué es PetServices?**\nLa plataforma líder que conecta dueños de mascotas con los mejores proveedores de servicios.\n\n**Nuestra misión:**\nFacilitar el cuidado de mascotas mediante tecnología innovadora y confiable.\n\n**Estadísticas:**\n• 🏢 ${await this.getBusinessCount()} comercios registrados\n• ⭐ Calificación promedio: 4.8/5.0\n• 📍 Disponible en múltiples ciudades\n• 🔒 Sistema 100% seguro\n\n**¿Listo para unirte?** ¡Regístrate ahora! 🚀`;
-        
-        case "guest_get_started":
-          return `🚀 **¡Comienza con PetServices!**\n\n**Paso 1:** Regístrate (2 minutos)\n**Paso 2:** Completa tu perfil\n**Paso 3:** Explora servicios cercanos\n**Paso 4:** Agenda tu primera cita\n**Paso 5:** ¡Disfruta de la experiencia!\n\n**¿Eres proveedor?**\n1. Regístrate como proveedor\n2. Completa los datos de tu negocio\n3. Publica tus servicios\n4. Comienza a recibir clientes\n\n**¡Es momento de comenzar!** 🎯`;
-        
-        case "guest_benefits":
-          return `✨ **Beneficios de usar PetServices:**\n\n**Para Dueños de Mascotas:**\n• 🔍 **Variedad:** Cientos de servicios disponibles\n• ⭐ **Calidad:** Proveedores verificados y calificados\n• 📅 **Conveniencia:** Agenda 24/7 desde tu celular\n• 💰 **Transparencia:** Precios claros y competitivos\n• 🏆 **Confianza:** Sistema de reseñas y garantías\n• 🚨 **Seguridad:** Contactos de emergencia disponibles\n\n**Para Proveedores:**\n• 📈 **Visibilidad:** Más clientes encuentran tu negocio\n• ⚡ **Eficiencia:** Gestión automática de citas\n• 📊 **Analítica:** Reportes de crecimiento\n• 💳 **Pagos:** Sistema seguro de pagos\n• 📱 **App:** Gestión desde cualquier dispositivo\n• 🌟 **Reputación:** Sistema de calificaciones\n\n**¡Regístrate para disfrutarlos todos!**`;
-        
-        case "guest_security":
-          return `🔒 **Seguridad en PetServices:**\n\n**Protegemos tus datos:**\n• 🔐 Encriptación de extremo a extremo\n• 📜 Cumplimiento con normativas de privacidad\n• 🛡️ Verificación de identidad\n• 📝 Términos y condiciones claros\n\n**Para transacciones:**\n• 💳 Pagos seguros con tarjeta\n• 🏦 Sin almacenamiento de datos bancarios\n• ✅ Proveedores verificados\n• ⭐ Sistema de calificaciones y reseñas\n\n**Tu privacidad es nuestra prioridad.**\n\n**¿Tienes preguntas sobre seguridad?**\nContacta a nuestro equipo: seguridad@petservices.com`;
-        
-        case "guest_app":
-          return `📱 **App Móvil PetServices:**\n\n**Disponible para:**\n• iOS (App Store)\n• Android (Google Play)\n\n**Funciones principales:**\n• 🔔 Notificaciones en tiempo real\n• 📅 Gestión de citas desde tu celular\n• 📍 Geolocalización de servicios cercanos\n• 💬 Chat directo con proveedores\n• ⭐ Calificación rápida de servicios\n• 💳 Pagos móviles seguros\n\n**Beneficios exclusivos de la app:**\n• 🎁 Promociones solo para usuarios móviles\n• ⚡ Acceso más rápido\n• 📊 Historial completo en tu bolsillo\n• 🔄 Sincronización en tiempo real\n\n**¡Descárgala ahora y lleva PetServices contigo!**`;
-        
-        case "guest_contact":
-          return `📞 **Contacta con PetServices:**\n\n**Soporte al Cliente:**\n• 📧 Email: soporte@petservices.com\n• 📞 Teléfono: +1 (800) PET-HELP\n• 💬 Chat en vivo: Disponible 9AM-6PM\n• 📍 Oficina: Av. Principal #123, Ciudad\n\n**Para Proveedores:**\n• 📧 Email: proveedores@petservices.com\n• 📞 Teléfono: +1 (800) PET-PROV\n\n**Horarios de atención:**\n• Lunes a Viernes: 9:00 AM - 6:00 PM\n• Sábados: 10:00 AM - 2:00 PM\n• Domingos: Cerrado\n\n**Redes Sociales:**\n• Facebook: @PetServicesOfficial\n• Instagram: @PetServices\n• Twitter: @PetServicesHelp\n\n**¡Estamos aquí para ayudarte!** 🤝`;
-        
-        case "guest_emergency":
-          return `🚨 **EMERGENCIA VETERINARIA**\n\n**Contactos inmediatos (24/7):**\n• 🚑 Ambulancia veterinaria: 1-800-PET-HELP\n• 🏥 Clínicas de emergencia cerca de ti (requiere registro)\n• 🐾 Primeros auxilios para mascotas\n\n**Síntomas de emergencia:**\n• 😫 Dificultad para respirar\n• 💔 Sangrado abundante\n• 🌀 Convulsiones\n• ☠️ Ingesta de venenos\n• 🚗 Trauma por accidente\n• 🌡️ Fiebre alta (>40°C)\n\n**⚠️ IMPORTANTE:**\nSi tu mascota presenta síntomas graves, ACUDE INMEDIATAMENTE a una clínica veterinaria.\n\n**Regístrate para acceder a:**\n• 📍 Veterinarias de emergencia cercanas\n• 🚑 Servicio de ambulancia veterinaria\n• 🏥 Directorio de hospitales 24/7`;
-        
-        case "guest_pets":
-          return `🐾 **Todo sobre mascotas en PetServices:**\n\n**Tipos de mascotas que atendemos:**\n• 🐕 **Perros:** Todas las razas y tamaños\n• 🐈 **Gatos:** Domésticos y de raza\n• 🐇 **Conejos:** Cuidado especializado\n• 🐦 **Aves:** Veterinaria aviar\n• 🐠 **Peces:** Acuaristas especializados\n• 🐹 **Roedores:** Hámsteres, cobayas, etc.\n• 🦎 **Reptiles:** Serpientes, lagartos, tortugas\n\n**Servicios disponibles:**\n• 🏥 Salud y veterinaria\n• ✂️ Estética y peluquería\n• 🏪 Hospedaje y guardería\n• 🎓 Entrenamiento y adiestramiento\n• 🛒 Alimentos y accesorios\n• 🚗 Transporte y taxi mascota\n\n**¡Regístrate y crea el perfil de tu mascota!**`;
-        
-        // RESPUESTAS PARA USUARIOS REGISTRADOS (MANTENIDAS)
+        // Para otras intenciones específicas, usar respuestas locales
         case "list_businesses":
           return await this.generateBusinessesResponse(message, userData);
         
@@ -655,6 +525,7 @@ class ResponseGenerator {
           return `📅 **Para agendar una cita:**\n\n1. Ve a "Buscar Comercios"\n2. Selecciona un servicio\n3. Elige fecha y hora disponible\n4. Completa los datos de tu mascota\n5. Confirma la reserva\n\n💡 *¿Quieres que te recomiende algunos comercios?*`;
         
         case "prices":
+          // Usar Gemini para dar respuestas más detalladas sobre precios
           const pricePrompt = `El usuario ${name} pregunta sobre precios de servicios veterinarios. Usuario es ${role}. Datos: ${JSON.stringify(userData?.stats || {})}. Proporciona información detallada sobre precios de servicios para mascotas, incluyendo rangos aproximados y factores que afectan el costo.`;
           const priceResponse = await GeminiClient.generateText(pricePrompt, "Eres un experto en precios de servicios veterinarios y para mascotas. Proporciona información útil y precisa.");
           return priceResponse || this.getLocalPriceResponse();
@@ -665,6 +536,7 @@ class ResponseGenerator {
         case "favorites":
           return this.generateFavoritesResponse(userData, name);
         
+        // Respuestas para proveedores
         case "provider_appointments":
           return this.generateProviderAppointments(userData, name);
         
@@ -677,6 +549,7 @@ class ResponseGenerator {
         case "provider_revenue":
           return this.generateProviderRevenue(userData, name);
         
+        // Respuestas para administradores
         case "admin_businesses":
           return this.generateAdminBusinesses(userData, name);
         
@@ -691,6 +564,7 @@ class ResponseGenerator {
         
         // Fallback
         default:
+          // Usar Gemini para respuestas genéricas
           const defaultPrompt = `Usuario: ${name} (${role}) dice: "${message}". Datos del usuario: ${JSON.stringify(userData?.stats || {})}. Responde de manera útil y amigable sobre temas de mascotas.`;
           const defaultResponse = await GeminiClient.generateText(defaultPrompt, "Eres un asistente especializado en mascotas y servicios veterinarios.");
           return defaultResponse || this.getFallbackResponse(role, name);
@@ -701,76 +575,7 @@ class ResponseGenerator {
     }
   }
   
-  static async getBusinessCount() {
-    try {
-      const count = await Business.countDocuments({ status: 'active', approved: true });
-      return count || 50; // Fallback si hay error
-    } catch (error) {
-      return 50;
-    }
-  }
-  
-  static async generateGuestBusinessesResponse(message) {
-    try {
-      let businesses = [];
-      let searchTerm = '';
-      
-      // Extraer término de búsqueda del mensaje
-      if (message.toLowerCase().includes('veterinaria')) {
-        searchTerm = 'veterinaria';
-      } else if (message.toLowerCase().includes('peluqueria')) {
-        searchTerm = 'peluqueria';
-      } else if (message.toLowerCase().includes('guarderia')) {
-        searchTerm = 'guarderia';
-      } else if (message.toLowerCase().includes('tienda')) {
-        searchTerm = 'tienda';
-      } else if (message.toLowerCase().includes('entrenador')) {
-        searchTerm = 'entrenamiento';
-      }
-      
-      businesses = await DataManager.searchBusinessesPublic(searchTerm);
-      
-      if (businesses.length === 0) {
-        return `🔍 **Ejemplos de servicios disponibles:**\n\n**Veterinarias:**\n• Consultas generales\n• Vacunación\n• Cirugías\n• Emergencias 24/7\n\n**Peluquerías Caninas:**\n• Baño y corte\n• Estética profesional\n• Spa para mascotas\n• Tratamientos especiales\n\n**Guarderías:**\n• Cuidado diurno\n• Hospedaje nocturno\n• Áreas de juego\n• Supervisión constante\n\n**💡 Regístrate para ver comercios reales cerca de ti!**`;
-      }
-      
-      let response = `🏢 **Ejemplo de comercios en PetServices:**\n\n`;
-      
-      businesses.slice(0, 3).forEach((business, index) => {
-        response += `${index + 1}. **${business.name}**\n`;
-        if (business.categories?.length) {
-          response += `   📍 ${business.categories.join(', ')}\n`;
-        }
-        if (business.rating) {
-          response += `   ⭐ ${business.rating.toFixed(1)}/5.0\n`;
-        }
-        if (business.averageServicePrice > 0) {
-          response += `   💰 Desde $${business.averageServicePrice.toFixed(2)}\n`;
-        }
-        if (business.location) {
-          response += `   🗺️ ${business.location}\n`;
-        }
-        response += `\n`;
-      });
-      
-      if (businesses.length > 3) {
-        response += `\n🔍 **Hay ${businesses.length - 3} comercios más disponibles**\n`;
-      }
-      
-      response += `\n✨ **Para ver TODOS los comercios y sus servicios:**\n1. **Regístrate** (solo 2 minutos)\n2. **Completa tu perfil**\n3. **¡Explora cientos de opciones!**\n\n**¡Es 100% gratuito!** 🎉`;
-      
-      return response;
-    } catch (error) {
-      console.error('Error generando respuesta de comercios para visitante:', error);
-      return `🏢 **En PetServices encontrarás:**\n\n• 🏥 Veterinarias certificadas\n• ✂️ Peluquerías caninas profesionales\n• 🏪 Guarderías con supervisión\n• 🛒 Tiendas de mascotas\n• 🎓 Entrenadores certificados\n• 🚗 Servicios de transporte\n\n**💡 Regístrate para:**\n• Ver precios reales\n• Acceder a promociones\n• Leer reseñas de otros usuarios\n• Agendar citas directamente\n\n**¡Comienza ahora!** 🚀`;
-    }
-  }
-  
   static getHelpMessage(role, name) {
-    if (role === 'guest') {
-      return `¡Claro ${name}! 🤝\n\n**Como visitante, puedo ayudarte con:**\n\n📋 **INFORMACIÓN GENERAL**\n• ¿Qué es PetServices?\n• ¿Cómo funciona?\n• Servicios disponibles\n• Beneficios de registrarse\n\n👤 **REGISTRO Y ACCESO**\n• Cómo registrarse\n• Cómo iniciar sesión\n• Recuperar contraseña\n• Tipos de cuenta disponibles\n\n💰 **PRECIOS Y COSTOS**\n• Costos para clientes\n• Planes para proveedores\n• Promociones disponibles\n• Comparativa de precios\n\n🏢 **SERVICIOS DISPONIBLES**\n• Veterinarias\n• Peluquerías caninas\n• Guarderías\n• Tiendas de mascotas\n• Entrenadores\n• Transporte mascota\n\n🔒 **SEGURIDAD Y CONFIANZA**\n• Protección de datos\n• Sistema de pagos\n• Verificación de proveedores\n• Política de privacidad\n\n📱 **APP MÓVIL**\n• Descargar la app\n• Funciones móviles\n• Beneficios exclusivos\n\n📞 **CONTACTO Y SOPORTE**\n• Información de contacto\n• Horarios de atención\n• Redes sociales\n• Preguntas frecuentes\n\n**¿Con qué necesitas ayuda?** ✨`;
-    }
-    
     const helpMessages = {
       client: `¡Claro ${name}! 🤖\n\n**Como cliente, puedo ayudarte con:**\n\n🔍 **BUSCAR SERVICIOS**\n• Veterinarias, peluquerías, guarderías\n• Tiendas de mascotas\n• Entrenadores profesionales\n\n📅 **GESTIONAR CITAS**\n• Agendar nuevas citas\n• Ver citas programadas\n• Cancelar o reprogramar\n\n🐾 **TUS MASCOTAS**\n• Ver mascotas registradas\n• Agregar nueva mascota\n• Información médica\n\n⭐ **FAVORITOS**\n• Guardar comercios favoritos\n• Ver recomendaciones\n\n💰 **INFORMACIÓN**\n• Precios y costos\n• Promociones\n\n🚨 **EMERGENCIAS**\n• Contactos de urgencia\n• Primeros auxilios\n\n**¿Con qué necesitas ayuda?**`,
       
@@ -790,6 +595,7 @@ class ResponseGenerator {
     try {
       let businesses = [];
       
+      // Extraer término de búsqueda del mensaje
       const searchTerm = message.toLowerCase().includes('veterinaria') ? 'veterinaria' :
                         message.toLowerCase().includes('peluqueria') ? 'peluqueria' :
                         message.toLowerCase().includes('guarderia') ? 'guarderia' :
@@ -1044,10 +850,6 @@ class ResponseGenerator {
   }
   
   static getFallbackResponse(role, name) {
-    if (role === 'guest') {
-      return `🤔 **${name}, no estoy seguro de entender.**\n\n**Como visitante, puedo ayudarte con:**\n\n📋 **INFORMACIÓN:**\n• "¿Qué es PetServices?"\n• "¿Cómo funciona?"\n• "Servicios disponibles"\n\n👤 **REGISTRO:**\n• "Cómo registrarme"\n• "Cómo iniciar sesión"\n• "Tipos de cuenta"\n\n💰 **PRECIOS:**\n• "Costos para clientes"\n• "Planes para proveedores"\n• "Promociones"\n\n🏢 **SERVICIOS:**\n• "Veterinarias"\n• "Peluquerías"\n• "Guarderías"\n\n🔒 **SEGURIDAD:**\n• "Protección de datos"\n• "Sistema de pagos"\n• "Política de privacidad"\n\n**¿Puedes reformular o elegir una opción?** ✨`;
-    }
-    
     const fallbackResponses = {
       client: `🤔 **${name}, no estoy seguro de entender.**\n\n**Como cliente, puedo ayudarte con:**\n\n🔍 **BUSCAR:**\n• "Buscar veterinarias"\n• "Encontrar peluquería"\n\n📅 **CITAS:**\n• "Agendar cita"\n• "Ver mis citas"\n\n🐾 **MASCOTAS:**\n• "Ver mis mascotas"\n• "Agregar mascota"\n\n💰 **INFORMACIÓN:**\n• "Precios de servicios"\n• "Costos"\n\n🚨 **EMERGENCIAS:**\n• "Ayuda de emergencia"\n\n**¿Puedes reformular o elegir una opción?**`,
       
@@ -1061,30 +863,16 @@ class ResponseGenerator {
 }
 
 // ============================================
-// 🚀 ENDPOINT PRINCIPAL (MODIFICADO)
+// 🚀 ENDPOINT PRINCIPAL
 // ============================================
 
-router.post("/", async (req, res) => {
+router.post("/", protect, async (req, res) => {
   console.log(`\n💬 ======= NUEVO MENSAJE CHAT =======`);
   
   try {
     const { message } = req.body;
-    
-    // Verificar si hay usuario autenticado
-    let user = null;
-    let userId = null;
-    let role = "guest";
-    let name = "Visitante";
-    
-    if (req.user) {
-      user = req.user;
-      userId = user._id;
-      role = user.role || "guest";
-      name = user.name || "Usuario";
-      console.log(`👤 Usuario autenticado: ${name} (${role})`);
-    } else {
-      console.log("👤 Usuario no autenticado (visitante)");
-    }
+    const user = req.user;
+    const { role, name, _id: userId } = user;
 
     if (!message || !message.trim()) {
       return res.json({
@@ -1097,24 +885,17 @@ router.post("/", async (req, res) => {
     const text = message.trim();
     const intent = detectIntent(text, role);
     
+    console.log(`👤 Usuario: ${name} (${role})`);
     console.log(`💭 Mensaje: "${text.substring(0, 60)}${text.length > 60 ? '...' : ''}"`);
     console.log(`🎯 Intención: ${intent}`);
 
-    // Respuestas rápidas predefinidas para todos los roles
+    // Respuestas rápidas predefinidas
     const quickResponses = {
-      greeting: role === 'guest' 
-        ? `¡Hola ${name}! 👋 Soy PetBot, tu asistente inteligente de **PetServices**.\n\n🎯 Soy tu guía para descubrir todo lo que ofrecemos:\n• 🏥 Servicios veterinarios\n• 🛁 Peluquería canina\n• 🏪 Guarderías para mascotas\n• 💰 Precios competitivos\n\n**¿En qué puedo ayudarte hoy?**`
-        : `¡Hola ${name}! 👋 Soy PetBot, tu asistente inteligente de PetServices.`,
-      
+      greeting: `¡Hola ${name}! 👋 Soy PetBot, tu asistente inteligente de PetServices.`,
       thanks: `¡De nada ${name}! 😊 Es un placer ayudarte.`,
-      
-      goodbye: role === 'guest'
-        ? `¡Hasta luego ${name}! 🐾\n\n✨ **Recuerda:**\n• Regístrate para acceder a todos los beneficios\n• Explora nuestros servicios para mascotas\n• ¡Vuelve pronto para más información!`
-        : `¡Hasta luego ${name}! Que tengas un excelente día. 🐾`,
-      
-      help: this.getHelpMessage(role, name),
-      
-      about: `🤖 **Soy PetBot**, el asistente virtual inteligente de PetServices.\n\nEstoy potenciado por Gemini AI para brindarte la mejor experiencia.`
+      goodbye: `¡Hasta luego ${name}! Que tengas un excelente día. 🐾`,
+      help: `¡Claro ${name}! Te ayudo con:\n• Comercios y servicios\n• Citas y mascotas\n• Precios y emergencias\n\n¿Qué necesitas?`,
+      about: `🤖 **Soy PetBot**, el asistente virtual inteligente de PetServices.`
     };
 
     if (quickResponses[intent]) {
@@ -1124,23 +905,20 @@ router.post("/", async (req, res) => {
         reply: quickResponses[intent],
         type: "text",
         intent,
-        source: "local",
-        userRole: role
+        source: "local"
       });
     }
 
-    // Para visitantes, no obtenemos datos del perfil
+    // Obtener datos del usuario para contexto
     let userData = null;
-    if (userId && role !== 'guest') {
-      try {
-        userData = await DataManager.getUserProfile(userId);
-      } catch (error) {
-        console.error(`⚠️ Error obteniendo datos:`, error.message);
-      }
+    try {
+      userData = await DataManager.getUserProfile(userId);
+    } catch (error) {
+      console.error(`⚠️ Error obteniendo datos:`, error.message);
     }
 
     // Generar respuesta usando el sistema híbrido
-    const reply = await ResponseGenerator.generateResponse(intent, { name, role }, userData, text);
+    const reply = await ResponseGenerator.generateResponse(intent, user, userData, text);
     
     console.log(`✅ Respuesta generada (${reply.length} caracteres)`);
     
@@ -1149,8 +927,7 @@ router.post("/", async (req, res) => {
       reply: reply,
       type: "text",
       intent,
-      source: intent === "gemini_analysis" ? "gemini" : "hybrid",
-      userRole: role
+      source: intent === "gemini_analysis" ? "gemini" : "hybrid"
     });
 
   } catch (error) {
@@ -1166,26 +943,11 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Función helper para mensajes de ayuda
-function getHelpMessage(role, name) {
-  if (role === 'guest') {
-    return `¡Claro ${name}! 🤝\n\n**Como visitante, puedo ayudarte con:**\n\n📋 **INFORMACIÓN GENERAL**\n• ¿Qué es PetServices?\n• ¿Cómo funciona?\n• Servicios disponibles\n• Beneficios de registrarse\n\n👤 **REGISTRO Y ACCESO**\n• Cómo registrarse\n• Cómo iniciar sesión\n• Recuperar contraseña\n• Tipos de cuenta disponibles\n\n💰 **PRECIOS Y COSTOS**\n• Costos para clientes\n• Planes para proveedores\n• Promociones disponibles\n\n🏢 **SERVICIOS DISPONIBLES**\n• Veterinarias\n• Peluquerías caninas\n• Guarderías\n• Tiendas de mascotas\n\n**¿Con qué necesitas ayuda?** ✨`;
-  }
-  
-  const helpMessages = {
-    client: `¡Claro ${name}! 🤖\n\n**Como cliente, puedo ayudarte con:**\n• Comercios y servicios\n• Citas y mascotas\n• Precios y emergencias\n\n**¿Qué necesitas?**`,
-    provider: `¡Claro ${name}! 💼\n\n**Como proveedor, puedo ayudarte con:**\n• Agenda y citas\n• Estadísticas\n• Ingresos\n\n**¿Qué área necesitas?**`,
-    admin: `¡Claro ${name}! 👨‍💼\n\n**Como administrador, puedo ayudarte con:**\n• Comercios pendientes\n• Usuarios\n• Reportes\n\n**¿Qué necesitas supervisar?**`
-  };
-  
-  return helpMessages[role] || helpMessages.client;
-}
-
 // ============================================
 // 🔍 ENDPOINT DE PRUEBA GEMINI
 // ============================================
 
-router.post("/test-gemini", async (req, res) => {
+router.post("/test-gemini", protect, async (req, res) => {
   try {
     const { message } = req.body;
     
@@ -1229,19 +991,16 @@ router.post("/test-gemini", async (req, res) => {
 // ============================================
 
 // Health check mejorado
-router.get("/health", (req, res) => {
-  const user = req.user || { role: 'guest', name: 'Visitante', _id: null };
-  
+router.get("/health", protect, (req, res) => {
   res.json({
     status: "healthy",
     service: "PetBot Chat API con Gemini",
-    version: "2.5",
+    version: "2.0",
     timestamp: new Date().toISOString(),
     user: {
-      role: user.role,
-      name: user.name,
-      id: user._id,
-      isAuthenticated: !!req.user
+      role: req.user.role,
+      name: req.user.name,
+      id: req.user._id
     },
     gemini: {
       apiKey: GEMINI_API_KEY ? "✅ Configurada" : "❌ Faltante",
@@ -1255,19 +1014,11 @@ router.get("/health", (req, res) => {
       Business: "✅",
       Appointment: "✅"
     },
-    features: [
-      "gemini_ai", 
-      "data_integration", 
-      "role_based_responses", 
-      "hybrid_system",
-      "guest_mode",
-      "landing_page_support"
-    ],
-    supportedRoles: ["guest", "client", "provider", "admin"]
+    features: ["gemini_ai", "data_integration", "role_based_responses", "hybrid_system"]
   });
 });
 
-// Dashboard con info de Gemini (para usuarios autenticados)
+// Dashboard con info de Gemini
 router.get("/dashboard", protect, async (req, res) => {
   try {
     const { _id: userId, role, name } = req.user;
@@ -1318,7 +1069,7 @@ router.get("/dashboard", protect, async (req, res) => {
 });
 
 // Test de conexión a modelos
-router.get("/test/models", async (req, res) => {
+router.get("/test/models", protect, async (req, res) => {
   try {
     const modelTests = {
       User: await User.countDocuments(),
@@ -1331,8 +1082,7 @@ router.get("/test/models", async (req, res) => {
       success: true,
       message: "Test de modelos completado",
       results: modelTests,
-      allWorking: Object.values(modelTests).every(result => result !== undefined),
-      isAuthenticated: !!req.user
+      allWorking: Object.values(modelTests).every(result => result !== undefined)
     });
   } catch (error) {
     res.json({
@@ -1343,7 +1093,7 @@ router.get("/test/models", async (req, res) => {
   }
 });
 
-// Obtener datos específicos del usuario (solo autenticados)
+// Obtener datos específicos del usuario
 router.get("/my-data", protect, async (req, res) => {
   try {
     const { _id: userId } = req.user;
@@ -1355,67 +1105,6 @@ router.get("/my-data", protect, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Endpoint público para estadísticas (para visitantes)
-router.get("/public/stats", async (req, res) => {
-  try {
-    const stats = await DataManager.getPublicStats();
-    
-    res.json({
-      success: true,
-      stats,
-      message: "Estadísticas públicas de PetServices"
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      stats: {
-        totalBusinesses: 50,
-        totalAppointments: 1000,
-        averageRating: 4.8
-      }
-    });
-  }
-});
-
-// Endpoint para probar el modo visitante
-router.post("/guest-test", async (req, res) => {
-  try {
-    const { message } = req.body;
-    
-    if (!message) {
-      return res.json({
-        success: false,
-        reply: "Por favor, escribe un mensaje de prueba."
-      });
-    }
-    
-    console.log(`🧪 Probando modo visitante: "${message}"`);
-    
-    const intent = detectIntent(message, "guest");
-    const reply = await ResponseGenerator.generateResponse(
-      intent, 
-      { name: "Visitante de Prueba", role: "guest" }, 
-      null, 
-      message
-    );
-    
-    res.json({
-      success: true,
-      reply,
-      intent,
-      role: "guest",
-      message: "Modo visitante funcionando correctamente"
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      reply: "Error en modo visitante. Por favor, intenta más tarde."
-    });
   }
 });
 
