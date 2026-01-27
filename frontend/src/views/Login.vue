@@ -65,7 +65,7 @@
                     :class="{ 'border-red-500': loginErrors.email }"
                   />
                   <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    📧
+                    
                   </div>
                 </div>
                 <p v-if="loginErrors.email" class="text-red-500 text-xs mt-1">{{ loginErrors.email }}</p>
@@ -86,7 +86,7 @@
                     :class="{ 'border-red-500': loginErrors.password }"
                   />
                   <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    🔒
+                    
                   </div>
                 </div>
                 <p v-if="loginErrors.password" class="text-red-500 text-xs mt-1">{{ loginErrors.password }}</p>
@@ -113,7 +113,7 @@
             </form>
 
             <!-- Separador -->
-            <div class="my-8 mx-10">
+            <div class="my-8 mx-10 mt-2 mb-2">
               <div class="flex items-center">
                 <div class="flex-1 border-t border-gray-200"></div>
                 <span class="px-4 text-gray-500 text-sm">O regístrate como</span>
@@ -395,12 +395,14 @@
       </div>
     </footer>
   </div>
+  <Chatbot />
 </template>
 
 <script setup>
 import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "vue-router";
 import { ref, reactive, onMounted } from "vue";
+import Chatbot from "@/components/Chatbot.vue";
 
 const router = useRouter();
 const userStore = useUserStore();

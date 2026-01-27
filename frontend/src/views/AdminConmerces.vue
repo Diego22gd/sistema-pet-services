@@ -1,5 +1,6 @@
 <template>
   <AdminLayout>
+  
     <div class="px-6 max-w-7xl mx-auto w-full pt-6">
       <!-- Header con estilo moderno -->
       <div class="mb-10 fade-up">
@@ -13,13 +14,12 @@
       </div>
 
       <!-- Barra de herramientas moderna -->
-      <div class="mb-10 bg-white rounded-2xl shadow-lg border border-gray-200 p-6 fade-up">
+      <div class="mb-4 bg-white rounded-2xl shadow-lg border border-gray-200 p-6 fade-up">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div class="flex flex-col lg:flex-row gap-6 w-full">
             <!-- Búsqueda -->
             <div class="relative w-full lg:w-96">
               <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <span class="text-emerald-500 text-lg">🔍</span>
               </div>
               <input
                 v-model="searchQuery"
@@ -159,7 +159,7 @@
         </div>
 
         <!-- Grid de cards modernas con imágenes -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
           <div
             v-for="business in businesses"
             :key="business._id"
@@ -1315,16 +1315,18 @@
         </div>
       </div>
     </div>
+    <Chatbot />
   </AdminLayout>
 </template>
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
 
 export default {
   name: "AdminBusinesses",
-  components: { AdminLayout },
+  components: { AdminLayout,  Chatbot },
   data() {
     return {
       businesses: [],

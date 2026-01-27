@@ -13,10 +13,10 @@
       <div 
         v-for="card in cards" 
         :key="card.title" 
-        class="bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center text-center transform hover:-translate-y-2 hover:shadow-xl transition cursor-pointer"
+        class="admin-card"
         @click="navigate(card.route)"
       >
-        <div class="text-5xl mb-4">{{ card.icon }}</div>
+        <div class="text-5xl mb-4 card-icon">{{ card.icon }}</div>
         <h2 class="font-bold text-xl text-neutral-dark mb-2">{{ card.title }}</h2>
         <p class="text-neutral-medium text-sm">{{ card.description }}</p>
       </div>
@@ -26,61 +26,65 @@
     <div class="px-6 max-w-7xl mx-auto mb-12">
       <h2 class="text-2xl font-bold text-neutral-dark mb-6">Estadísticas Rápidas</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="bg-white shadow-lg rounded-2xl p-6">
+        <div class="stat-card">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-neutral-medium text-sm">Total de Usuarios</p>
               <p class="text-3xl font-bold text-emerald-600 mt-2">{{ stats.totalUsers }}</p>
             </div>
-            <div class="text-4xl">👥</div>
+            <div class="text-4xl stat-icon">👥</div>
           </div>
         </div>
         
-        <div class="bg-white shadow-lg rounded-2xl p-6">
+        <div class="stat-card">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-neutral-medium text-sm">Proveedores Activos</p>
               <p class="text-3xl font-bold text-emerald-600 mt-2">{{ stats.activeProviders }}</p>
             </div>
-            <div class="text-4xl">👨‍💼</div>
+            <div class="text-4xl stat-icon">👨‍💼</div>
           </div>
         </div>
         
-        <div class="bg-white shadow-lg rounded-2xl p-6">
+        <div class="stat-card">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-neutral-medium text-sm">Citas de Hoy</p>
               <p class="text-3xl font-bold text-emerald-600 mt-2">{{ stats.todayAppointments }}</p>
             </div>
-            <div class="text-4xl">📅</div>
+            <div class="text-4xl stat-icon">📅</div>
           </div>
         </div>
         
-        <div class="bg-white shadow-lg rounded-2xl p-6">
+        <div class="stat-card">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-neutral-medium text-sm">Reseñas Pendientes</p>
               <p class="text-3xl font-bold text-emerald-600 mt-2">{{ stats.pendingReviews }}</p>
             </div>
-            <div class="text-4xl">⭐</div>
+            <div class="text-4xl stat-icon">⭐</div>
           </div>
         </div>
       </div>
     </div>
+    
+    <!-- Chatbot SIN protector - versión simplificada -->
+    <Chatbot ref="chatbot" />
   </AdminLayout>
 </template>
 
 <script>
 import AdminLayout from "@/components/AdminLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 
 export default {
   name: "AdminDashboard",
-  components: { AdminLayout },
+  components: { AdminLayout, Chatbot },
   data() {
     return {
       stats: {
-        totalUsers: 1248,
-        activeProviders: 156,
+        totalUsers: 148,
+        activeProviders: 16,
         todayAppointments: 89,
         pendingReviews: 23
       },
@@ -128,28 +132,123 @@ export default {
     navigate(route) {
       this.$router.push(route)
     }
+  },
+  mounted() {
+    // Configurar chatbot para modo admin (sin auto-ocultar)
+    setTimeout(() => {
+      if (this.$refs.chatbot && this.$refs.chatbot.setAdminMode) {
+        this.$refs.chatbot.setAdminMode(true);
+      }
+    }, 100);
+  },
+  beforeUnmount() {
+    // Restaurar comportamiento normal al salir
+    if (this.$refs.chatbot && this.$refs.chatbot.setAdminMode) {
+      this.$refs.chatbot.setAdminMode(false);
+    }
   }
 }
 </script>
 
 <style scoped>
-/* Animación suave al pasar el cursor sobre las tarjetas */
-div:hover .text-5xl {
+/* Estilos para tarjetas de admin */
+.admin-card {
+  background-color: white;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.admin-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(16, 185, 129, 0.08));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.admin-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(5, 150, 105, 0.15);
+}
+
+.admin-card:hover::before {
+  opacity: 1;
+}
+
+.admin-card:hover .card-icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.card-icon {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-block;
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+
+/* Estilos para tarjetas de estadísticas */
+.stat-card {
+  background-color: white;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #059669, #10b981);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+.stat-card:hover .stat-icon {
   transform: scale(1.1);
+}
+
+.stat-icon {
   transition: transform 0.3s ease;
+  display: inline-block;
+  font-size: 2.25rem;
+  line-height: 1;
 }
 
 /* Colores personalizados para administración */
-.bg-emerald-600 {
-  background-color: #059669;
-}
-
 .text-emerald-600 {
   color: #059669;
-}
-
-.bg-neutral-light {
-  background-color: #f5f5f5;
 }
 
 .text-neutral-dark {
@@ -160,14 +259,10 @@ div:hover .text-5xl {
   color: #737373;
 }
 
-/* Efecto hover para las tarjetas de estadísticas */
-.bg-white {
-  transition: all 0.3s ease;
-}
-
-.bg-white:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+/* Evitar que los hover afecten al chatbot */
+.admin-card,
+.stat-card {
+  isolation: isolate;
 }
 
 /* Ajustes responsivos */

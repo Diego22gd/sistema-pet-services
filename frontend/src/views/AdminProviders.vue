@@ -15,7 +15,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Buscar proveedores por nombre, email o tipo de servicio..."
+              placeholder="Buscar proveedores por nombre, email, RIF o tipo de servicio..."
               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50"
             />
           </div>
@@ -57,6 +57,7 @@
               <tr>
                 <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Proveedor</th>
                 <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Contacto</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Identificación</th>
                 <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Servicio</th>
                 <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Suscripción</th>
                 <th class="px-6 py-4 text-left text-sm font-semibold uppercase tracking-wider">Estado</th>
@@ -91,10 +92,20 @@
                   <div class="text-sm text-gray-500">{{ provider.phone || 'Sin teléfono' }}</div>
                 </td>
 
+                <!-- Identificación (RIF) -->
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-800">
+                    <span class="font-semibold">RIF:</span> {{ provider.rif || 'No registrado' }}
+                  </div>
+                  <div v-if="provider.businessName" class="text-sm text-gray-500">
+                    {{ provider.businessName }}
+                  </div>
+                </td>
+
                 <!-- Servicio -->
                 <td class="px-6 py-4">
                   <span class="badge-tag-admin">
-                    {{ provider.serviceType }}
+                    {{ provider.serviceType || 'Sin especificar' }}
                   </span>
                 </td>
 
@@ -213,7 +224,7 @@
           <form @submit.prevent="saveProvider">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="md:col-span-2">
-                <label class="block mb-3 font-semibold text-gray-700 text-sm">Nombre del Proveedor</label>
+                <label class="block mb-3 font-semibold text-gray-700 text-sm">Nombre del Proveedor *</label>
                 <input 
                   v-model="form.name" 
                   type="text" 
@@ -224,12 +235,34 @@
               </div>
               
               <div class="md:col-span-2">
-                <label class="block mb-3 font-semibold text-gray-700 text-sm">Correo Electrónico</label>
+                <label class="block mb-3 font-semibold text-gray-700 text-sm">Correo Electrónico *</label>
                 <input 
                   v-model="form.email" 
                   type="email" 
                   required 
                   placeholder="correo@ejemplo.com"
+                  class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
+                />
+              </div>
+              
+              <div>
+                <label class="block mb-3 font-semibold text-gray-700 text-sm">RIF *</label>
+                <input 
+                  v-model="form.rif" 
+                  type="text" 
+                  required
+                  placeholder="J-12345678-9"
+                  class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
+                />
+                <p class="text-xs text-gray-500 mt-1">Formato: J-12345678-9</p>
+              </div>
+              
+              <div>
+                <label class="block mb-3 font-semibold text-gray-700 text-sm">Nombre del Negocio</label>
+                <input 
+                  v-model="form.businessName" 
+                  type="text" 
+                  placeholder="Nombre del negocio o empresa"
                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
                 />
               </div>
@@ -245,7 +278,7 @@
               </div>
               
               <div>
-                <label class="block mb-3 font-semibold text-gray-700 text-sm">Tipo de Servicio</label>
+                <label class="block mb-3 font-semibold text-gray-700 text-sm">Tipo de Servicio *</label>
                 <select 
                   v-model="form.serviceType" 
                   required
@@ -258,8 +291,44 @@
                   <option value="Entrenamiento">Entrenamiento</option>
                   <option value="Spa">Spa para mascotas</option>
                   <option value="Transporte">Transporte</option>
+                  <option value="Tienda">Tienda de mascotas</option>
+                  <option value="Hotel">Hotel para mascotas</option>
+                  <option value="Adiestramiento">Adiestramiento</option>
                   <option value="Otro">Otro</option>
                 </select>
+              </div>
+
+              <!-- Campos adicionales -->
+              <div>
+                <label class="block mb-3 font-semibold text-gray-700 text-sm">Fecha de Nacimiento</label>
+                <input 
+                  v-model="form.birthdate" 
+                  type="date" 
+                  class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
+                />
+              </div>
+
+              <div>
+                <label class="block mb-3 font-semibold text-gray-700 text-sm">Dirección</label>
+                <input 
+                  v-model="form.address" 
+                  type="text" 
+                  placeholder="Dirección completa"
+                  class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
+                />
+              </div>
+
+              <!-- Contraseña solo para nuevos proveedores -->
+              <div v-if="!editingProvider" class="md:col-span-2">
+                <label class="block mb-3 font-semibold text-gray-700 text-sm">Contraseña Temporal *</label>
+                <input 
+                  v-model="form.password" 
+                  type="password" 
+                  required
+                  placeholder="••••••••"
+                  class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
+                />
+                <p class="text-xs text-gray-500 mt-1">El proveedor podrá cambiar esta contraseña después</p>
               </div>
             </div>
 
@@ -307,7 +376,12 @@ export default {
         name: "",
         email: "",
         phone: "",
+        rif: "",
+        businessName: "",
         serviceType: "",
+        birthdate: "",
+        address: "",
+        password: "",
       },
     };
   },
@@ -317,7 +391,7 @@ export default {
       if (!this.searchQuery) return this.providers;
       const query = this.searchQuery.toLowerCase();
       return this.providers.filter((p) =>
-        `${p.name} ${p.email} ${p.serviceType}`.toLowerCase().includes(query)
+        `${p.name} ${p.email} ${p.rif} ${p.businessName} ${p.serviceType}`.toLowerCase().includes(query)
       );
     },
     activeProviders() {
@@ -341,13 +415,19 @@ export default {
       return new Date(date).toLocaleDateString("es-VE");
     },
 
-    // Nuevo método para traducir el tipo de suscripción
+    // Formatear fecha para input type="date"
+    formatDateForInput(dateString) {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    },
+
     getSubscriptionTypeText(type) {
       if (!type) return 'Sin suscripción';
       
       const subscriptionTypes = {
         'monthly': 'Mensual',
-        'monthly': 'Mensual', // Cambiado de "monthly" a "Mensual"
+        'Monthly': 'Mensual',
         'annual': 'Anual',
         'quarterly': 'Trimestral',
         'basic': 'Básica',
@@ -376,9 +456,10 @@ export default {
       try {
         const { data } = await api.put(`/admin/providers/${provider._id}/pause`);
         Object.assign(provider, data);
+        alert("✅ Suscripción pausada correctamente");
       } catch (err) {
         console.error("Error pausing subscription:", err);
-        alert("Error al pausar la suscripción");
+        alert("❌ Error al pausar la suscripción: " + (err.response?.data?.message || err.message));
       }
     },
 
@@ -386,9 +467,10 @@ export default {
       try {
         const { data } = await api.put(`/admin/providers/${provider._id}/resume`);
         Object.assign(provider, data);
+        alert("✅ Suscripción reanudada correctamente");
       } catch (err) {
         console.error("Error resuming subscription:", err);
-        alert("Error al reanudar la suscripción");
+        alert("❌ Error al reanudar la suscripción: " + (err.response?.data?.message || err.message));
       }
     },
 
@@ -396,9 +478,10 @@ export default {
       try {
         const { data } = await api.put(`/admin/providers/${provider._id}/renew`);
         Object.assign(provider, data);
+        alert("✅ Suscripción renovada correctamente");
       } catch (err) {
         console.error("Error renewing subscription:", err);
-        alert("Error al renovar la suscripción");
+        alert("❌ Error al renovar la suscripción: " + (err.response?.data?.message || err.message));
       }
     },
 
@@ -409,7 +492,12 @@ export default {
         name: "",
         email: "",
         phone: "",
+        rif: "",
+        businessName: "",
         serviceType: "",
+        birthdate: "",
+        address: "",
+        password: "",
       };
     },
 
@@ -419,25 +507,70 @@ export default {
 
     editProvider(provider) {
       this.editingProvider = provider;
-      this.form = { ...provider };
+      this.form = { 
+        ...provider, 
+        password: "", // No enviar contraseña en edición
+        birthdate: provider.birthdate ? this.formatDateForInput(provider.birthdate) : ""
+      };
       this.showModal = true;
     },
 
     async saveProvider() {
       try {
+        // Crear objeto sin password si está vacío durante edición
+        const formData = { ...this.form };
+        
         if (this.editingProvider) {
-          const { data } = await api.put(`/admin/providers/${this.editingProvider._id}`, this.form);
+          // Para edición: eliminar password si está vacío
+          if (!formData.password || formData.password.trim() === "") {
+            delete formData.password;
+          }
+          
+          const { data } = await api.put(`/admin/providers/${this.editingProvider._id}`, formData);
           const index = this.providers.findIndex((p) => p._id === data._id);
           this.providers.splice(index, 1, data);
+          this.closeModal();
+          alert("✅ Proveedor actualizado exitosamente");
+          
         } else {
-          const { data } = await api.post("/admin/providers", this.form);
+          // Para creación: validar que tenga password
+          if (!formData.password || formData.password.trim() === "") {
+            alert("⚠️ La contraseña es obligatoria para nuevos proveedores");
+            return;
+          }
+          
+          const { data } = await api.post("/admin/providers", formData);
           this.providers.push(data);
+          this.closeModal();
+          alert("✅ Proveedor creado exitosamente");
         }
-
-        this.closeModal();
+        
       } catch (err) {
         console.error("Error saving provider:", err);
-        alert("Error al guardar el proveedor");
+        
+        // Mostrar mensaje de error más específico
+        let errorMessage = "Error al guardar el proveedor";
+        
+        if (err.response) {
+          // El servidor respondió con un código de error
+          const serverError = err.response.data;
+          
+          if (serverError.message) {
+            errorMessage = serverError.message;
+          } else if (typeof serverError === 'string') {
+            errorMessage = serverError;
+          } else if (serverError.error) {
+            errorMessage = serverError.error;
+          }
+        } else if (err.request) {
+          // La solicitud fue hecha pero no hubo respuesta
+          errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+        } else {
+          // Algo pasó al configurar la solicitud
+          errorMessage = err.message || "Error desconocido";
+        }
+        
+        alert(`❌ ${errorMessage}`);
       }
     },
 
@@ -447,9 +580,10 @@ export default {
       try {
         await api.delete(`/admin/providers/${id}`);
         this.providers = this.providers.filter((p) => p._id !== id);
+        alert("✅ Proveedor eliminado exitosamente");
       } catch (err) {
         console.error("Error deleting provider:", err);
-        alert("Error al eliminar el proveedor");
+        alert("❌ Error al eliminar el proveedor: " + (err.response?.data?.message || err.message));
       }
     },
   },
@@ -464,6 +598,7 @@ export default {
   },
 };
 </script>
+
 <style scoped>
 /* Estilos específicos para admin */
 .fade-up {
@@ -561,25 +696,6 @@ export default {
 
 .btn-confirm-admin:hover {
   background-color: #16a34a !important;
-  transform: scale(1.1) !important;
-}
-
-.btn-complete-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.25rem 0.5rem !important;
-  background-color: #3b82f6 !important;
-  color: white !important;
-  font-size: 0.75rem !important;
-  font-weight: 500 !important;
-  border-radius: 0.375rem !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.2s !important;
-}
-
-.btn-complete-admin:hover {
-  background-color: #2563eb !important;
   transform: scale(1.1) !important;
 }
 
@@ -682,83 +798,7 @@ export default {
   cursor: not-allowed;
 }
 
-.btn-modal-confirm-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.75rem 1.5rem !important;
-  background-color: #22c55e !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border-radius: 10px !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-.btn-modal-confirm-admin:hover:not(:disabled) {
-  background-color: #16a34a !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3) !important;
-}
-
-.btn-modal-complete-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.75rem 1.5rem !important;
-  background-color: #3b82f6 !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border-radius: 10px !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-.btn-modal-complete-admin:hover:not(:disabled) {
-  background-color: #2563eb !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3) !important;
-}
-
-.btn-modal-cancel-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.75rem 1.5rem !important;
-  background-color: #f43f5e !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border-radius: 10px !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-.btn-modal-cancel-admin:hover:not(:disabled) {
-  background-color: #e11d48 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 20px rgba(244, 63, 94, 0.3) !important;
-}
-
-.btn-modal-reschedule-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.75rem 1.5rem !important;
-  background-color: #a855f7 !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border-radius: 10px !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-.btn-modal-reschedule-admin:hover:not(:disabled) {
-  background-color: #9333ea !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 20px rgba(168, 85, 247, 0.3) !important;
-}
-
-/* Estilos del modal */
+/* Resto de estilos del modal (se mantienen igual) */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -813,10 +853,6 @@ export default {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid #e5e7eb;
-}
-
-.avatar-modern-lg {
-  flex-shrink: 0;
 }
 
 .btn-modal-close {
@@ -874,24 +910,7 @@ export default {
   border-color: #8b5cf6;
 }
 
-.animate-pulse {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
+/* Responsive */
 @media (max-width: 768px) {
   .modal-modern-box {
     padding: 1rem;
@@ -907,23 +926,6 @@ export default {
   .btn-modal-ghost {
     width: 100%;
     justify-content: center;
-  }
-  
-  .text-5xl {
-    font-size: 2.5rem;
-  }
-  
-  .text-6xl {
-    font-size: 3rem;
-  }
-  
-  .grid.grid-cols-12 {
-    grid-template-columns: 1fr;
-  }
-  
-  .col-span-1,
-  .col-span-2 {
-    grid-column: span 1;
   }
 }
 </style>

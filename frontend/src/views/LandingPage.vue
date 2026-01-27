@@ -17,8 +17,10 @@
           <!-- Botón hamburguesa para móvil -->
           <button 
             @click="toggleMobileMenu"
-            class="md:hidden text-white hover:text-emerald-100 transition-colors p-2 rounded-lg hover:bg-emerald-700"
+            class="md:hidden text-white hover:text-emerald-100 transition-colors p-2 rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-600"
             aria-label="Menú de navegación"
+            :aria-expanded="isMobileMenuOpen"
+            type="button"
           >
             <span class="text-2xl">{{ isMobileMenuOpen ? '✕' : '☰' }}</span>
           </button>
@@ -56,7 +58,7 @@
         <!-- Menú móvil desplegable -->
         <div 
           v-if="isMobileMenuOpen"
-          class="md:hidden bg-emerald-700/95 backdrop-blur-sm rounded-lg mt-2 py-4 px-4 animate-slideDown shadow-xl border border-emerald-500/20"
+          class="md:hidden bg-emerald-700/95 backdrop-blur-sm rounded-lg mt-2 py-4 px-4 shadow-xl border border-emerald-500/20 animate-slideDown"
         >
           <div class="space-y-2">
             <!-- Comercios móvil -->
@@ -97,7 +99,7 @@
               class="block bg-white text-emerald-600 px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 group w-full text-center"
             >
               <span>Iniciar Sesión</span>
-              <span class="group-hover:translate-x-1 transition-transform duration-300">→</span>
+              <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
             </router-link>
           </div>
         </div>
@@ -105,7 +107,7 @@
     </header>
 
     <!-- Contenido principal con tema claro -->
-    <main class="flex-1">
+    <main class="flex-1 relative z-10">
       <!-- Hero Section Moderna -->
       <section class="pt-32 pb-16 md:pb-24 px-6 md:px-20 bg-white relative overflow-hidden">
         <!-- Elementos decorativos -->
@@ -1316,7 +1318,7 @@
     </main>
 
     <!-- Footer Simple -->
-    <footer class="bg-neutral-light text-neutral-medium py-6 text-center mt-auto shadow-inner">
+    <footer class="bg-neutral-light text-neutral-medium py-6 text-center mt-auto shadow-inner relative z-10">
       <div class="container mx-auto px-6">
         <p class="text-base md:text-lg">© 2025 PetServices - Todos los derechos reservados</p>
         <p class="text-sm mt-2 text-neutral-medium/80">
@@ -1324,12 +1326,25 @@
         </p>
       </div>
     </footer>
+
+    <!-- Chatbot - POSICIONADO CORRECTAMENTE -->
+    <div class="fixed bottom-6 right-6 z-40">
+      <Chatbot />
+    </div>
   </div>
 </template>
 
 <script>
+// Importa el componente Chatbot
+import Chatbot from "@/components/Chatbot.vue";
+
 export default {
   name: "LandingLayout",
+  
+  // Registra el componente Chatbot
+  components: {
+    Chatbot
+  },
 
   data() {
     return {
@@ -1417,6 +1432,7 @@ export default {
 
   methods: {
     toggleMobileMenu() {
+      console.log('toggleMobileMenu called, current state:', this.isMobileMenuOpen);
       this.isMobileMenuOpen = !this.isMobileMenuOpen;
       if (this.isMobileMenuOpen) {
         document.body.style.overflow = 'hidden';
@@ -1426,6 +1442,7 @@ export default {
     },
     
     closeMobileMenu() {
+      console.log('closeMobileMenu called');
       this.isMobileMenuOpen = false;
       document.body.style.overflow = '';
     },
@@ -1456,29 +1473,52 @@ export default {
           behavior: 'smooth'
         });
       }
+    },
+
+    handleClickOutside(event) {
+      // Solo cerrar si el menú está abierto y se hace clic fuera del menú y del botón
+      if (this.isMobileMenuOpen && 
+          !event.target.closest('.md\\:hidden') && 
+          !event.target.closest('button[aria-label="Menú de navegación"]')) {
+        this.closeMobileMenu();
+      }
+    },
+
+    initializeAnimations() {
+      const cards = document.querySelectorAll(".fade-up");
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("show");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { 
+          threshold: 0.15,
+          rootMargin: '50px 0px -50px 0px'
+        }
+      );
+
+      cards.forEach((card) => observer.observe(card));
     }
   },
 
   mounted() {
-    const cards = this.$el.querySelectorAll(".fade-up");
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("show");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.15 }
-    );
-
-    cards.forEach((card) => observer.observe(card));
+    // Inicializar animaciones con un pequeño delay para asegurar que el DOM esté listo
+    setTimeout(() => {
+      this.initializeAnimations();
+    }, 100);
+    
+    // Agregar listener para cerrar menú al hacer clic fuera
+    document.addEventListener('click', this.handleClickOutside);
   },
 
   beforeUnmount() {
     document.body.style.overflow = '';
+    document.removeEventListener('click', this.handleClickOutside);
   }
 };
 </script>
@@ -1510,10 +1550,12 @@ header {
   from {
     opacity: 0;
     transform: translateY(-10px);
+    max-height: 0;
   }
   to {
     opacity: 1;
     transform: translateY(0);
+    max-height: 500px;
   }
 }
 
@@ -1541,15 +1583,25 @@ header {
   50% { opacity: 0.5; }
 }
 
-.animate-fadeIn { animation: fadeIn 1s ease-out forwards; }
-.animate-pulse { animation: pulse 2s ease-in-out infinite; }
+.animate-fadeIn { 
+  animation: fadeIn 1s ease-out forwards; 
+  animation-delay: 0.2s;
+}
+
+.animate-pulse { 
+  animation: pulse 2s ease-in-out infinite; 
+}
 
 .fade-up {
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
-.fade-up.show { opacity: 1; transform: translateY(0); }
+
+.fade-up.show { 
+  opacity: 1; 
+  transform: translateY(0); 
+}
 
 /* ===== SERVICIOS CORREGIDOS - CARD MÁS ALTAS 20% ===== */
 .service-card-modern {
@@ -1754,11 +1806,13 @@ header {
   width: 90%;
   margin: auto;
   padding: 0;
+  z-index: 60; /* Más alto que el chatbot */
 }
 
 .modal-modern::backdrop {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
+  z-index: 50;
 }
 
 .modal-modern-box {
@@ -1923,7 +1977,7 @@ header {
   border-radius: 16px;
   padding: 1.5rem;
   transition: all 0.3s ease;
-  margin-bottom:1rem;
+  margin-bottom: 1rem;
 }
 
 .faq-card-modern:hover {
@@ -2024,5 +2078,49 @@ button:focus-visible {
   #servicios-completos .gap-8 {
     gap: 1.5rem;
   }
+}
+
+/* Mejoras para el chatbot */
+.fixed.z-40 {
+  z-index: 40;
+}
+
+main.relative.z-10 {
+  z-index: 10;
+  position: relative;
+}
+
+/* Asegurar que los modales estén por encima del chatbot */
+dialog[open] {
+  z-index: 60 !important;
+}
+
+/* Mejoras para el menú móvil */
+.transition-all.duration-300 {
+  transition: all 0.3s ease;
+}
+
+/* Botón hamburguesa más accesible */
+button[aria-label="Menú de navegación"] {
+  touch-action: manipulation;
+}
+
+/* Menú móvil con mejor animación */
+.md\:hidden.bg-emerald-700\/95 {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Asegurar que el botón sea clickeable */
+button.md\:hidden {
+  z-index: 60;
+  position: relative;
+}
+
+/* Asegurar que el menú móvil tenga buena visibilidad */
+.md\:hidden.bg-emerald-700\/95 {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 </style>

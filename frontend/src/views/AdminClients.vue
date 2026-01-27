@@ -315,6 +315,7 @@ export default {
         console.error("❌ Error al obtener clientes:", err);
       }
     },
+    
     openModal() {
       this.showModal = true;
       this.editingClient = null;
@@ -328,45 +329,106 @@ export default {
         password: "",
       };
     },
+    
     closeModal() {
       this.showModal = false;
     },
+    
     async saveClient() {
       try {
+        // Crear objeto sin password si está vacío durante edición
+        const formData = { ...this.form };
+        
         if (this.editingClient) {
-          const { data } = await api.put(`/admin/clients/${this.editingClient._id}`, this.form);
+          // Para edición: eliminar password si está vacío
+          if (!formData.password || formData.password.trim() === "") {
+            delete formData.password;
+          }
+          
+          const { data } = await api.put(`/admin/clients/${this.editingClient._id}`, formData);
           const index = this.clients.findIndex((c) => c._id === data._id);
           this.clients.splice(index, 1, data);
+          this.closeModal();
+          alert("✅ Cliente actualizado exitosamente");
+          
         } else {
-          const { data } = await api.post("/admin/clients", this.form);
+          // Para creación: validar que tenga password
+          if (!formData.password || formData.password.trim() === "") {
+            alert("⚠️ La contraseña es obligatoria para nuevos clientes");
+            return;
+          }
+          
+          const { data } = await api.post("/admin/clients", formData);
           this.clients.push(data);
+          this.closeModal();
+          alert("✅ Cliente creado exitosamente");
         }
-        this.closeModal();
+        
       } catch (err) {
         console.error("❌ Error al guardar cliente:", err);
-        alert("Error al guardar el cliente: " + (err.response?.data?.message || err.message));
+        
+        // Mostrar mensaje de error más específico
+        let errorMessage = "Error al guardar el cliente";
+        
+        if (err.response) {
+          // El servidor respondió con un código de error
+          const serverError = err.response.data;
+          
+          if (serverError.message) {
+            errorMessage = serverError.message;
+          } else if (typeof serverError === 'string') {
+            errorMessage = serverError;
+          } else if (serverError.error) {
+            errorMessage = serverError.error;
+          }
+        } else if (err.request) {
+          // La solicitud fue hecha pero no hubo respuesta
+          errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+        } else {
+          // Algo pasó al configurar la solicitud
+          errorMessage = err.message || "Error desconocido";
+        }
+        
+        alert(`❌ ${errorMessage}`);
       }
     },
+    
     editClient(client) {
       this.editingClient = client;
-      this.form = { ...client, password: "" };
+      this.form = { 
+        ...client, 
+        password: "",
+        birthdate: client.birthdate ? this.formatDateForInput(client.birthdate) : ""
+      };
       this.showModal = true;
     },
+    
     async deleteClient(id) {
       if (!confirm("¿Estás seguro de que quieres eliminar este cliente?")) return;
+      
       try {
         await api.delete(`/admin/clients/${id}`);
         this.clients = this.clients.filter((c) => c._id !== id);
+        alert("✅ Cliente eliminado exitosamente");
       } catch (err) {
         console.error("❌ Error al eliminar cliente:", err);
-        alert("Error al eliminar el cliente");
+        alert("Error al eliminar el cliente: " + (err.response?.data?.message || err.message));
       }
     },
+    
     formatDate(date) {
       if (!date) return "-";
       return new Date(date).toLocaleDateString("es-VE");
     },
+    
+    // Formato especial para input type="date" (YYYY-MM-DD)
+    formatDateForInput(dateString) {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    }
   },
+  
   mounted() {
     this.fetchClients();
     // Agregar animación de entrada
@@ -377,6 +439,7 @@ export default {
   },
 };
 </script>
+
 <style scoped>
 /* Estilos específicos para admin */
 .fade-up {
