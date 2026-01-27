@@ -62,11 +62,13 @@
                     placeholder="ejemplo@email.com"
                     required
                     class="form-input pl-12"
+                    :class="{ 'border-red-500': loginErrors.email }"
                   />
                   <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                     📧
                   </div>
                 </div>
+                <p v-if="loginErrors.email" class="text-red-500 text-xs mt-1">{{ loginErrors.email }}</p>
               </div>
 
               <!-- Password -->
@@ -81,25 +83,32 @@
                     placeholder="********"
                     required
                     class="form-input pl-12"
+                    :class="{ 'border-red-500': loginErrors.password }"
                   />
                   <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                     🔒
                   </div>
                 </div>
+                <p v-if="loginErrors.password" class="text-red-500 text-xs mt-1">{{ loginErrors.password }}</p>
               </div>
 
-              <!-- Error Message -->
-              <p v-if="errors.general" class="error-message">
-                ⚠️ {{ errors.general }}
-              </p>
+              <!-- Mensajes de éxito/error -->
+              <div v-if="loginSuccess" class="success-message">
+                ✅ {{ loginSuccess }}
+              </div>
+              <div v-if="loginError" class="error-message">
+                ⚠️ {{ loginError }}
+              </div>
 
               <!-- Botón Login -->
               <button
                 type="submit"
                 class="btn-primary w-full group mx-10"
+                :disabled="isLoggingIn"
               >
-                <span>Entrar a mi cuenta</span>
-                <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                <span v-if="!isLoggingIn">Entrar a mi cuenta</span>
+                <span v-else>Procesando...</span>
+                <span v-if="!isLoggingIn" class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
               </button>
             </form>
 
@@ -150,16 +159,6 @@
                 </div>
               </button>
             </div>
-
-            <!-- Enlace de ayuda -->
-            <div class="text-center mt-8 mx-10 mb-8">
-              <p class="text-gray-600 text-sm">
-                ¿Necesitas ayuda?
-                <a href="#" class="text-emerald-600 hover:text-emerald-700 font-medium hover:underline">
-                  Contacta con soporte
-                </a>
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -192,41 +191,60 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mx-6">
               <!-- Nombre -->
               <div class="form-group">
-                <label class="form-label">Nombre</label>
+                <label class="form-label">Nombre <span class="text-red-500">*</span></label>
                 <input v-model="clientForm.name" type="text" class="form-input" placeholder="Juan" required />
+                <p v-if="clientErrors.name" class="text-red-500 text-xs mt-1">{{ clientErrors.name }}</p>
               </div>
 
               <!-- Apellido -->
               <div class="form-group">
-                <label class="form-label">Apellido</label>
+                <label class="form-label">Apellido <span class="text-red-500">*</span></label>
                 <input v-model="clientForm.lastname" type="text" class="form-input" placeholder="Pérez" required />
+                <p v-if="clientErrors.lastname" class="text-red-500 text-xs mt-1">{{ clientErrors.lastname }}</p>
+              </div>
+
+              <!-- Cédula -->
+              <div class="form-group">
+                <label class="form-label">Cédula <span class="text-red-500">*</span></label>
+                <input v-model="clientForm.cedula" type="text" class="form-input" placeholder="V-12345678" required />
+                <p v-if="clientErrors.cedula" class="text-red-500 text-xs mt-1">{{ clientErrors.cedula }}</p>
               </div>
 
               <!-- Email -->
               <div class="form-group">
-                <label class="form-label">Correo electrónico</label>
+                <label class="form-label">Correo electrónico <span class="text-red-500">*</span></label>
                 <input v-model="clientForm.email" type="email" class="form-input" placeholder="email@ejemplo.com" required />
+                <p v-if="clientErrors.email" class="text-red-500 text-xs mt-1">{{ clientErrors.email }}</p>
               </div>
 
               <!-- Teléfono -->
               <div class="form-group">
-                <label class="form-label">Teléfono</label>
-                <input v-model="clientForm.phone" type="tel" class="form-input" placeholder="+58 412 1234567" />
+                <label class="form-label">Teléfono <span class="text-red-500">*</span></label>
+                <input v-model="clientForm.phone" type="tel" class="form-input" placeholder="+58 412 1234567" required />
+                <p v-if="clientErrors.phone" class="text-red-500 text-xs mt-1">{{ clientErrors.phone }}</p>
               </div>
 
               <!-- Contraseña -->
-              <div class="form-group md:col-span-2">
-                <label class="form-label">Contraseña</label>
+              <div class="form-group">
+                <label class="form-label">Contraseña <span class="text-red-500">*</span></label>
                 <input v-model="clientForm.password" type="password" class="form-input" placeholder="********" required />
+                <p v-if="clientErrors.password" class="text-red-500 text-xs mt-1">{{ clientErrors.password }}</p>
+              </div>
+
+              <!-- Confirmar Contraseña -->
+              <div class="form-group">
+                <label class="form-label">Confirmar Contraseña <span class="text-red-500">*</span></label>
+                <input v-model="clientForm.confirmPassword" type="password" class="form-input" placeholder="********" required />
+                <p v-if="clientErrors.confirmPassword" class="text-red-500 text-xs mt-1">{{ clientErrors.confirmPassword }}</p>
               </div>
             </div>
 
             <!-- Mensajes -->
-            <div v-if="errors.general" class="error-message mt-4 mx-6">
-              ⚠️ {{ errors.general }}
+            <div v-if="registerError" class="error-message mt-4 mx-6">
+              ⚠️ {{ registerError }}
             </div>
-            <div v-if="successMessage" class="success-message mt-4 mx-6">
-              ✅ {{ successMessage }}
+            <div v-if="registerSuccess" class="success-message mt-4 mx-6">
+              ✅ {{ registerSuccess }}
             </div>
 
             <!-- Botones del modal -->
@@ -234,9 +252,10 @@
               <button type="button" @click="showRegisterClient = false" class="btn-modal-ghost">
                 Cancelar
               </button>
-              <button type="submit" class="btn-modal-primary group">
-                <span>Registrarme como Cliente</span>
-                <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+              <button type="submit" class="btn-modal-primary group" :disabled="isRegistering">
+                <span v-if="!isRegistering">Registrarme como Cliente</span>
+                <span v-else>Procesando...</span>
+                <span v-if="!isRegistering" class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
               </button>
             </div>
           </form>
@@ -271,60 +290,83 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mx-6">
               <!-- Nombre -->
               <div class="form-group">
-                <label class="form-label">Nombre</label>
+                <label class="form-label">Nombre <span class="text-red-500">*</span></label>
                 <input v-model="providerForm.name" type="text" class="form-input" placeholder="Carlos" required />
+                <p v-if="providerErrors.name" class="text-red-500 text-xs mt-1">{{ providerErrors.name }}</p>
               </div>
 
               <!-- Apellido -->
               <div class="form-group">
-                <label class="form-label">Apellido</label>
+                <label class="form-label">Apellido <span class="text-red-500">*</span></label>
                 <input v-model="providerForm.lastname" type="text" class="form-input" placeholder="Gómez" required />
+                <p v-if="providerErrors.lastname" class="text-red-500 text-xs mt-1">{{ providerErrors.lastname }}</p>
               </div>
 
               <!-- Email -->
               <div class="form-group">
-                <label class="form-label">Correo electrónico</label>
+                <label class="form-label">Correo electrónico <span class="text-red-500">*</span></label>
                 <input v-model="providerForm.email" type="email" class="form-input" placeholder="email@ejemplo.com" required />
+                <p v-if="providerErrors.email" class="text-red-500 text-xs mt-1">{{ providerErrors.email }}</p>
               </div>
 
               <!-- Teléfono -->
               <div class="form-group">
-                <label class="form-label">Teléfono</label>
-                <input v-model="providerForm.phone" type="tel" class="form-input" placeholder="+58 414 7654321" />
+                <label class="form-label">Teléfono <span class="text-red-500">*</span></label>
+                <input v-model="providerForm.phone" type="tel" class="form-input" placeholder="+58 414 7654321" required />
+                <p v-if="providerErrors.phone" class="text-red-500 text-xs mt-1">{{ providerErrors.phone }}</p>
+              </div>
+
+              <!-- RIF -->
+              <div class="form-group">
+                <label class="form-label">RIF <span class="text-red-500">*</span></label>
+                <input v-model="providerForm.rif" type="text" class="form-input" placeholder="J-12345678-9" required />
+                <p v-if="providerErrors.rif" class="text-red-500 text-xs mt-1">{{ providerErrors.rif }}</p>
               </div>
 
               <!-- Nombre del Negocio -->
               <div class="form-group">
-                <label class="form-label">Nombre del Negocio</label>
-                <input v-model="providerForm.businessName" type="text" class="form-input" placeholder="Veterinaria Patitas Felices" />
+                <label class="form-label">Nombre del Negocio <span class="text-red-500">*</span></label>
+                <input v-model="providerForm.businessName" type="text" class="form-input" placeholder="Veterinaria Patitas Felices" required />
+                <p v-if="providerErrors.businessName" class="text-red-500 text-xs mt-1">{{ providerErrors.businessName }}</p>
               </div>
 
               <!-- Tipo de Servicio -->
               <div class="form-group">
-                <label class="form-label">Tipo de Servicio</label>
-                <select v-model="providerForm.serviceType" class="form-input">
+                <label class="form-label">Tipo de Servicio <span class="text-red-500">*</span></label>
+                <select v-model="providerForm.serviceType" class="form-input" required>
                   <option disabled value="">Selecciona una opción</option>
                   <option>Veterinaria</option>
                   <option>Peluquería</option>
                   <option>Guardería</option>
                   <option>Tienda de mascotas</option>
                   <option>Adiestramiento</option>
+                  <option>Paseo de mascotas</option>
+                  <option>Otro</option>
                 </select>
+                <p v-if="providerErrors.serviceType" class="text-red-500 text-xs mt-1">{{ providerErrors.serviceType }}</p>
               </div>
 
               <!-- Contraseña -->
-              <div class="form-group md:col-span-2">
-                <label class="form-label">Contraseña</label>
+              <div class="form-group">
+                <label class="form-label">Contraseña <span class="text-red-500">*</span></label>
                 <input v-model="providerForm.password" type="password" class="form-input" placeholder="********" required />
+                <p v-if="providerErrors.password" class="text-red-500 text-xs mt-1">{{ providerErrors.password }}</p>
+              </div>
+
+              <!-- Confirmar Contraseña -->
+              <div class="form-group">
+                <label class="form-label">Confirmar Contraseña <span class="text-red-500">*</span></label>
+                <input v-model="providerForm.confirmPassword" type="password" class="form-input" placeholder="********" required />
+                <p v-if="providerErrors.confirmPassword" class="text-red-500 text-xs mt-1">{{ providerErrors.confirmPassword }}</p>
               </div>
             </div>
 
             <!-- Mensajes -->
-            <div v-if="errors.general" class="error-message mt-4 mx-6">
-              ⚠️ {{ errors.general }}
+            <div v-if="registerError" class="error-message mt-4 mx-6">
+              ⚠️ {{ registerError }}
             </div>
-            <div v-if="successMessage" class="success-message mt-4 mx-6">
-              ✅ {{ successMessage }}
+            <div v-if="registerSuccess" class="success-message mt-4 mx-6">
+              ✅ {{ registerSuccess }}
             </div>
 
             <!-- Botones del modal -->
@@ -332,9 +374,10 @@
               <button type="button" @click="showRegisterProvider = false" class="btn-modal-ghost">
                 Cancelar
               </button>
-              <button type="submit" class="btn-modal-primary group">
-                <span>Registrarme como Proveedor</span>
-                <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+              <button type="submit" class="btn-modal-primary group" :disabled="isRegistering">
+                <span v-if="!isRegistering">Registrarme como Proveedor</span>
+                <span v-else>Procesando...</span>
+                <span v-if="!isRegistering" class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
               </button>
             </div>
           </form>
@@ -343,7 +386,7 @@
     </div>
 
     <!-- FOOTER IDÉNTICO A LANDING -->
-        <footer class="bg-neutral-light text-neutral-medium py-6 text-center mt-auto shadow-inner">
+    <footer class="bg-neutral-light text-neutral-medium py-6 text-center mt-auto shadow-inner">
       <div class="container mx-auto px-6">
         <p class="text-base md:text-lg">© 2025 PetServices - Todos los derechos reservados</p>
         <p class="text-sm mt-2 text-neutral-medium/80">
@@ -357,27 +400,38 @@
 <script setup>
 import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "vue-router";
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 
 const router = useRouter();
 const userStore = useUserStore();
 
+// Estados para login
 const email = ref("");
 const password = ref("");
+const isLoggingIn = ref(false);
+const loginError = ref("");
+const loginSuccess = ref("");
+const loginErrors = reactive({
+  email: "",
+  password: ""
+});
 
+// Estados para registro
 const showRegisterClient = ref(false);
 const showRegisterProvider = ref(false);
+const isRegistering = ref(false);
+const registerError = ref("");
+const registerSuccess = ref("");
 
-const successMessage = ref("");
-const errors = reactive({});
-
-// formularios
+// Formularios
 const clientForm = reactive({
   name: "",
   lastname: "",
+  cedula: "",
   email: "",
   phone: "",
   password: "",
+  confirmPassword: "",
 });
 
 const providerForm = reactive({
@@ -385,55 +439,402 @@ const providerForm = reactive({
   lastname: "",
   email: "",
   phone: "",
+  rif: "",
   password: "",
+  confirmPassword: "",
   businessName: "",
   serviceType: "",
 });
 
-// login
-async function handleLogin() {
-  errors.general = "";
-  try {
-    await userStore.login(email.value, password.value);
+// Errores de validación
+const clientErrors = reactive({
+  name: "",
+  lastname: "",
+  cedula: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: ""
+});
+
+const providerErrors = reactive({
+  name: "",
+  lastname: "",
+  email: "",
+  phone: "",
+  rif: "",
+  password: "",
+  confirmPassword: "",
+  businessName: "",
+  serviceType: ""
+});
+
+// 🔹 Verificar si ya está autenticado
+onMounted(() => {
+  // Inicializar userStore
+  userStore.initializeApp();
+  
+  // Si ya está autenticado, redirigir
+  if (userStore.user && userStore.token) {
+    console.log("✅ Usuario ya autenticado, redirigiendo...");
     userStore.redirectByRole(router);
-  } catch (err) {
-    errors.general = err.message || "Error al iniciar sesión";
+  }
+});
+
+// Validaciones
+const validateEmail = (email) => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
+const validateVenezuelanPhone = (phone) => {
+  const regex = /^(\+58\s?)?(0?4(1[2-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|8[0-9]|9[0-9]))[-. ]?(\d{3})[-. ]?(\d{4})$/;
+  return regex.test(phone);
+};
+
+const validateCedula = (cedula) => {
+  const regex = /^(V|E|v|e)?-?\d{5,9}$/;
+  return regex.test(cedula);
+};
+
+const validateRIF = (rif) => {
+  const regex = /^[JGVEPjvgep]-?\d{8}-?\d$/;
+  return regex.test(rif);
+};
+
+const validatePassword = (password) => {
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  return regex.test(password);
+};
+
+// 🔹 Validación del formulario de login
+const validateLoginForm = () => {
+  let isValid = true;
+  
+  loginErrors.email = "";
+  loginErrors.password = "";
+  loginError.value = "";
+  
+  if (!email.value.trim()) {
+    loginErrors.email = "El correo electrónico es obligatorio";
+    isValid = false;
+  } else if (!validateEmail(email.value)) {
+    loginErrors.email = "Formato de correo inválido";
+    isValid = false;
+  }
+  
+  if (!password.value) {
+    loginErrors.password = "La contraseña es obligatoria";
+    isValid = false;
+  } else if (password.value.length < 8) {
+    loginErrors.password = "La contraseña debe tener al menos 8 caracteres";
+    isValid = false;
+  }
+  
+  return isValid;
+};
+
+// 🔹 Validación cliente
+const validateClientForm = () => {
+  let isValid = true;
+  Object.keys(clientErrors).forEach(key => clientErrors[key] = '');
+
+  if (!clientForm.name.trim()) {
+    clientErrors.name = "El nombre es obligatorio";
+    isValid = false;
+  }
+
+  if (!clientForm.lastname.trim()) {
+    clientErrors.lastname = "El apellido es obligatorio";
+    isValid = false;
+  }
+
+  if (!clientForm.cedula.trim()) {
+    clientErrors.cedula = "La cédula es obligatoria";
+    isValid = false;
+  } else if (!validateCedula(clientForm.cedula)) {
+    clientErrors.cedula = "Formato de cédula inválido (ej: V-12345678)";
+    isValid = false;
+  }
+
+  if (!clientForm.email.trim()) {
+    clientErrors.email = "El correo electrónico es obligatorio";
+    isValid = false;
+  } else if (!validateEmail(clientForm.email)) {
+    clientErrors.email = "Formato de correo inválido";
+    isValid = false;
+  }
+
+  if (!clientForm.phone.trim()) {
+    clientErrors.phone = "El teléfono es obligatorio";
+    isValid = false;
+  } else if (!validateVenezuelanPhone(clientForm.phone)) {
+    clientErrors.phone = "Formato de teléfono inválido (ej: +58 412 1234567)";
+    isValid = false;
+  }
+
+  if (!clientForm.password) {
+    clientErrors.password = "La contraseña es obligatoria";
+    isValid = false;
+  } else if (!validatePassword(clientForm.password)) {
+    clientErrors.password = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
+    isValid = false;
+  }
+
+  if (!clientForm.confirmPassword) {
+    clientErrors.confirmPassword = "Debes confirmar la contraseña";
+    isValid = false;
+  } else if (clientForm.password !== clientForm.confirmPassword) {
+    clientErrors.confirmPassword = "Las contraseñas no coinciden";
+    isValid = false;
+  }
+
+  return isValid;
+};
+
+// 🔹 Validación proveedor
+const validateProviderForm = () => {
+  let isValid = true;
+  Object.keys(providerErrors).forEach(key => providerErrors[key] = '');
+
+  if (!providerForm.name.trim()) {
+    providerErrors.name = "El nombre es obligatorio";
+    isValid = false;
+  }
+
+  if (!providerForm.lastname.trim()) {
+    providerErrors.lastname = "El apellido es obligatorio";
+    isValid = false;
+  }
+
+  if (!providerForm.email.trim()) {
+    providerErrors.email = "El correo electrónico es obligatorio";
+    isValid = false;
+  } else if (!validateEmail(providerForm.email)) {
+    providerErrors.email = "Formato de correo inválido";
+    isValid = false;
+  }
+
+  if (!providerForm.phone.trim()) {
+    providerErrors.phone = "El teléfono es obligatorio";
+    isValid = false;
+  } else if (!validateVenezuelanPhone(providerForm.phone)) {
+    providerErrors.phone = "Formato de teléfono inválido (ej: +58 414 7654321)";
+    isValid = false;
+  }
+
+  if (!providerForm.rif.trim()) {
+    providerErrors.rif = "El RIF es obligatorio";
+    isValid = false;
+  } else if (!validateRIF(providerForm.rif)) {
+    providerErrors.rif = "Formato de RIF inválido (ej: J-12345678-9)";
+    isValid = false;
+  }
+
+  if (!providerForm.businessName.trim()) {
+    providerErrors.businessName = "El nombre del negocio es obligatorio";
+    isValid = false;
+  }
+
+  if (!providerForm.serviceType) {
+    providerErrors.serviceType = "Debes seleccionar un tipo de servicio";
+    isValid = false;
+  }
+
+  if (!providerForm.password) {
+    providerErrors.password = "La contraseña es obligatoria";
+    isValid = false;
+  } else if (!validatePassword(providerForm.password)) {
+    providerErrors.password = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
+    isValid = false;
+  }
+
+  if (!providerForm.confirmPassword) {
+    providerErrors.confirmPassword = "Debes confirmar la contraseña";
+    isValid = false;
+  } else if (providerForm.password !== providerForm.confirmPassword) {
+    providerErrors.confirmPassword = "Las contraseñas no coinciden";
+    isValid = false;
+  }
+
+  return isValid;
+};
+
+// 🔹 Función de login usando userStore
+async function handleLogin() {
+  if (!validateLoginForm()) {
+    return;
+  }
+  
+  isLoggingIn.value = true;
+  loginError.value = "";
+  loginSuccess.value = "";
+  
+  try {
+    console.log('📤 Iniciando sesión con userStore...');
+    
+    // Usar el userStore para login
+    const response = await userStore.login(email.value, password.value);
+    
+    console.log('✅ Login exitoso con userStore:', response);
+    
+    if (userStore.user && userStore.token) {
+      loginSuccess.value = "✅ Inicio de sesión exitoso";
+      
+      // Esperar un momento para que se guarde en localStorage
+      setTimeout(() => {
+        console.log('🔄 Redirigiendo según rol...', userStore.user?.role);
+        userStore.redirectByRole(router);
+      }, 500);
+    } else {
+      loginError.value = "Error al iniciar sesión: datos de usuario no disponibles";
+    }
+    
+  } catch (error) {
+    console.error('❌ Error completo en login:', error);
+    
+    // Manejo de errores
+    if (error.message) {
+      loginError.value = error.message;
+    } else if (error.response) {
+      if (error.response.status === 400) {
+        loginError.value = error.response.data.message || "Credenciales incorrectas";
+      } else if (error.response.status === 404) {
+        loginError.value = "Usuario no encontrado";
+      } else if (error.response.status === 500) {
+        loginError.value = "Error en el servidor. Por favor, intente más tarde.";
+      } else {
+        loginError.value = error.response.data.message || "Error al iniciar sesión";
+      }
+    } else if (error.request) {
+      loginError.value = "No se pudo conectar con el servidor. Verifica tu conexión.";
+    } else {
+      loginError.value = "Error en la configuración de la solicitud";
+    }
+  } finally {
+    isLoggingIn.value = false;
   }
 }
 
-// registro cliente
+// 🔹 Registro cliente usando userStore
 async function handleRegisterClient() {
-  errors.general = "";
+  if (!validateClientForm()) {
+    return;
+  }
+
+  isRegistering.value = true;
+  registerError.value = "";
+  registerSuccess.value = "";
+
   try {
-    await userStore.register({
+    console.log('📤 Registrando cliente con userStore...');
+    
+    const response = await userStore.register({
       ...clientForm,
       role: "client",
     });
-    successMessage.value = "✅ Registro exitoso. Bienvenido cliente.";
-    setTimeout(() => {
-      userStore.redirectByRole(router);
-      showRegisterClient.value = false;
-    }, 1200);
-  } catch (err) {
-    errors.general = err.message || "Error al registrarse como cliente";
+
+    console.log('✅ Registro exitoso con userStore:', response);
+    
+    if (userStore.user && userStore.token) {
+      registerSuccess.value = "✅ Registro exitoso. Bienvenido cliente.";
+      
+      // Esperar un momento para que se guarde en localStorage
+      setTimeout(() => {
+        console.log('🔄 Redirigiendo cliente...', userStore.user?.role);
+        showRegisterClient.value = false;
+        userStore.redirectByRole(router);
+        
+        // Resetear formulario
+        Object.keys(clientForm).forEach(key => clientForm[key] = '');
+      }, 1500);
+    } else {
+      registerError.value = "Error al registrarse: datos de usuario no disponibles";
+    }
+    
+  } catch (error) {
+    console.error('❌ Error en registro cliente:', error);
+    
+    if (error.message) {
+      registerError.value = error.message;
+    } else if (error.response) {
+      if (error.response.status === 400) {
+        registerError.value = error.response.data.message || "Error en los datos del formulario";
+      } else if (error.response.status === 409) {
+        registerError.value = "El correo electrónico o cédula ya están registrados";
+      } else if (error.response.status === 500) {
+        registerError.value = "Error en el servidor. Por favor, intente más tarde.";
+      } else {
+        registerError.value = error.response.data.message || "Error al registrarse";
+      }
+    } else if (error.request) {
+      registerError.value = "No se pudo conectar con el servidor. Verifica tu conexión.";
+    } else {
+      registerError.value = "Error en la configuración de la solicitud";
+    }
+  } finally {
+    isRegistering.value = false;
   }
 }
 
-// registro proveedor
+// 🔹 Registro proveedor usando userStore
 async function handleRegisterProvider() {
-  errors.general = "";
+  if (!validateProviderForm()) {
+    return;
+  }
+
+  isRegistering.value = true;
+  registerError.value = "";
+  registerSuccess.value = "";
+
   try {
-    await userStore.register({
+    console.log('📤 Registrando proveedor con userStore...');
+    
+    const response = await userStore.register({
       ...providerForm,
       role: "provider",
     });
-    successMessage.value = "✅ Registro exitoso. Bienvenido proveedor.";
-    setTimeout(() => {
-      userStore.redirectByRole(router);
-      showRegisterProvider.value = false;
-    }, 1200);
-  } catch (err) {
-    errors.general = err.message || "Error al registrarse como proveedor";
+
+    console.log('✅ Registro exitoso con userStore:', response);
+    
+    if (userStore.user && userStore.token) {
+      registerSuccess.value = "✅ Registro exitoso. Bienvenido proveedor.";
+      
+      // Esperar un momento para que se guarde en localStorage
+      setTimeout(() => {
+        console.log('🔄 Redirigiendo proveedor...', userStore.user?.role);
+        showRegisterProvider.value = false;
+        userStore.redirectByRole(router);
+        
+        // Resetear formulario
+        Object.keys(providerForm).forEach(key => providerForm[key] = '');
+      }, 1500);
+    } else {
+      registerError.value = "Error al registrarse: datos de usuario no disponibles";
+    }
+    
+  } catch (error) {
+    console.error('❌ Error en registro proveedor:', error);
+    
+    if (error.message) {
+      registerError.value = error.message;
+    } else if (error.response) {
+      if (error.response.status === 400) {
+        registerError.value = error.response.data.message || "Error en los datos del formulario";
+      } else if (error.response.status === 409) {
+        registerError.value = "El correo electrónico o RIF ya están registrados";
+      } else if (error.response.status === 500) {
+        registerError.value = "Error en el servidor. Por favor, intente más tarde.";
+      } else {
+        registerError.value = error.response.data.message || "Error al registrarse";
+      }
+    } else if (error.request) {
+      registerError.value = "No se pudo conectar con el servidor. Verifica tu conexión.";
+    } else {
+      registerError.value = "Error en la configuración de la solicitud";
+    }
+  } finally {
+    isRegistering.value = false;
   }
 }
 </script>
@@ -449,9 +850,9 @@ async function handleRegisterProvider() {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  max-width: 480px !important; /* Añadido 20px más de ancho (de 460px a 480px) */
+  max-width: 480px !important;
   width: 100%;
-  padding: 1.5rem 0; /* Agregado padding vertical */
+  padding: 1.5rem 0;
 }
 
 .card-modern:hover {
@@ -461,8 +862,9 @@ async function handleRegisterProvider() {
     0 0 0 1px #10b981,
     0 0 20px rgba(16, 185, 129, 0.1);
 }
+
 header {
-  background-color: #059669 !important; /* emerald-600 */
+  background-color: #059669 !important;
 }
 
 /* Botones */
@@ -483,11 +885,16 @@ header {
   margin-left: 20px;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 
     0 15px 35px rgba(16, 185, 129, 0.4),
     0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-modern-card {
@@ -522,6 +929,7 @@ header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-left:20px;
 }
 
 .form-input {
@@ -543,6 +951,10 @@ header {
 
 .form-input.pl-12 {
   padding-left: 3rem;
+}
+
+.border-red-500 {
+  border-color: #ef4444;
 }
 
 /* Badges */
@@ -655,9 +1067,14 @@ header {
   text-decoration: none;
 }
 
-.btn-modal-primary:hover {
+.btn-modal-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-modal-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-modal-ghost {
@@ -676,24 +1093,6 @@ header {
   border-color: #10b981;
 }
 
-/* Social Icons */
-.social-icon-modern {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-
-.social-icon-modern:hover {
-  transform: translateY(-3px) scale(1.1);
-  border-color: currentColor;
-}
-
 /* Mensajes */
 .error-message {
   color: #dc2626;
@@ -705,6 +1104,7 @@ header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin: 0 20px;
 }
 
 .success-message {
@@ -717,6 +1117,7 @@ header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin: 0 20px;
 }
 
 /* Footer */
@@ -730,7 +1131,7 @@ header {
 /* Responsive */
 @media (max-width: 768px) {
   .card-modern {
-    max-width: 100% !important; /* En móvil ocupa todo el ancho disponible */
+    max-width: 100% !important;
     margin: 0 1rem;
   }
   

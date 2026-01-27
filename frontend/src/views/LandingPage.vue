@@ -491,12 +491,12 @@
         </div>
       </section>
 
-      <!-- NUEVA SECCIÓN: Servicios con imágenes completas -->
+      <!-- SECCIÓN CORREGIDA: Servicios con imágenes completas - CARD MÁS ALTAS 20% -->
       <section id="servicios-completos" class="py-16 md:py-24 px-6 bg-white scroll-mt-20">
         <div class="container mx-auto max-w-7xl">
           
           <!-- Header moderno -->
-          <div class="text-center mb-12">
+          <div class="text-center mb-12 fade-up">
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200">
               <span class="text-2xl text-emerald-600">✨</span>
             </div>
@@ -508,28 +508,32 @@
             </p>
           </div>
 
-          <!-- Grid de servicios con imágenes completas -->
+          <!-- Grid de servicios corregido con cards 20% más altas -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             
             <!-- Servicio 1 - Veterinaria -->
-            <div class="service-card-full group">
-              <div class="service-card-image">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+            <div class="service-card-modern group fade-up">
+              <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/veterinaria.png" 
+                  src="/veterinariaservicio.jpg" 
                   alt="Servicio Veterinario" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
+                <div class="absolute top-4 left-4 z-20">
+                  <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-600/90 backdrop-blur-sm border border-emerald-400/30">
+                    <span class="text-xl text-white">🏥</span>
+                  </div>
+                </div>
                 <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
                   <div class="flex items-center justify-between">
                     <div>
-                      <div class="badge-service mb-2">🏥</div>
-                      <h3 class="text-2xl font-bold text-white mb-2">Veterinaria</h3>
-                      <p class="text-emerald-100">Cuidado médico completo para tu mascota</p>
+                      <h3 class="text-xl font-bold text-white mb-1">Veterinaria</h3>
+                      <p class="text-emerald-100/90 text-sm">Cuidado médico completo</p>
                     </div>
-                    <div class="service-price-badge">
-                      <span class="text-xs text-emerald-100">Desde</span>
-                      <p class="text-xl font-bold text-white">$25</p>
+                    <div class="bg-emerald-600/90 backdrop-blur-sm border border-emerald-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
+                      <span class="text-xs text-emerald-100 block">Desde</span>
+                      <p class="text-lg font-bold text-white">$25</p>
                     </div>
                   </div>
                 </div>
@@ -537,24 +541,28 @@
             </div>
 
             <!-- Servicio 2 - Peluquería -->
-            <div class="service-card-full group">
-              <div class="service-card-image">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+            <div class="service-card-modern group fade-up">
+              <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/patasybelleza.png" 
+                  src="/peluqueria.jpg" 
                   alt="Servicio de Peluquería" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
+                <div class="absolute top-4 left-4 z-20">
+                  <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-teal-600/90 backdrop-blur-sm border border-teal-400/30">
+                    <span class="text-xl text-white">✂️</span>
+                  </div>
+                </div>
                 <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
                   <div class="flex items-center justify-between">
                     <div>
-                      <div class="badge-service mb-2">✂️</div>
-                      <h3 class="text-2xl font-bold text-white mb-2">Peluquería</h3>
-                      <p class="text-emerald-100">Estilo y cuidado para el pelaje de tu mascota</p>
+                      <h3 class="text-xl font-bold text-white mb-1">Peluquería</h3>
+                      <p class="text-emerald-100/90 text-sm">Estilo y cuidado profesional</p>
                     </div>
-                    <div class="service-price-badge">
-                      <span class="text-xs text-emerald-100">Desde</span>
-                      <p class="text-xl font-bold text-white">$30</p>
+                    <div class="bg-teal-600/90 backdrop-blur-sm border border-teal-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
+                      <span class="text-xs text-emerald-100 block">Desde</span>
+                      <p class="text-lg font-bold text-white">$30</p>
                     </div>
                   </div>
                 </div>
@@ -562,24 +570,28 @@
             </div>
 
             <!-- Servicio 3 - Guardería -->
-            <div class="service-card-full group">
-              <div class="service-card-image">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+            <div class="service-card-modern group fade-up">
+              <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/amidogs.png" 
+                  src="/guarderia2.jpg" 
                   alt="Servicio de Guardería" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
+                <div class="absolute top-4 left-4 z-20">
+                  <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-purple-600/90 backdrop-blur-sm border border-purple-400/30">
+                    <span class="text-xl text-white">🏠</span>
+                  </div>
+                </div>
                 <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
                   <div class="flex items-center justify-between">
                     <div>
-                      <div class="badge-service mb-2">🏠</div>
-                      <h3 class="text-2xl font-bold text-white mb-2">Guardería</h3>
-                      <p class="text-emerald-100">Cuidado diurno con diversión garantizada</p>
+                      <h3 class="text-xl font-bold text-white mb-1">Guardería</h3>
+                      <p class="text-emerald-100/90 text-sm">Cuidado diurno con diversión</p>
                     </div>
-                    <div class="service-price-badge">
-                      <span class="text-xs text-emerald-100">Desde</span>
-                      <p class="text-xl font-bold text-white">$20</p>
+                    <div class="bg-purple-600/90 backdrop-blur-sm border border-purple-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
+                      <span class="text-xs text-emerald-100 block">Desde</span>
+                      <p class="text-lg font-bold text-white">$20</p>
                     </div>
                   </div>
                 </div>
@@ -587,24 +599,28 @@
             </div>
 
             <!-- Servicio 4 - Entrenamiento -->
-            <div class="service-card-full group">
-              <div class="service-card-image">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+            <div class="service-card-modern group fade-up">
+              <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="https://images.unsplash.com/photo-1548192746-dd526f154ed9?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
+                  src="/nutricion.jpg" 
                   alt="Servicio de Entrenamiento" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
+                <div class="absolute top-4 left-4 z-20">
+                  <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-amber-600/90 backdrop-blur-sm border border-amber-400/30">
+                    <span class="text-xl text-white">🎓</span>
+                  </div>
+                </div>
                 <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
                   <div class="flex items-center justify-between">
                     <div>
-                      <div class="badge-service mb-2">🎓</div>
-                      <h3 class="text-2xl font-bold text-white mb-2">Entrenamiento</h3>
-                      <p class="text-emerald-100">Educación y comportamiento canino</p>
+                      <h3 class="text-xl font-bold text-white mb-1">Entrenamiento</h3>
+                      <p class="text-emerald-100/90 text-sm">Educación y comportamiento</p>
                     </div>
-                    <div class="service-price-badge">
-                      <span class="text-xs text-emerald-100">Desde</span>
-                      <p class="text-xl font-bold text-white">$35</p>
+                    <div class="bg-amber-600/90 backdrop-blur-sm border border-amber-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
+                      <span class="text-xs text-emerald-100 block">Desde</span>
+                      <p class="text-lg font-bold text-white">$35</p>
                     </div>
                   </div>
                 </div>
@@ -612,24 +628,28 @@
             </div>
 
             <!-- Servicio 5 - Paseos -->
-            <div class="service-card-full group">
-              <div class="service-card-image">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+            <div class="service-card-modern group fade-up">
+              <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="https://images.unsplash.com/photo-1503256207526-0d5d80fa2f47?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" 
+                  src="/paseadores.jpg" 
                   alt="Servicio de Paseos" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
+                <div class="absolute top-4 left-4 z-20">
+                  <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600/90 backdrop-blur-sm border border-blue-400/30">
+                    <span class="text-xl text-white">🚶</span>
+                  </div>
+                </div>
                 <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
                   <div class="flex items-center justify-between">
                     <div>
-                      <div class="badge-service mb-2">🚶</div>
-                      <h3 class="text-2xl font-bold text-white mb-2">Paseos</h3>
-                      <p class="text-emerald-100">Ejercicio diario para tu mascota</p>
+                      <h3 class="text-xl font-bold text-white mb-1">Paseos</h3>
+                      <p class="text-emerald-100/90 text-sm">Ejercicio diario para tu mascota</p>
                     </div>
-                    <div class="service-price-badge">
-                      <span class="text-xs text-emerald-100">Desde</span>
-                      <p class="text-xl font-bold text-white">$15</p>
+                    <div class="bg-blue-600/90 backdrop-blur-sm border border-blue-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
+                      <span class="text-xs text-emerald-100 block">Desde</span>
+                      <p class="text-lg font-bold text-white">$15</p>
                     </div>
                   </div>
                 </div>
@@ -637,24 +657,28 @@
             </div>
 
             <!-- Servicio 6 - Traumatología -->
-            <div class="service-card-full group">
-              <div class="service-card-image">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10"></div>
+            <div class="service-card-modern group fade-up">
+              <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/traumavet.png" 
+                  src="/Adriestramiento.jpg" 
                   alt="Servicio de Traumatología" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
+                <div class="absolute top-4 left-4 z-20">
+                  <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600/90 backdrop-blur-sm border border-indigo-400/30">
+                    <span class="text-xl text-white">🏥</span>
+                  </div>
+                </div>
                 <div class="absolute bottom-0 left-0 right-0 p-6 z-20">
                   <div class="flex items-center justify-between">
                     <div>
-                      <div class="badge-service mb-2">🏥</div>
-                      <h3 class="text-2xl font-bold text-white mb-2">Traumatología</h3>
-                      <p class="text-emerald-100">Especialistas en ortopedia veterinaria</p>
+                      <h3 class="text-xl font-bold text-white mb-1">Traumatología</h3>
+                      <p class="text-emerald-100/90 text-sm">Especialistas en ortopedia</p>
                     </div>
-                    <div class="service-price-badge">
-                      <span class="text-xs text-emerald-100">Desde</span>
-                      <p class="text-xl font-bold text-white">$40</p>
+                    <div class="bg-indigo-600/90 backdrop-blur-sm border border-indigo-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
+                      <span class="text-xs text-emerald-100 block">Desde</span>
+                      <p class="text-lg font-bold text-white">$40</p>
                     </div>
                   </div>
                 </div>
@@ -816,12 +840,10 @@
               </div>
             </div>
           </div>
-          
-          <!-- Se eliminó el botón de Contactar con soporte -->
         </div>
       </section>
 
-      <!-- MODALES PARA CADA COMERCIO -->
+      <!-- MODALES PARA CADA COMERCIO (sin cambios) -->
       <!-- Modal AnimalCare -->
       <dialog id="modal_animalcare" class="modal-modern" @click.self="closeModal">
         <div class="modal-modern-box" @click.stop>
@@ -1396,7 +1418,6 @@ export default {
   methods: {
     toggleMobileMenu() {
       this.isMobileMenuOpen = !this.isMobileMenuOpen;
-      // Prevenir scroll cuando el menú está abierto
       if (this.isMobileMenuOpen) {
         document.body.style.overflow = 'hidden';
       } else {
@@ -1417,19 +1438,17 @@ export default {
     },
 
     closeModal(event) {
-      // Si se hace click en el backdrop (dialog) o en el botón de cerrar
       const dialog = event?.target?.closest('dialog')
       if (dialog) {
         dialog.close()
       }
     },
 
-    // Método para hacer scroll a cualquier sección
     scrollToSection(sectionId) {
       const section = document.getElementById(sectionId);
       if (section) {
         const offsetTop = section.offsetTop;
-        const headerHeight = 80; // Altura del header
+        const headerHeight = 80;
         const scrollPosition = offsetTop - headerHeight;
         
         window.scrollTo({
@@ -1459,7 +1478,6 @@ export default {
   },
 
   beforeUnmount() {
-    // Asegurarse de restaurar el scroll
     document.body.style.overflow = '';
   }
 };
@@ -1474,12 +1492,12 @@ html {
 /* Estilos para las secciones con scroll */
 #comercios-destacados,
 #servicios-completos {
-  scroll-margin-top: 80px; /* Espacio para el header fijo */
+  scroll-margin-top: 80px;
 }
 
 /* ===== HEADER CON MENÚ HAMBURGUESA ===== */
 header {
-  background-color: #059669 !important; /* emerald-600 */
+  background-color: #059669 !important;
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
@@ -1533,19 +1551,19 @@ header {
 }
 .fade-up.show { opacity: 1; transform: translateY(0); }
 
-/* ===== NUEVA SECCIÓN: SERVICIOS CON IMÁGENES COMPLETAS ===== */
-
-.service-card-full {
+/* ===== SERVICIOS CORREGIDOS - CARD MÁS ALTAS 20% ===== */
+.service-card-modern {
   background: white;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  height: 100%;
 }
 
-.service-card-full:hover {
+.service-card-modern:hover {
   transform: translateY(-8px);
   box-shadow: 
     0 20px 40px rgba(0, 0, 0, 0.15),
@@ -1553,41 +1571,38 @@ header {
     0 0 30px rgba(16, 185, 129, 0.2);
 }
 
-.service-card-image {
-  position: relative;
-  height: 300px;
-  width: 100%;
-  overflow: hidden;
+.service-card-modern .relative {
+  height: 100%;
 }
 
-.service-card-image img {
+.service-card-modern img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.7s ease;
 }
 
-.badge-service {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  font-size: 1.5rem;
+/* Asegurar altura consistente - AGRANDADO 20% (de 256px a 307px) */
+.service-card-modern .relative {
+  height: 307px; /* 256px * 1.2 = 307px */
 }
 
-.service-price-badge {
-  background: rgba(16, 185, 129, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 8px 16px;
-  border-radius: 12px;
-  text-align: center;
-  min-width: 80px;
+/* Responsive para las cards más altas */
+@media (max-width: 768px) {
+  .service-card-modern .relative {
+    height: 270px; /* Un poco más pequeño en móvil pero manteniendo proporción */
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .service-card-modern .relative {
+    height: 290px; /* Ajuste para tablet */
+  }
+}
+
+@media (min-width: 1024px) {
+  .service-card-modern .relative {
+    height: 307px; /* Altura completa en desktop */
+  }
 }
 
 /* ===== COMPONENTES MODERNOS ===== */
@@ -1908,6 +1923,7 @@ header {
   border-radius: 16px;
   padding: 1.5rem;
   transition: all 0.3s ease;
+  margin-bottom:1rem;
 }
 
 .faq-card-modern:hover {
@@ -1926,19 +1942,16 @@ header {
 
 /* Responsive */
 @media (max-width: 768px) {
-  /* Ajustar padding del main para header móvil */
   main {
     padding-top: 5rem;
   }
   
-  /* Botón hamburguesa más táctil */
-  button.md\\:hidden {
+  button.md\:hidden {
     min-width: 44px;
     min-height: 44px;
   }
   
-  /* Mejorar visibilidad del menú móvil */
-  .md\\:hidden.bg-emerald-700\/95 {
+  .md\:hidden.bg-emerald-700\/95 {
     background-color: rgba(5, 150, 105, 0.98);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -1970,8 +1983,9 @@ header {
     height: 200px;
   }
   
-  .service-card-image {
-    height: 250px;
+  /* Ajuste para las cards de servicios en móvil */
+  .service-card-modern .relative {
+    height: 240px;
   }
 }
 
@@ -1988,23 +2002,8 @@ header {
   object-fit: cover;
 }
 
-/* Asegurar altura fija para las imágenes de servicios */
-.service-card-full {
-  height: 300px;
-}
-
-/* Prevenir scroll cuando el menú está abierto */
-@media (max-width: 768px) {
-  body.menu-open {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-  }
-}
-
 /* Mejoras para enlaces con flechas */
-.group:hover .group-hover\\:opacity-100 {
+.group:hover .group-hover\:opacity-100 {
   opacity: 1;
 }
 
@@ -2016,18 +2015,14 @@ button:focus-visible {
   border-radius: 8px;
 }
 
-/* Efecto de overlay para el menú móvil */
+/* Ajuste del gap en la sección de servicios para las cards más altas */
+#servicios-completos .gap-8 {
+  gap: 2rem;
+}
+
 @media (max-width: 768px) {
-  .md\\:hidden.bg-emerald-700\/95::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(2px);
-    z-index: -1;
+  #servicios-completos .gap-8 {
+    gap: 1.5rem;
   }
 }
 </style>

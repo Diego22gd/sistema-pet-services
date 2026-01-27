@@ -7,6 +7,14 @@ export const useUserStore = defineStore("user", {
     token: localStorage.getItem("token") || null,
   }),
 
+  getters: {
+    isAuthenticated: (state) => {
+      return !!(state.token && state.user);
+    },
+    userRole: (state) => state.user?.role,
+    userName: (state) => state.user?.name || state.user?.email?.split("@")[0] || "Usuario",
+  },
+
   actions: {
     // 🔹 Registro de usuario
     async register(userData) {
@@ -16,14 +24,7 @@ export const useUserStore = defineStore("user", {
         this.token = res.data.token;
 
         // GUARDAR EN LOCALSTORAGE - MEJORADO
-        localStorage.setItem("token", this.token);
-        localStorage.setItem("user", JSON.stringify(this.user));
-        
-        // GUARDAR CAMPOS INDIVIDUALES (IMPORTANTE PARA LAS NOTIFICACIONES)
-        localStorage.setItem("userId", this.user._id || this.user.id);
-        localStorage.setItem("userRole", this.user.role);
-        localStorage.setItem("userName", this.user.name || "");
-        localStorage.setItem("userEmail", this.user.email || "");
+        this.saveToLocalStorage();
         
         console.log("✅ Usuario registrado. Datos guardados en localStorage:", {
           userId: this.user._id,
@@ -34,7 +35,7 @@ export const useUserStore = defineStore("user", {
         return res.data;
       } catch (err) {
         console.error("❌ Error al registrar usuario:", err);
-        throw new Error(err.response?.data?.message || "Error al registrar usuario");
+        throw this.handleError(err);
       }
     },
 
@@ -45,18 +46,11 @@ export const useUserStore = defineStore("user", {
         this.user = res.data.user;
         this.token = res.data.token;
 
-        // GUARDAR EN LOCALSTORAGE - MEJORADO
-        localStorage.setItem("token", this.token);
-        localStorage.setItem("user", JSON.stringify(this.user));
-        
-        // GUARDAR CAMPOS INDIVIDUALES (CRÍTICO PARA LAS NOTIFICACIONES)
-        localStorage.setItem("userId", this.user._id || this.user.id);
-        localStorage.setItem("userRole", this.user.role);
-        localStorage.setItem("userName", this.user.name || "");
-        localStorage.setItem("userEmail", this.user.email || "");
+        // GUARDAR EN LOCALSTORAGE
+        this.saveToLocalStorage();
         
         // Configurar token en axios para futuras peticiones
-        api.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+        this.setAuthHeader();
         
         console.log("✅ Usuario autenticado. Datos guardados en localStorage:", {
           userId: this.user._id,
@@ -68,32 +62,33 @@ export const useUserStore = defineStore("user", {
         return res.data;
       } catch (err) {
         console.error("❌ Error al iniciar sesión:", err);
-        throw new Error(err.response?.data?.message || "Error al iniciar sesión");
+        throw this.handleError(err);
       }
     },
 
     // 🔹 Obtener datos actualizados del usuario desde el backend
     async fetchUser() {
-      if (!this.token || !this.user?._id) return null;
+      if (!this.token) {
+        console.warn("⚠️ No hay token para fetchUser");
+        return null;
+      }
 
       try {
-        const { data } = await api.get(`/users/${this.user._id}`, {
+        const { data } = await api.get(`/users/${this.user?._id || 'me'}`, {
           headers: { Authorization: `Bearer ${this.token}` },
         });
 
-        this.user = data;
-        localStorage.setItem("user", JSON.stringify(data));
+        const userData = data.user || data;
+        this.user = userData;
+        this.saveUserToLocalStorage(userData);
         
-        // ACTUALIZAR CAMPOS INDIVIDUALES
-        localStorage.setItem("userId", data._id || data.id);
-        localStorage.setItem("userRole", data.role);
-        localStorage.setItem("userName", data.name || "");
-        localStorage.setItem("userEmail", data.email || "");
-        
-        return data;
+        return userData;
       } catch (err) {
         console.error("❌ Error al obtener datos del usuario:", err);
-        this.logout();
+        // Si el token es inválido, hacer logout
+        if (err.response?.status === 401) {
+          this.cleanLogout();
+        }
         throw err;
       }
     },
@@ -109,27 +104,24 @@ export const useUserStore = defineStore("user", {
           headers: { Authorization: `Bearer ${this.token}` },
         });
 
-        this.user = data;
-        localStorage.setItem("user", JSON.stringify(data));
+        const userData = data.user || data;
+        this.user = userData;
+        this.saveUserToLocalStorage(userData);
         
-        // ACTUALIZAR CAMPOS INDIVIDUALES
-        localStorage.setItem("userName", data.name || "");
-        localStorage.setItem("userEmail", data.email || "");
-        
-        return data;
+        return userData;
       } catch (err) {
         console.error("❌ Error al actualizar perfil:", err);
-        throw new Error(err.response?.data?.message || "Error al actualizar el perfil");
+        throw this.handleError(err);
       }
     },
 
+    // 🔹 Obtener mascotas del usuario
     async fetchUserPets() {
       if (!this.token) return [];
       try {
         const { data } = await api.get("/pets", {
           headers: { Authorization: `Bearer ${this.token}` },
         });
-        this.userPets = data;
         return data;
       } catch (err) {
         console.error("❌ Error al obtener mascotas del usuario:", err);
@@ -137,132 +129,173 @@ export const useUserStore = defineStore("user", {
       }
     },
 
-    // 🔹 Cerrar sesión
+    // 🔹 Cerrar sesión - VERSIÓN CORREGIDA
     logout() {
+      console.log("🔄 Iniciando logout...");
+      
+      // 1. Guardar ruta actual para posible uso futuro
+      const currentPath = window.location.pathname;
+      console.log(`📍 Ruta actual: ${currentPath}`);
+      
+      // 2. Limpiar estado del store
       this.user = null;
       this.token = null;
       
-      // LIMPIAR TODO EL LOCALSTORAGE
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("userName");
-      localStorage.removeItem("userEmail");
+      // 3. Limpiar localStorage COMPLETAMENTE
+      this.clearLocalStorage();
       
-      // Limpiar headers de axios
-      delete api.defaults.headers.common['Authorization'];
+      // 4. Limpiar headers de axios
+      this.clearAuthHeader();
       
-      console.log("✅ Sesión cerrada y localStorage limpiado");
+      console.log("✅ Logout completado. Estado actual:", {
+        hasToken: !!localStorage.getItem("token"),
+        hasUser: !!localStorage.getItem("user"),
+        userStoreToken: this.token,
+        userStoreUser: this.user
+      });
+      
+      // 5. NO redirigir aquí - dejar que el router guard maneje la redirección
+      // El router guard detectará que no hay token y redirigirá a login
     },
 
-    // 🔹 Redirigir según rol
+    // 🔹 Limpieza completa (sin redirección)
+    cleanLogout() {
+      console.log("🧹 Limpieza completa de sesión...");
+      this.user = null;
+      this.token = null;
+      this.clearLocalStorage();
+      this.clearAuthHeader();
+    },
+
+    // 🔹 Redirigir según rol - VERSIÓN MEJORADA
     redirectByRole(router) {
-      if (!this.user) {
-        router.push("/login");
+      console.log("🔀 Redirigiendo según rol...");
+      
+      // Verificar usando localStorage como fuente de verdad
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      console.log("🔍 Estado actual:", {
+        tokenPresent: !!token,
+        userPresent: !!user,
+        userRole: user?.role
+      });
+      
+      if (!token || !user) {
+        console.log("⚠️ No autenticado, redirigiendo a login");
+        if (router.currentRoute.value.path !== "/login") {
+          router.push("/login");
+        }
         return;
       }
 
-      const role = this.user.role;
-
-      if (role === "admin") {
-        router.push("/admin");
-      } else if (role === "provider") {
-        router.push("/provider/dashboard");
+      const role = user.role;
+      const currentRoute = router.currentRoute.value.path;
+      
+      console.log(`🎯 Rol: ${role}, Ruta actual: ${currentRoute}`);
+      
+      // Definir rutas por rol
+      const roleRoutes = {
+        admin: "/admin",
+        provider: "/provider/dashboard",
+        client: "/dashboard"
+      };
+      
+      const targetRoute = roleRoutes[role] || "/dashboard";
+      
+      // Solo redirigir si no está ya en la ruta correcta
+      if (!currentRoute.includes(targetRoute.replace("/", ""))) {
+        console.log(`🔄 Redirigiendo a: ${targetRoute}`);
+        router.push(targetRoute);
       } else {
-        router.push("/profile");
+        console.log(`✅ Ya está en la ruta correcta: ${currentRoute}`);
       }
     },
 
-    // 🔹 NUEVO: Verificar y reparar sesión (para usar cuando falten datos)
+    // 🔹 Verificar y reparar sesión
     async verifyAndRepairSession() {
       const token = localStorage.getItem("token");
       
-      if (!token) {
-        console.log("ℹ️ No hay token en localStorage");
+      if (!token || token === "null" || token === "undefined") {
+        console.log("ℹ️ Token no válido o ausente");
+        this.cleanLogout();
         return false;
       }
       
       // Restaurar estado del store si es necesario
       if (!this.token) {
         this.token = token;
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        this.setAuthHeader();
       }
       
-      // Verificar si faltan datos individuales
-      const hasUserId = localStorage.getItem("userId");
-      const hasUserRole = localStorage.getItem("userRole");
+      // Verificar datos en localStorage
+      const userStr = localStorage.getItem("user");
       
-      if (!hasUserId || !hasUserRole) {
-        console.log("🔄 Reparando datos faltantes en localStorage...");
-        
-        // Intentar obtener del objeto user completo
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
+      if (!userStr) {
+        console.log("🔄 Intentando recuperar usuario desde servidor...");
+        try {
+          const userData = await this.fetchUser();
+          if (userData) {
+            return true;
+          }
+        } catch (error) {
+          console.error("❌ No se pudo recuperar usuario:", error);
+          this.cleanLogout();
+          return false;
+        }
+      } else {
+        // Asegurar que el store tenga el usuario
+        if (!this.user) {
           try {
-            const user = JSON.parse(userStr);
-            localStorage.setItem("userId", user._id || user.id);
-            localStorage.setItem("userRole", user.role);
-            localStorage.setItem("userName", user.name || "");
-            localStorage.setItem("userEmail", user.email || "");
-            
-            console.log("✅ Datos reparados desde objeto user:", {
-              userId: user._id,
-              userRole: user.role
-            });
+            this.user = JSON.parse(userStr);
           } catch (e) {
             console.error("❌ Error parseando usuario:", e);
-          }
-        } else {
-          // Si no hay objeto user, intentar obtener del servidor
-          try {
-            const response = await api.get("/users/me");
-            if (response.data.success) {
-              const user = response.data.user;
-              localStorage.setItem("userId", user._id);
-              localStorage.setItem("userRole", user.role);
-              localStorage.setItem("userName", user.name || "");
-              localStorage.setItem("userEmail", user.email || "");
-              localStorage.setItem("user", JSON.stringify(user));
-              
-              this.user = user;
-              
-              console.log("✅ Datos obtenidos del servidor y guardados");
-            }
-          } catch (error) {
-            console.error("❌ Error obteniendo usuario del servidor:", error);
+            this.cleanLogout();
+            return false;
           }
         }
       }
       
-      return !!this.token;
+      // Verificar datos individuales importantes
+      const userId = localStorage.getItem("userId");
+      const userRole = localStorage.getItem("userRole");
+      
+      if (!userId || !userRole) {
+        console.log("🔧 Reparando datos faltantes...");
+        this.saveMissingFields();
+      }
+      
+      return true;
     },
 
-    // 🔹 NUEVO: Inicializar aplicación (llamar en main.js o App.vue)
+    // 🔹 Inicializar aplicación
     async initializeApp() {
       console.log("🚀 Inicializando aplicación...");
       
-      // Restaurar token en axios si existe
+      // Verificar token válido en localStorage
       const token = localStorage.getItem("token");
-      if (token) {
+      
+      if (token && token !== "null" && token !== "undefined") {
         this.token = token;
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      }
-      
-      // Verificar y reparar datos faltantes
-      await this.verifyAndRepairSession();
-      
-      // Si hay token, intentar obtener usuario completo
-      if (token && !this.user) {
-        try {
-          const response = await api.get("/users/me");
-          if (response.data.success) {
-            this.user = response.data.user;
-            console.log("✅ Usuario cargado desde servidor:", this.user.name);
+        this.setAuthHeader();
+        
+        // Intentar cargar usuario
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          try {
+            this.user = JSON.parse(userStr);
+          } catch (e) {
+            console.error("❌ Error parseando usuario, limpiando sesión:", e);
+            this.cleanLogout();
           }
-        } catch (error) {
-          console.log("ℹ️ No se pudo cargar usuario completo, pero hay token válido");
         }
+        
+        // Verificar sesión completa
+        await this.verifyAndRepairSession();
+      } else {
+        // Token inválido, limpiar
+        this.cleanLogout();
       }
       
       console.log("✅ Aplicación inicializada. Estado:", {
@@ -270,6 +303,91 @@ export const useUserStore = defineStore("user", {
         hasUser: !!this.user,
         userRole: this.user?.role
       });
-    }
+    },
+
+    // ===== MÉTODOS AUXILIARES =====
+    
+    // Guardar en localStorage
+    saveToLocalStorage() {
+      if (this.token) {
+        localStorage.setItem("token", this.token);
+      }
+      if (this.user) {
+        localStorage.setItem("user", JSON.stringify(this.user));
+        this.saveUserDetails(this.user);
+      }
+    },
+    
+    // Guardar detalles del usuario
+    saveUserDetails(user) {
+      localStorage.setItem("userId", user._id || user.id);
+      localStorage.setItem("userRole", user.role);
+      localStorage.setItem("userName", user.name || "");
+      localStorage.setItem("userEmail", user.email || "");
+    },
+    
+    // Guardar solo usuario
+    saveUserToLocalStorage(user) {
+      localStorage.setItem("user", JSON.stringify(user));
+      this.saveUserDetails(user);
+    },
+    
+    // Guardar campos faltantes
+    saveMissingFields() {
+      if (this.user) {
+        this.saveUserDetails(this.user);
+      } else {
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            this.saveUserDetails(user);
+          } catch (e) {
+            console.error("❌ Error guardando campos faltantes:", e);
+          }
+        }
+      }
+    },
+    
+    // Limpiar localStorage
+    clearLocalStorage() {
+      // Remover solo items relacionados con autenticación
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
+      
+      console.log("🧹 localStorage limpiado");
+    },
+    
+    // Configurar header de autorización
+    setAuthHeader() {
+      if (this.token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+      }
+    },
+    
+    // Limpiar header de autorización
+    clearAuthHeader() {
+      delete api.defaults.headers.common['Authorization'];
+    },
+    
+    // Manejo de errores
+    handleError(err) {
+      console.error("🔴 Error en userStore:", err);
+      
+      // Si es error de autenticación, limpiar sesión
+      if (err.response?.status === 401) {
+        this.cleanLogout();
+      }
+      
+      return new Error(
+        err.response?.data?.message || 
+        err.message || 
+        "Error en la operación"
+      );
+    },
   },
 });

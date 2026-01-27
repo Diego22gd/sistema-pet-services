@@ -1,9 +1,9 @@
 <template>
   <!-- ChatBot Container -->
   <div class="chatbot-container">
-    <!-- Mensaje FIJO arriba del botón (Siempre visible cuando el chat está cerrado) -->
+    <!-- Mensaje FIJO arriba del botón - SOLO POR 3 SEGUNDOS -->
     <div 
-      v-if="!isOpen" 
+      v-if="!isOpen && showFixedMessage" 
       class="fixed-help-message"
       @click="toggleChat"
     >
@@ -29,7 +29,7 @@
       <div v-if="!isOpen && hasNewMessage" class="notification-dot"></div>
     </button>
 
-    <!-- Ventana del Chat - Posición más alta -->
+    <!-- Ventana del Chat -->
     <transition name="chat-window">
       <div
         v-if="isOpen"
@@ -43,7 +43,7 @@
             alt="PetBot"
           />
           <div class="chatbot-info">
-            <h3>PetBot AI</h3>
+            <h3>PetBot</h3>
             <p>{{ getRoleDescription() }}</p>
           </div>
           <button 
@@ -87,42 +87,65 @@
                 <div class="dot"></div>
                 <div class="dot"></div>
               </div>
-              <span class="typing-text">PetBot está escribiendo...</span>
+              <span class="typing-text">PetBot está pensando...</span>
             </div>
           </div>
         </div>
 
-        <!-- Botones rápidos CON SCROLL HORIZONTAL -->
+        <!-- Botones rápidos CON FLECHAS DE SCROLL -->
         <div class="quick-buttons-container">
           <div class="quick-buttons-wrapper">
-            <div class="quick-buttons-scroll" ref="quickButtonsScroll">
+            <!-- Flecha izquierda -->
+            <button 
+              v-if="showScrollArrows && canScrollLeft"
+              @click="scrollQuickButtons(-1)"
+              class="scroll-arrow scroll-arrow-left"
+              title="Desplazar izquierda"
+            >
+              <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            <!-- Contenedor con scroll -->
+            <div 
+              ref="quickButtonsScroll" 
+              class="quick-buttons-scroll"
+              @scroll="handleQuickButtonsScroll"
+            >
               <button
-                v-for="q in quickOptions"
-                :key="q"
+                v-for="(q, index) in quickOptions"
+                :key="index"
                 @click="sendQuick(q)"
                 :disabled="isLoading"
                 class="quick-button"
+                :title="q"
               >
                 {{ q }}
               </button>
             </div>
-            <!-- Flechas de navegación -->
+
+            <!-- Flecha derecha -->
             <button 
-              v-if="showScrollArrows" 
-              @click="scrollQuickButtons(-100)"
-              class="scroll-button scroll-left"
-              title="Desplazar izquierda"
-            >
-              ‹
-            </button>
-            <button 
-              v-if="showScrollArrows" 
-              @click="scrollQuickButtons(100)"
-              class="scroll-button scroll-right"
+              v-if="showScrollArrows && canScrollRight"
+              @click="scrollQuickButtons(1)"
+              class="scroll-arrow scroll-arrow-right"
               title="Desplazar derecha"
             >
-              ›
+              <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
             </button>
+          </div>
+
+          <!-- Indicador de scroll (puntos) -->
+          <div v-if="showScrollArrows" class="scroll-indicator">
+            <div 
+              v-for="n in scrollPages"
+              :key="n"
+              :class="{ 'active': currentScrollPage === n }"
+              class="scroll-dot"
+            ></div>
           </div>
         </div>
 
@@ -172,7 +195,14 @@ export default {
       isLoading: false,
       hasNewMessage: false,
       showScrollArrows: false,
-      userRole: "client"
+      canScrollLeft: false,
+      canScrollRight: false,
+      currentScrollPage: 1,
+      scrollPages: 1,
+      userRole: "client",
+      showFixedMessage: false,
+      fixedMessageTimeout: null,
+      lastRoutePath: null
     };
   },
   computed: {
@@ -186,7 +216,9 @@ export default {
           "Agendar cita",
           "Precios generales",
           "Emergencias",
-          "Cómo funciona"
+          "Veterinarias cerca",
+          "Peluquerías caninas",
+          "Tienda de mascotas"
         ],
         provider: [
           "Mi comercio",
@@ -196,7 +228,9 @@ export default {
           "Mis ingresos",
           "Clientes recientes",
           "Actualizar servicios",
-          "Reportes"
+          "Mis reseñas",
+          "Promociones",
+          "Horarios"
         ],
         admin: [
           "Comercios pendientes",
@@ -206,7 +240,9 @@ export default {
           "Estadísticas globales",
           "Aprobar comercios",
           "Monitoreo",
-          "Soporte"
+          "Logs del sistema",
+          "Soporte técnico",
+          "Backup de datos"
         ]
       };
       
@@ -261,15 +297,21 @@ export default {
         this.addWelcomeMessage();
       }
       this.hasNewMessage = false;
+      
+      // Si se abre el chat, ocultar el mensaje flotante
+      if (this.isOpen) {
+        this.hideFixedMessage();
+      }
+      
       this.$nextTick(() => {
         this.scrollToBottom();
-        this.checkScrollButtons();
+        this.checkQuickButtonsScroll();
       });
     },
 
     addWelcomeMessage() {
       const welcomeMessages = {
-        client: `¡Hola! 👋 Soy PetBot, tu asistente para servicios de mascotas. 
+        client: `¡Hola! 👋 Soy PetBot, tu asistente para servicios de mascotas.
 
 Como **cliente**, puedo ayudarte con:
 • 🏪 Buscar comercios cercanos  
@@ -401,20 +443,57 @@ Como **administrador**, puedo ayudarte con:
       });
     },
 
-    scrollQuickButtons(distance) {
-      const container = this.$refs.quickButtonsScroll;
-      if (container) {
-        container.scrollLeft += distance;
-      }
-    },
-
-    checkScrollButtons() {
+    // MÉTODOS PARA SCROLL HORIZONTAL
+    checkQuickButtonsScroll() {
       this.$nextTick(() => {
         const container = this.$refs.quickButtonsScroll;
         if (container) {
+          // Mostrar flechas si hay scroll horizontal
           this.showScrollArrows = container.scrollWidth > container.clientWidth;
+          
+          // Calcular páginas de scroll
+          const containerWidth = container.clientWidth;
+          const scrollWidth = container.scrollWidth;
+          this.scrollPages = Math.ceil(scrollWidth / containerWidth);
+          
+          // Actualizar estado de flechas
+          this.handleQuickButtonsScroll();
         }
       });
+    },
+
+    scrollQuickButtons(direction) {
+      const container = this.$refs.quickButtonsScroll;
+      if (!container) return;
+
+      const scrollAmount = container.clientWidth * 0.8;
+      const newScrollLeft = container.scrollLeft + (direction * scrollAmount);
+      
+      container.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
+      });
+    },
+
+    handleQuickButtonsScroll() {
+      const container = this.$refs.quickButtonsScroll;
+      if (!container) return;
+
+      const scrollLeft = container.scrollLeft;
+      const scrollWidth = container.scrollWidth;
+      const clientWidth = container.clientWidth;
+      
+      // Determinar si podemos seguir desplazando
+      this.canScrollLeft = scrollLeft > 0;
+      this.canScrollRight = scrollLeft + clientWidth < scrollWidth;
+      
+      // Calcular página actual
+      if (clientWidth > 0) {
+        this.currentScrollPage = Math.min(
+          Math.max(1, Math.floor(scrollLeft / clientWidth) + 1),
+          this.scrollPages
+        );
+      }
     },
 
     getCurrentTime() {
@@ -427,48 +506,45 @@ Como **administrador**, puedo ayudarte con:
     formatMessage(text) {
       if (!text) return '';
       
+      // Formato simple y limpio
       return text
         .replace(/\n/g, '<br>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-        .replace(/•/g, '•')
-        .replace(/📅/g, '<span class="inline-block mr-1">📅</span>')
-        .replace(/🐾/g, '<span class="inline-block mr-1">🐾</span>')
-        .replace(/🛎️/g, '<span class="inline-block mr-1">🛎️</span>')
-        .replace(/💰/g, '<span class="inline-block mr-1">💰</span>')
-        .replace(/🏥/g, '<span class="inline-block mr-1">🏥</span>')
-        .replace(/📊/g, '<span class="inline-block mr-1">📊</span>')
-        .replace(/👥/g, '<span class="inline-block mr-1">👥</span>')
-        .replace(/⚙️/g, '<span class="inline-block mr-1">⚙️</span>')
-        .replace(/🏪/g, '<span class="inline-block mr-1">🏪</span>')
-        .replace(/⭐/g, '<span class="inline-block mr-1">⭐</span>')
-        .replace(/🛡️/g, '<span class="inline-block mr-1">🛡️</span>');
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     },
 
-    applyEmergencyPatch() {
-      if (window.CHATBOT_PATCH_APPLIED) return;
-      
-      console.log('🔧 Aplicando parche de emergencia para API...');
-      
-      const isProduction = window.location.hostname.includes('onrender.com') && 
-                          !window.location.hostname.includes('localhost');
-      
-      if (isProduction) {
-        const originalXHROpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
-          if (typeof url === 'string') {
-            if (url.includes('localhost:4000')) {
-              url = url.replace('http://localhost:4000', '');
-            }
-            if (url.includes('localhost:10000')) {
-              url = url.replace('http://localhost:10000', '');
-            }
-          }
-          return originalXHROpen.call(this, method, url, async, user, pass);
-        };
+    // MÉTODOS PARA MOSTRAR/OCULTAR MENSAJE FLOTANTE
+    showFixedMessageFor3Seconds() {
+      // Limpiar timeout anterior si existe
+      if (this.fixedMessageTimeout) {
+        clearTimeout(this.fixedMessageTimeout);
       }
       
-      window.CHATBOT_PATCH_APPLIED = true;
+      // Solo mostrar si el chat está cerrado
+      if (!this.isOpen) {
+        this.showFixedMessage = true;
+        
+        // Ocultar después de 3 segundos
+        this.fixedMessageTimeout = setTimeout(() => {
+          this.showFixedMessage = false;
+        }, 3000);
+      }
+    },
+
+    hideFixedMessage() {
+      this.showFixedMessage = false;
+      if (this.fixedMessageTimeout) {
+        clearTimeout(this.fixedMessageTimeout);
+        this.fixedMessageTimeout = null;
+      }
+    },
+
+    // Método para detectar cambios de ruta
+    checkRouteChange() {
+      const currentPath = this.$route?.path;
+      if (currentPath && currentPath !== this.lastRoutePath) {
+        this.lastRoutePath = currentPath;
+        this.showFixedMessageFor3Seconds();
+      }
     }
   },
 
@@ -477,8 +553,11 @@ Como **administrador**, puedo ayudarte con:
       if (newVal) {
         this.$nextTick(() => {
           this.scrollToBottom();
-          this.checkScrollButtons();
+          setTimeout(() => this.checkQuickButtonsScroll(), 100);
         });
+      } else {
+        // Cuando se cierra el chat, mostrar el mensaje flotante por 3 segundos
+        this.showFixedMessageFor3Seconds();
       }
     },
 
@@ -492,25 +571,43 @@ Como **administrador**, puedo ayudarte con:
         }
       },
       deep: true
+    },
+
+    quickOptions() {
+      this.$nextTick(() => {
+        setTimeout(() => this.checkQuickButtonsScroll(), 150);
+      });
+    },
+
+    // Observar cambios de ruta
+    '$route.path': function(newPath, oldPath) {
+      if (newPath !== oldPath) {
+        this.showFixedMessageFor3Seconds();
+      }
     }
   },
 
   mounted() {
     this.userRole = this.getUserRole();
     
-    this.applyEmergencyPatch();
+    // Mostrar mensaje flotante al cargar por primera vez
+    this.showFixedMessageFor3Seconds();
     
     this.$nextTick(() => {
-      setTimeout(() => {
-        this.checkScrollButtons();
-      }, 100);
+      setTimeout(() => this.checkQuickButtonsScroll(), 200);
+      
+      // Recalcular scroll cuando cambia el tamaño de la ventana
+      window.addEventListener('resize', this.checkQuickButtonsScroll);
     });
-
-    window.addEventListener('resize', this.checkScrollButtons);
   },
 
   beforeUnmount() {
-    window.removeEventListener('resize', this.checkScrollButtons);
+    window.removeEventListener('resize', this.checkQuickButtonsScroll);
+    
+    // Limpiar timeout al desmontar
+    if (this.fixedMessageTimeout) {
+      clearTimeout(this.fixedMessageTimeout);
+    }
   }
 };
 </script>
@@ -524,7 +621,7 @@ Como **administrador**, puedo ayudarte con:
 }
 
 /* =========================================== */
-/* MENSAJE FIJO ARRIBA DEL BOTÓN (NUNCA DESAPARECE) */
+/* MENSAJE FIJO ARRIBA DEL BOTÓN - CON ANIMACIÓN DE ENTRADA */
 /* =========================================== */
 .fixed-help-message {
   position: absolute;
@@ -539,13 +636,35 @@ Como **administrador**, puedo ayudarte con:
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 2px solid rgba(255, 255, 255, 0.2);
   z-index: 1001;
-  animation: fixed-float 3s ease-in-out infinite;
+  animation: slide-in-fixed 0.4s ease-out, float-fixed 2s ease-in-out infinite 0.4s;
+  transform-origin: left bottom;
+}
+
+@keyframes slide-in-fixed {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes float-fixed {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .fixed-help-message:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
   background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+  animation-play-state: paused;
 }
 
 .fixed-message-content {
@@ -576,16 +695,6 @@ Como **administrador**, puedo ayudarte con:
   background: #3b82f6;
   transform: rotate(45deg);
   border-bottom-right-radius: 4px;
-}
-
-/* Animación para el mensaje fijo */
-@keyframes fixed-float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
 }
 
 /* Botón flotante */
@@ -649,7 +758,7 @@ Como **administrador**, puedo ayudarte con:
   position: fixed;
   bottom: 90px;
   left: 20px;
-  width: 380px;
+  width: 420px; /* Un poco más ancha para botones */
   height: 520px;
   background: white;
   border-radius: 20px;
@@ -658,7 +767,6 @@ Como **administrador**, puedo ayudarte con:
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  backdrop-filter: blur(10px);
 }
 
 /* Header */
@@ -714,7 +822,6 @@ Como **administrador**, puedo ayudarte con:
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(5px);
 }
 
 .close-btn:hover {
@@ -727,10 +834,10 @@ Como **administrador**, puedo ayudarte con:
   flex: 1;
   padding: 16px;
   overflow-y: auto;
-  background: linear-gradient(to bottom, #f8fafc, #ffffff);
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .message-container {
@@ -747,10 +854,10 @@ Como **administrador**, puedo ayudarte con:
 }
 
 .message-bubble {
-  max-width: 82%;
-  padding: 14px 18px;
-  border-radius: 22px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -759,7 +866,7 @@ Como **administrador**, puedo ayudarte con:
 .message-user {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
-  border-bottom-right-radius: 8px;
+  border-bottom-right-radius: 6px;
   margin-left: auto;
 }
 
@@ -767,7 +874,7 @@ Como **administrador**, puedo ayudarte con:
   background: white;
   color: #1f2937;
   border: 1px solid #e5e7eb;
-  border-bottom-left-radius: 8px;
+  border-bottom-left-radius: 6px;
   margin-right: auto;
 }
 
@@ -781,13 +888,9 @@ Como **administrador**, puedo ayudarte con:
   font-weight: 600;
 }
 
-.message-content >>> em {
-  font-style: italic;
-}
-
 .message-time {
   font-size: 11px;
-  margin-top: 6px;
+  margin-top: 4px;
   text-align: right;
   opacity: 0.7;
   font-weight: 500;
@@ -811,23 +914,22 @@ Como **administrador**, puedo ayudarte con:
 .typing-bubble {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 22px;
-  border-bottom-left-radius: 8px;
-  padding: 14px 18px;
+  border-radius: 18px;
+  border-bottom-left-radius: 6px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  gap: 10px;
 }
 
 .typing-dots {
   display: flex;
-  gap: 5px;
+  gap: 4px;
 }
 
 .dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   background: #3b82f6;
   border-radius: 50%;
   animation: typing-bounce 1.4s infinite ease-in-out;
@@ -847,7 +949,7 @@ Como **administrador**, puedo ayudarte con:
     opacity: 0.4;
   }
   30% {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     opacity: 1;
   }
 }
@@ -858,29 +960,80 @@ Como **administrador**, puedo ayudarte con:
   font-weight: 500;
 }
 
-/* Botones rápidos */
+/* =========================================== */
+/* BOTONES RÁPIDOS CON SCROLL HORIZONTAL */
+/* =========================================== */
 .quick-buttons-container {
-  padding: 14px 16px;
+  padding: 12px 16px;
   border-top: 1px solid #e5e7eb;
-  background: #f8fafc;
+  background: white;
   position: relative;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .quick-buttons-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  gap: 6px;
+}
+
+.scroll-arrow {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.scroll-arrow:hover:not(:disabled) {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  transform: scale(1.1);
+}
+
+.scroll-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.scroll-arrow-left {
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.scroll-arrow-right {
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.arrow-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .quick-buttons-scroll {
+  flex: 1;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 4px;
   scroll-behavior: smooth;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  padding: 4px 2px;
+  min-height: 46px;
+  align-items: center;
 }
 
 .quick-buttons-scroll::-webkit-scrollbar {
@@ -889,18 +1042,22 @@ Como **administrador**, puedo ayudarte con:
 
 .quick-button {
   flex-shrink: 0;
-  padding: 10px 16px;
+  padding: 10px 14px;
   background: white;
-  border: 1.5px solid #d1d5db;
-  border-radius: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: #374151;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s;
   white-space: nowrap;
-  min-width: max-content;
-  letter-spacing: 0.3px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .quick-button:hover:not(:disabled) {
@@ -908,7 +1065,11 @@ Como **administrador**, puedo ayudarte con:
   color: white;
   border-color: #3b82f6;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.quick-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .quick-button:disabled {
@@ -917,47 +1078,30 @@ Como **administrador**, puedo ayudarte con:
   transform: none;
 }
 
-/* Botones de scroll */
-.scroll-button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 28px;
-  height: 28px;
-  background: white;
-  border: 1.5px solid #d1d5db;
-  border-radius: 50%;
+/* Indicador de scroll (puntos) */
+.scroll-indicator {
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: bold;
-  color: #374151;
-  cursor: pointer;
-  z-index: 10;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-  backdrop-filter: blur(5px);
+  gap: 6px;
+  padding-top: 4px;
 }
 
-.scroll-button:hover {
+.scroll-dot {
+  width: 6px;
+  height: 6px;
+  background: #d1d5db;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.scroll-dot.active {
   background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-  transform: translateY(-50%) scale(1.1);
-}
-
-.scroll-left {
-  left: -12px;
-}
-
-.scroll-right {
-  right: -12px;
+  transform: scale(1.2);
 }
 
 /* Input area */
 .input-container {
-  padding: 16px;
+  padding: 12px 16px;
   border-top: 1px solid #e5e7eb;
   background: white;
   flex-shrink: 0;
@@ -966,27 +1110,26 @@ Como **administrador**, puedo ayudarte con:
 .input-wrapper {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   position: relative;
 }
 
 .message-input {
   flex: 1;
-  padding: 14px 16px;
+  padding: 12px 16px;
   padding-right: 50px;
-  border: 2px solid #d1d5db;
-  border-radius: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
   font-size: 14px;
   outline: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s;
   background: white;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
 }
 
 .message-input:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .message-input:disabled {
@@ -998,14 +1141,14 @@ Como **administrador**, puedo ayudarte con:
 .send-button {
   position: absolute;
   right: 8px;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  width: 36px;
+  height: 36px;
+  background: #3b82f6;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   color: white;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1013,9 +1156,8 @@ Como **administrador**, puedo ayudarte con:
 }
 
 .send-button:hover:not(:disabled) {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+  background: #2563eb;
+  transform: scale(1.05);
 }
 
 .send-button:active:not(:disabled) {
@@ -1030,19 +1172,13 @@ Como **administrador**, puedo ayudarte con:
 }
 
 .send-icon {
-  width: 20px;
-  height: 20px;
-  transform: rotate(0deg);
-  transition: transform 0.2s ease;
-}
-
-.send-button:hover:not(:disabled) .send-icon {
-  transform: rotate(-5deg);
+  width: 18px;
+  height: 18px;
 }
 
 .loading-spinner {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border: 2px solid white;
   border-top: 2px solid transparent;
   border-radius: 50%;
@@ -1059,24 +1195,23 @@ Como **administrador**, puedo ayudarte con:
   color: #6b7280;
   text-align: right;
   margin-top: 6px;
-  font-weight: 500;
   opacity: 0.7;
 }
 
 /* Animaciones */
 .chat-window-enter-active,
 .chat-window-leave-active {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .chat-window-enter-from {
   opacity: 0;
-  transform: translateY(30px) scale(0.9);
+  transform: translateY(20px) scale(0.95);
 }
 
 .chat-window-leave-to {
   opacity: 0;
-  transform: translateY(30px) scale(0.9);
+  transform: translateY(20px) scale(0.95);
 }
 
 /* Scroll personalizado */
@@ -1113,8 +1248,8 @@ Como **administrador**, puedo ayudarte con:
   }
   
   .chatbot-window {
-    width: calc(100vw - 40px);
-    max-width: 380px;
+    width: calc(100vw - 30px);
+    max-width: 420px;
     left: 15px;
     bottom: 80px;
     height: 500px;
@@ -1127,29 +1262,36 @@ Como **administrador**, puedo ayudarte con:
   }
   
   .message-bubble {
-    max-width: 88%;
-    padding: 12px 16px;
+    max-width: 90%;
+    padding: 10px 14px;
   }
   
   .quick-button {
-    padding: 9px 14px;
+    padding: 8px 12px;
     font-size: 11px;
+    min-height: 36px;
+  }
+  
+  .scroll-arrow {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
   }
   
   .message-input {
-    padding: 12px 14px;
+    padding: 10px 14px;
     padding-right: 46px;
     font-size: 13px;
   }
   
   .send-button {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     right: 6px;
   }
 }
 
-/* Dark mode support */
+/* Dark mode */
 @media (prefers-color-scheme: dark) {
   .fixed-help-message {
     background: linear-gradient(135deg, #1e40af, #1e3a8a);
@@ -1175,7 +1317,7 @@ Como **administrador**, puedo ayudarte con:
   }
   
   .chatbot-messages {
-    background: linear-gradient(to bottom, #111827, #1f2937);
+    background: #111827;
   }
   
   .message-bot {
@@ -1198,6 +1340,17 @@ Como **administrador**, puedo ayudarte con:
     border-color: #374151;
   }
   
+  .scroll-arrow {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .scroll-arrow:hover:not(:disabled) {
+    background: #3b82f6;
+    border-color: #3b82f6;
+  }
+  
   .quick-button {
     background: #374151;
     border-color: #4b5563;
@@ -1209,10 +1362,12 @@ Como **administrador**, puedo ayudarte con:
     border-color: #3b82f6;
   }
   
-  .scroll-button {
-    background: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
+  .scroll-dot {
+    background: #4b5563;
+  }
+  
+  .scroll-dot.active {
+    background: #3b82f6;
   }
   
   .input-container {
@@ -1228,7 +1383,7 @@ Como **administrador**, puedo ayudarte con:
   
   .message-input:focus {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
   }
   
   .char-counter {

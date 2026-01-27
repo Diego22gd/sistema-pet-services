@@ -44,6 +44,13 @@ const routes = [
     name: 'UserCommerces', // <-- NUEVA RUTA PARA USUARIOS
     component: UserCommerces
   },
+  // En tu router.js
+  {
+  path: '/dashboard',
+  name: 'UserDashboard',
+  component: () => import('@/views/UserDashboard.vue'),
+  meta: { requiresAuth: true }
+  },
 
   // Rutas administrador
   { path: '/admin', name: 'AdminDashboard', component: AdminDashboard },

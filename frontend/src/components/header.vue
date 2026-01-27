@@ -23,6 +23,22 @@
 
         <!-- Navegación para desktop -->
         <nav class="hidden md:flex items-center space-x-2">
+          <!-- DASHBOARD - AGREGADO PRIMERO -->
+          <router-link 
+            to="/dashboard"
+            class="text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-2 rounded-lg hover:bg-emerald-700 cursor-pointer flex items-center space-x-2 group relative"
+            :class="{
+              'bg-emerald-700': $route.path === '/dashboard' || $route.path.startsWith('/dashboard'),
+              'border-b-2 border-emerald-300': $route.path === '/dashboard' || $route.path.startsWith('/dashboard')
+            }"
+          >
+            <span class="text-xl">🏠</span>
+            <span>Dashboard</span>
+            <span class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-pulse" 
+                  v-if="!($route.path === '/dashboard' || $route.path.startsWith('/dashboard'))">
+            </span>
+          </router-link>
+
           <!-- COMERCIOS -->
           <router-link 
             to="/commerces"
@@ -98,6 +114,24 @@
         class="md:hidden bg-emerald-700/95 backdrop-blur-sm rounded-lg mt-2 py-4 px-4 animate-slideDown shadow-xl border border-emerald-500/20"
       >
         <div class="space-y-2">
+          <!-- DASHBOARD móvil - AGREGADO PRIMERO -->
+          <router-link 
+            to="/dashboard"
+            @click="closeMobileMenu"
+            class="block text-white hover:text-emerald-100 transition-all duration-300 font-medium px-4 py-3 rounded-lg hover:bg-emerald-600 cursor-pointer flex items-center space-x-3 group border-l-4 border-emerald-300 pl-3"
+            :class="{
+              'bg-emerald-600': $route.path === '/dashboard' || $route.path.startsWith('/dashboard')
+            }"
+          >
+            <span class="text-xl">🏠</span>
+            <span class="flex-1 font-semibold">Dashboard</span>
+            <span class="text-emerald-300">🏠</span>
+            <span class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse" 
+                  v-if="!($route.path === '/dashboard' || $route.path.startsWith('/dashboard'))">
+            </span>
+            <span class="text-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+          </router-link>
+
           <!-- COMERCIOS móvil -->
           <router-link 
             to="/commerces"
@@ -317,6 +351,12 @@ nav a:hover, nav button:hover {
   animation: pulseDot 2s ease-in-out infinite;
 }
 
+/* Punto animado para Dashboard */
+.bg-emerald-400 {
+  background-color: #34d399;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
 @keyframes pulseDot {
   0%, 100% {
     opacity: 1;
@@ -386,6 +426,13 @@ header {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* Efecto especial para el enlace de Dashboard */
+.border-l-4.border-emerald-300 {
+  border-left-color: #6ee7b7 !important;
+  border-left-width: 4px;
+  background: linear-gradient(to right, rgba(110, 231, 183, 0.1), transparent);
 }
 
 /* Efecto especial para el enlace de Comercios */
@@ -509,31 +556,57 @@ button:focus-visible {
   opacity: 0;
 }
 
-/* Efecto de brillo para el enlace de Comercios */
-nav a[href="/commerces"] {
+/* Efecto de brillo para el enlace de Dashboard */
+nav a[href="/dashboard"] {
   position: relative;
-  animation: subtleGlow 3s ease-in-out infinite;
+  animation: subtleGlowHome 3s ease-in-out infinite;
 }
 
-@keyframes subtleGlow {
+@keyframes subtleGlowHome {
   0%, 100% {
     box-shadow: 0 0 0 rgba(255, 255, 255, 0);
   }
   50% {
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 10px rgba(110, 231, 183, 0.3);
+  }
+}
+
+/* Efecto de brillo para el enlace de Comercios */
+nav a[href="/commerces"] {
+  position: relative;
+  animation: subtleGlowCommerces 3s ease-in-out infinite;
+}
+
+@keyframes subtleGlowCommerces {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
   }
 }
 
 /* Ajuste para el punto animado en móvil */
 @media (max-width: 768px) {
+  nav a[href="/dashboard"]::before,
   nav a[href="/commerces"]::before {
     display: none;
   }
   
-  .bg-amber-400 {
+  .bg-amber-400,
+  .bg-emerald-400 {
     width: 6px;
     height: 6px;
   }
+}
+
+/* Efecto de partículas para hover en Dashboard */
+nav a[href="/dashboard"]:hover::after {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0.8) 0%, 
+    rgba(110,231,183,0.8) 50%, 
+    rgba(255,255,255,0.8) 100%);
+  height: 4px;
 }
 
 /* Efecto de partículas para hover en Comercios */
@@ -572,9 +645,9 @@ body.menu-open {
 
 .md\\:hidden a:hover,
 .md\\:hidden a.bg-emerald-600 {
-  border-left-color: #fbbf24;
+  border-left-color: #6ee7b7;
   padding-left: calc(1rem - 3px);
-  background: linear-gradient(to right, rgba(251, 191, 36, 0.1), rgba(5, 150, 105, 0.6));
+  background: linear-gradient(to right, rgba(110, 231, 183, 0.1), rgba(5, 150, 105, 0.6));
 }
 
 /* Efecto de overlay para el menú móvil */
@@ -606,5 +679,10 @@ body.menu-open {
 nav a, nav button {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+/* Estilo especial para Dashboard en menú móvil */
+.md\\:hidden a[href="/dashboard"] {
+  background: linear-gradient(to right, rgba(110, 231, 183, 0.05), rgba(5, 150, 105, 0.3));
 }
 </style>

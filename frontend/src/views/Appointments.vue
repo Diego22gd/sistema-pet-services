@@ -187,10 +187,10 @@
                 <div class="card-actions justify-between items-center mt-auto pt-4 border-t border-gray-200">
                   <button 
                     @click="viewDetails(appointment)"
-                    class="btn-modern-outline group"
+                    class="btn-modern-outline group mb-4"
                   >
                     <span>Ver detalles</span>
-                    <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                    <span class="ml-2  group-hover:translate-x-1 transition-transform duration-300">→</span>
                   </button>
                   
                   <div v-if="isActiveAppointment(appointment)" class="flex gap-2">

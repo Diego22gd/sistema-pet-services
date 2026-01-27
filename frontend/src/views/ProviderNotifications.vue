@@ -9,7 +9,7 @@
       
       <div class="flex items-center space-x-4">
         <!-- Contador de no leídas -->
-        <div class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg font-semibold">
+        <div class="notification-count">
           {{ unreadCount }} sin leer
         </div>
         
@@ -17,7 +17,7 @@
         <button 
           v-if="unreadCount > 0"
           @click="markAllAsRead"
-          class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+          class="mark-all-btn"
           :disabled="isMarkingAll"
         >
           <span v-if="isMarkingAll">Procesando...</span>
@@ -33,10 +33,8 @@
           v-for="filter in filters"
           :key="filter.value"
           @click="activeFilter = filter.value"
-          class="px-4 py-2 rounded-lg transition-colors duration-200"
-          :class="activeFilter === filter.value 
-            ? 'bg-emerald-600 text-white' 
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+          class="filter-btn"
+          :class="{ 'filter-btn-active': activeFilter === filter.value }"
         >
           {{ filter.label }}
         </button>
@@ -44,7 +42,7 @@
       
       <!-- Estado de carga -->
       <div v-if="isLoading" class="mt-6 text-center">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        <div class="loading-spinner"></div>
         <p class="text-gray-600 mt-2">Cargando notificaciones...</p>
       </div>
     </div>
@@ -53,71 +51,71 @@
     <div class="px-6 max-w-7xl mx-auto pb-10">
       <!-- Sin notificaciones -->
       <div v-if="!isLoading && filteredNotifications.length === 0" 
-           class="text-center py-12 bg-white rounded-2xl shadow">
-        <div class="text-6xl mb-4">🔔</div>
-        <h3 class="text-xl font-semibold text-gray-700 mb-2">No hay notificaciones</h3>
-        <p class="text-gray-500">¡Estás al día!</p>
+           class="empty-notifications">
+        <div class="empty-icon">🔔</div>
+        <h3 class="empty-title">No hay notificaciones</h3>
+        <p class="empty-text">¡Estás al día!</p>
       </div>
 
       <!-- Lista de notificaciones -->
-      <div v-else class="space-y-4">
+      <div v-else class="notifications-list">
         <div 
           v-for="notification in filteredNotifications" 
           :key="notification._id"
-          class="bg-white rounded-2xl shadow-md p-6 transition-all duration-200 hover:shadow-lg border-l-4"
-          :class="notification.read ? 'border-l-gray-300' : 'border-l-emerald-500'"
+          class="notification-card"
+          :class="{ 'notification-unread': !notification.read }"
         >
-          <div class="flex items-start justify-between">
+          <div class="notification-content">
             <!-- Icono y contenido -->
-            <div class="flex items-start space-x-4 flex-1">
+            <div class="notification-icon-content">
               <!-- Icono según tipo -->
-              <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+              <div class="notification-icon"
                    :class="getNotificationIconClass(notification.type)">
                 {{ getNotificationIcon(notification.type) }}
               </div>
               
               <!-- Contenido -->
-              <div class="flex-1">
-                <div class="flex items-center justify-between mb-2">
-                  <h3 class="font-bold text-lg text-neutral-dark">{{ notification.title }}</h3>
-                  <span class="text-sm text-gray-500">{{ notification.date }}</span>
+              <div class="notification-details">
+                <div class="notification-header">
+                  <h3 class="notification-title">{{ notification.title }}</h3>
+                  <span class="notification-date">{{ notification.date }}</span>
                 </div>
                 
-                <p class="text-gray-700 mb-4">{{ notification.message }}</p>
+                <p class="notification-message">{{ notification.message }}</p>
                 
                 <!-- Información de la cita si existe -->
                 <div v-if="notification.appointmentId" 
-                     class="bg-gray-50 rounded-lg p-4 mb-4">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div class="flex items-center space-x-2">
-                      <span class="text-gray-500">📅</span>
+                     class="appointment-info">
+                  <div class="appointment-grid">
+                    <div class="appointment-item">
+                      <span class="appointment-icon">📅</span>
                       <div>
-                        <p class="text-sm text-gray-600">Fecha y Hora</p>
-                        <p class="font-medium">{{ formatDateTime(notification.appointmentId) }}</p>
+                        <p class="appointment-label">Fecha y Hora</p>
+                        <p class="appointment-value">{{ formatDateTime(notification.appointmentId) }}</p>
                       </div>
                     </div>
                     
-                    <div class="flex items-center space-x-2">
-                      <span class="text-gray-500">💼</span>
+                    <div class="appointment-item">
+                      <span class="appointment-icon">💼</span>
                       <div>
-                        <p class="text-sm text-gray-600">Servicio</p>
-                        <p class="font-medium">{{ notification.appointmentId.serviceName }}</p>
+                        <p class="appointment-label">Servicio</p>
+                        <p class="appointment-value">{{ notification.appointmentId.serviceName }}</p>
                       </div>
                     </div>
                     
-                    <div class="flex items-center space-x-2">
-                      <span class="text-gray-500">👤</span>
+                    <div class="appointment-item">
+                      <span class="appointment-icon">👤</span>
                       <div>
-                        <p class="text-sm text-gray-600">Cliente</p>
-                        <p class="font-medium">{{ notification.userId?.name || 'Cliente' }}</p>
+                        <p class="appointment-label">Cliente</p>
+                        <p class="appointment-value">{{ notification.userId?.name || 'Cliente' }}</p>
                       </div>
                     </div>
                     
-                    <div class="flex items-center space-x-2">
-                      <span class="text-gray-500">📋</span>
+                    <div class="appointment-item">
+                      <span class="appointment-icon">📋</span>
                       <div>
-                        <p class="text-sm text-gray-600">Estado</p>
-                        <span class="px-2 py-1 rounded text-xs font-medium"
+                        <p class="appointment-label">Estado</p>
+                        <span class="status-badge"
                               :class="getStatusClass(notification.appointmentId.status)">
                           {{ translateStatus(notification.appointmentId.status) }}
                         </span>
@@ -129,7 +127,7 @@
                   <button 
                     v-if="notification.appointmentId"
                     @click="viewAppointment(notification.appointmentId._id)"
-                    class="mt-3 text-emerald-600 hover:text-emerald-700 font-medium flex items-center space-x-1"
+                    class="view-appointment-btn"
                   >
                     <span>Ver detalles de la cita</span>
                     <span>→</span>
@@ -138,26 +136,24 @@
                 
                 <!-- Metadata adicional -->
                 <div v-if="notification.metadata && Object.keys(notification.metadata).length > 0"
-                     class="bg-blue-50 rounded-lg p-3 text-sm text-blue-700">
+                     class="metadata-container">
                   <div v-for="(value, key) in notification.metadata" 
                        :key="key"
-                       class="mb-1 last:mb-0">
-                    <span class="font-medium">{{ formatKey(key) }}:</span>
-                    <span class="ml-2">{{ value }}</span>
+                       class="metadata-item">
+                    <span class="metadata-key">{{ formatKey(key) }}:</span>
+                    <span class="metadata-value">{{ value }}</span>
                   </div>
                 </div>
               </div>
             </div>
             
             <!-- Botones de acción -->
-            <div class="flex flex-col items-center space-y-2 ml-4">
+            <div class="notification-actions">
               <!-- Botón marcar como leída/no leída -->
               <button 
                 @click="toggleReadStatus(notification)"
-                class="w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200"
-                :class="notification.read 
-                  ? 'bg-gray-200 text-gray-600 hover:bg-gray-300' 
-                  : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'"
+                class="read-toggle-btn"
+                :class="{ 'read': notification.read }"
                 :title="notification.read ? 'Marcar como no leída' : 'Marcar como leída'"
               >
                 {{ notification.read ? '👁️' : '👁️‍🗨️' }}
@@ -165,24 +161,24 @@
               
               <!-- Indicador de no leído -->
               <div v-if="!notification.read" 
-                   class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                   class="unread-indicator"></div>
             </div>
           </div>
           
           <!-- Tipo y hora -->
-          <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-            <span class="text-sm text-gray-500 capitalize">{{ translateNotificationType(notification.type) }}</span>
-            <span class="text-sm text-gray-500">{{ formatExactTime(notification.createdAt) }}</span>
+          <div class="notification-footer">
+            <span class="notification-type">{{ translateNotificationType(notification.type) }}</span>
+            <span class="notification-time">{{ formatExactTime(notification.createdAt) }}</span>
           </div>
         </div>
       </div>
       
       <!-- Paginación -->
       <div v-if="notifications.length > 10" 
-           class="mt-8 flex justify-center items-center space-x-4">
+           class="pagination-container">
         <button 
           @click="loadMore"
-          class="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
+          class="load-more-btn"
         >
           Cargar más
         </button>
@@ -373,14 +369,14 @@ export default {
     
     getNotificationIconClass(type) {
       const classes = {
-        'appointment_created': 'bg-green-100 text-green-600',
-        'appointment_cancelled': 'bg-red-100 text-red-600',
-        'appointment_rescheduled': 'bg-yellow-100 text-yellow-600',
-        'appointment_updated': 'bg-blue-100 text-blue-600',
-        'system': 'bg-gray-100 text-gray-600',
-        'info': 'bg-blue-100 text-blue-600',
-        'warning': 'bg-orange-100 text-orange-600',
-        'success': 'bg-green-100 text-green-600'
+        'appointment_created': 'notification-icon-green',
+        'appointment_cancelled': 'notification-icon-red',
+        'appointment_rescheduled': 'notification-icon-yellow',
+        'appointment_updated': 'notification-icon-blue',
+        'system': 'notification-icon-gray',
+        'info': 'notification-icon-blue',
+        'warning': 'notification-icon-orange',
+        'success': 'notification-icon-green'
       };
       
       if (type.includes('appointment')) {
@@ -390,7 +386,7 @@ export default {
         if (type.includes('updated')) return classes.appointment_updated;
       }
       
-      return classes[type] || 'bg-gray-100 text-gray-600';
+      return classes[type] || 'notification-icon-gray';
     },
     
     formatDateTime(appointment) {
@@ -468,55 +464,487 @@ export default {
     
     getStatusClass(status) {
       const classes = {
-        'pending': 'bg-yellow-100 text-yellow-800',
-        'confirmed': 'bg-green-100 text-green-800',
-        'cancelled': 'bg-red-100 text-red-800',
-        'completed': 'bg-blue-100 text-blue-800',
-        'rescheduled': 'bg-purple-100 text-purple-800',
-        'in_progress': 'bg-orange-100 text-orange-800',
-        'awaiting_payment': 'bg-amber-100 text-amber-800',
-        'paid': 'bg-emerald-100 text-emerald-800'
+        'pending': 'status-badge-yellow',
+        'confirmed': 'status-badge-green',
+        'cancelled': 'status-badge-red',
+        'completed': 'status-badge-blue',
+        'rescheduled': 'status-badge-purple',
+        'in_progress': 'status-badge-orange',
+        'awaiting_payment': 'status-badge-amber',
+        'paid': 'status-badge-emerald'
       };
-      return classes[status?.toLowerCase()] || 'bg-gray-100 text-gray-800';
+      return classes[status?.toLowerCase()] || 'status-badge-gray';
     }
   }
 };
 </script>
 
 <style scoped>
-/* Animaciones */
-button {
-  transition: all 0.2s ease;
+/* Estilos personalizados para garantizar que se apliquen */
+
+/* Contador de notificaciones */
+.notification-count {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  font-weight: 600 !important;
+  border: none !important;
 }
 
-/* Estilos para scrollbar */
+/* Botón marcar todas como leídas */
+.mark-all-btn {
+  background-color: #10b981 !important;
+  color: white !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  font-weight: 500 !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.mark-all-btn:hover:not(:disabled) {
+  background-color: #059669 !important;
+}
+
+.mark-all-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Botones de filtro */
+.filter-btn {
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+  cursor: pointer !important;
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+}
+
+.filter-btn:hover {
+  background-color: #e5e7eb !important;
+}
+
+.filter-btn-active {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.filter-btn-active:hover {
+  background-color: #059669 !important;
+}
+
+/* Spinner de carga */
+.loading-spinner {
+  display: inline-block !important;
+  animation: spin 1s linear infinite !important;
+  border-radius: 50% !important;
+  height: 2rem !important;
+  width: 2rem !important;
+  border-bottom: 2px solid #10b981 !important;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Estado vacío */
+.empty-notifications {
+  text-align: center !important;
+  padding: 3rem 1rem !important;
+  background-color: white !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.empty-icon {
+  font-size: 3rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.empty-title {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.empty-text {
+  color: #6b7280 !important;
+}
+
+/* Lista de notificaciones */
+.notifications-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+}
+
+.notification-card {
+  background-color: white !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  padding: 1.5rem !important;
+  transition: all 0.2s ease !important;
+  border-left: 4px solid #d1d5db !important;
+}
+
+.notification-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.notification-unread {
+  border-left-color: #10b981 !important;
+}
+
+.notification-content {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Icono de notificación */
+.notification-icon-content {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 1rem !important;
+  flex: 1 !important;
+}
+
+.notification-icon {
+  flex-shrink: 0 !important;
+  width: 3rem !important;
+  height: 3rem !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.5rem !important;
+}
+
+.notification-icon-green {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+.notification-icon-red {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.notification-icon-yellow {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+.notification-icon-blue {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+.notification-icon-gray {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+.notification-icon-orange {
+  background-color: #ffedd5 !important;
+  color: #9a3412 !important;
+}
+
+/* Detalles de notificación */
+.notification-details {
+  flex: 1 !important;
+}
+
+.notification-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.notification-title {
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+}
+
+.notification-date {
+  font-size: 0.875rem !important;
+  color: #6b7280 !important;
+}
+
+.notification-message {
+  color: #374151 !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Información de cita */
+.appointment-info {
+  background-color: #f9fafb !important;
+  border-radius: 0.5rem !important;
+  padding: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.appointment-grid {
+  display: grid !important;
+  grid-template-columns: repeat(1, 1fr) !important;
+  gap: 0.75rem !important;
+}
+
+@media (min-width: 768px) {
+  .appointment-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+.appointment-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.appointment-icon {
+  color: #6b7280 !important;
+}
+
+.appointment-label {
+  font-size: 0.875rem !important;
+  color: #6b7280 !important;
+}
+
+.appointment-value {
+  font-weight: 500 !important;
+  color: #1f2937 !important;
+}
+
+.view-appointment-btn {
+  color: #10b981 !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  margin-top: 0.75rem !important;
+  cursor: pointer !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.view-appointment-btn:hover {
+  color: #059669 !important;
+}
+
+/* Badges de estado */
+.status-badge {
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 9999px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+}
+
+.status-badge-yellow {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+.status-badge-green {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+.status-badge-red {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.status-badge-blue {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+.status-badge-purple {
+  background-color: #e9d5ff !important;
+  color: #6b21a8 !important;
+}
+
+.status-badge-orange {
+  background-color: #fed7aa !important;
+  color: #9a3412 !important;
+}
+
+.status-badge-amber {
+  background-color: #fde68a !important;
+  color: #92400e !important;
+}
+
+.status-badge-emerald {
+  background-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+
+.status-badge-gray {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+/* Metadata */
+.metadata-container {
+  background-color: #dbeafe !important;
+  border-radius: 0.5rem !important;
+  padding: 0.75rem !important;
+  font-size: 0.875rem !important;
+  color: #1e40af !important;
+}
+
+.metadata-item {
+  margin-bottom: 0.25rem !important;
+}
+
+.metadata-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+.metadata-key {
+  font-weight: 600 !important;
+}
+
+.metadata-value {
+  margin-left: 0.5rem !important;
+}
+
+/* Acciones de notificación */
+.notification-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-left: 1rem !important;
+}
+
+.read-toggle-btn {
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 0.2s ease !important;
+  border: none !important;
+  cursor: pointer !important;
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+.read-toggle-btn.read {
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
+}
+
+.read-toggle-btn:hover {
+  background-color: #a7f3d0 !important;
+}
+
+.read-toggle-btn.read:hover {
+  background-color: #e5e7eb !important;
+}
+
+.unread-indicator {
+  width: 0.75rem !important;
+  height: 0.75rem !important;
+  border-radius: 50% !important;
+  background-color: #10b981 !important;
+}
+
+/* Footer de notificación */
+.notification-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-top: 1rem !important;
+  border-top: 1px solid #f3f4f6 !important;
+}
+
+.notification-type {
+  font-size: 0.875rem !important;
+  color: #6b7280 !important;
+  text-transform: capitalize !important;
+}
+
+.notification-time {
+  font-size: 0.875rem !important;
+  color: #6b7280 !important;
+}
+
+/* Paginación */
+.pagination-container {
+  margin-top: 2rem !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+.load-more-btn {
+  padding: 0.5rem 1.5rem !important;
+  background-color: #10b981 !important;
+  color: white !important;
+  border-radius: 0.5rem !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+  font-weight: 500 !important;
+}
+
+.load-more-btn:hover {
+  background-color: #059669 !important;
+}
+
+/* Scrollbar personalizado */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 8px !important;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  background: #f1f1f1 !important;
+  border-radius: 4px !important;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #10b981;
-  border-radius: 4px;
+  background: #10b981 !important;
+  border-radius: 4px !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #059669;
+  background: #059669 !important;
 }
 
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 640px) {
   .flex-col {
-    flex-direction: column;
+    flex-direction: column !important;
   }
   
-  .space-x-4 {
-    margin-left: 0;
-    margin-top: 1rem;
+  .notification-icon-content {
+    flex-direction: column !important;
+  }
+  
+  .notification-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.25rem !important;
+  }
+  
+  .appointment-grid {
+    grid-template-columns: repeat(1, 1fr) !important;
   }
 }
 </style>

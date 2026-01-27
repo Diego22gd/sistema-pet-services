@@ -1,14 +1,14 @@
 <template>
   <AdminLayout>
-    <!-- Header con notificaciones -->
+    <!-- Encabezado con notificaciones -->
     <div class="flex justify-between items-center px-6 pt-16 pb-6 max-w-7xl mx-auto mt-8">
       <div>
-        <h1 class="text-3xl font-extrabold text-neutral-dark">Admin Dashboard</h1>
-        <p class="text-neutral-medium mt-2">Welcome back, Administrator</p>
+        <h1 class="text-3xl font-extrabold text-neutral-dark">Panel de Administración</h1>
+        <p class="text-neutral-medium mt-2">Bienvenido de nuevo, Administrador</p>
       </div>
     </div>
 
-    <!-- Grid con 6 cards para admin -->
+    <!-- Grid con 6 tarjetas para administrador -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-6 max-w-7xl mx-auto pb-10">
       <div 
         v-for="card in cards" 
@@ -24,12 +24,12 @@
 
     <!-- Sección de estadísticas rápidas -->
     <div class="px-6 max-w-7xl mx-auto mb-12">
-      <h2 class="text-2xl font-bold text-neutral-dark mb-6">Quick Stats</h2>
+      <h2 class="text-2xl font-bold text-neutral-dark mb-6">Estadísticas Rápidas</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white shadow-lg rounded-2xl p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-neutral-medium text-sm">Total Users</p>
+              <p class="text-neutral-medium text-sm">Total de Usuarios</p>
               <p class="text-3xl font-bold text-emerald-600 mt-2">{{ stats.totalUsers }}</p>
             </div>
             <div class="text-4xl">👥</div>
@@ -39,7 +39,7 @@
         <div class="bg-white shadow-lg rounded-2xl p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-neutral-medium text-sm">Active Providers</p>
+              <p class="text-neutral-medium text-sm">Proveedores Activos</p>
               <p class="text-3xl font-bold text-emerald-600 mt-2">{{ stats.activeProviders }}</p>
             </div>
             <div class="text-4xl">👨‍💼</div>
@@ -49,7 +49,7 @@
         <div class="bg-white shadow-lg rounded-2xl p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-neutral-medium text-sm">Today's Appointments</p>
+              <p class="text-neutral-medium text-sm">Citas de Hoy</p>
               <p class="text-3xl font-bold text-emerald-600 mt-2">{{ stats.todayAppointments }}</p>
             </div>
             <div class="text-4xl">📅</div>
@@ -59,7 +59,7 @@
         <div class="bg-white shadow-lg rounded-2xl p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-neutral-medium text-sm">Pending Reviews</p>
+              <p class="text-neutral-medium text-sm">Reseñas Pendientes</p>
               <p class="text-3xl font-bold text-emerald-600 mt-2">{{ stats.pendingReviews }}</p>
             </div>
             <div class="text-4xl">⭐</div>
@@ -86,38 +86,38 @@ export default {
       },
       cards: [
         { 
-          title: "Users Management", 
-          description: "Manage all system users", 
+          title: "Gestión de Usuarios", 
+          description: "Administra todos los usuarios del sistema", 
           route: "/admin/users", 
           icon: "👥" 
         },
         { 
-          title: "Providers", 
-          description: "Manage service providers", 
+          title: "Proveedores", 
+          description: "Gestiona los proveedores de servicios", 
           route: "/admin/providers", 
           icon: "👨‍💼" 
         },
         { 
-          title: "Clients", 
-          description: "View and manage clients", 
+          title: "Clientes", 
+          description: "Visualiza y administra clientes", 
           route: "/admin/clients", 
           icon: "👤" 
         },
         { 
-          title: "Commerces", 
-          description: "Manage business listings", 
+          title: "Comercios", 
+          description: "Administra los listados de negocios", 
           route: "/admin/commerces", 
           icon: "🏬" 
         },
         { 
-          title: "Appointments", 
-          description: "View all appointments", 
+          title: "Citas", 
+          description: "Visualiza todas las citas", 
           route: "/admin/appointments", 
           icon: "📅" 
         },
         { 
-          title: "Settings", 
-          description: "System configuration", 
+          title: "Configuración", 
+          description: "Configuración del sistema", 
           route: "/admin/settings", 
           icon: "⚙️" 
         }
@@ -133,13 +133,13 @@ export default {
 </script>
 
 <style scoped>
-/* Animación suave al hover para las cards */
+/* Animación suave al pasar el cursor sobre las tarjetas */
 div:hover .text-5xl {
   transform: scale(1.1);
   transition: transform 0.3s ease;
 }
 
-/* Colores personalizados para admin */
+/* Colores personalizados para administración */
 .bg-emerald-600 {
   background-color: #059669;
 }
@@ -160,7 +160,7 @@ div:hover .text-5xl {
   color: #737373;
 }
 
-/* Efecto hover para las cards de estadísticas */
+/* Efecto hover para las tarjetas de estadísticas */
 .bg-white {
   transition: all 0.3s ease;
 }
@@ -170,7 +170,7 @@ div:hover .text-5xl {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* Responsive adjustments */
+/* Ajustes responsivos */
 @media (max-width: 640px) {
   .grid-cols-2 {
     grid-template-columns: repeat(1, minmax(0, 1fr));

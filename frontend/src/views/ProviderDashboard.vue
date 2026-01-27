@@ -1,7 +1,7 @@
 <template>
   <ProviderLayout>
-    <!-- Encabezado con notificaciones -->
-    <div class="flex justify-between items-center px-6 pt-8 pb-6 max-w-7xl mx-auto">
+    <!-- Encabezado con notificaciones - Añadido margen superior -->
+    <div class="flex justify-between items-center px-6 pt-16 pb-6 max-w-7xl mx-auto mt-8">
       <h1 class="text-3xl font-extrabold text-neutral-dark">Panel del Proveedor</h1>
       
       <!-- Botón de notificaciones -->
@@ -19,14 +19,14 @@
 
     <!-- Grid con 4 tarjetas -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-6 max-w-7xl mx-auto pb-10">
-      <!-- Tarjeta 1: Mis Servicios -->
+      <!-- Tarjeta 1: Comercios -->
       <div 
         class="bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center text-center transform hover:-translate-y-2 hover:shadow-xl transition cursor-pointer"
-        @click="navigate('/provider/services')"
+        @click="navigate('/provider/commerces')"
       >
-        <div class="text-5xl mb-4">🛠️</div>
-        <h2 class="font-bold text-xl text-neutral-dark mb-2">Mis Servicios</h2>
-        <p class="text-neutral-medium text-sm">Administra y edita los servicios que ofreces</p>
+        <div class="text-5xl mb-4">🏪</div>
+        <h2 class="font-bold text-xl text-neutral-dark mb-2">Mis Comercios</h2>
+        <p class="text-neutral-medium text-sm">Administra los comercios que manejas</p>
       </div>
 
       <!-- Tarjeta 2: Citas Programadas -->
@@ -75,16 +75,16 @@ export default {
       unreadNotifications: 3,
       cards: [
         { 
+          title: "Commerces", 
+          description: "Manage your commerce locations", 
+          route: "/provider/commerces", 
+          icon: "🏪" 
+        },
+        { 
           title: "Profile", 
           description: "Edit your business information", 
           route: "/provider/profile", 
           icon: "👤" 
-        },
-        { 
-          title: "Services", 
-          description: "Manage the services you offer", 
-          route: "/provider/services", 
-          icon: "💼" 
         },
         { 
           title: "Appointments", 

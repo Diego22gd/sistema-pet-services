@@ -233,18 +233,18 @@
                   @error="handleImageError"
                 />
               </div>
-              <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                <div class="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md">
+              <div class="absolute -bottom-2 left-1/2  transform -translate-x-1/2">
+                <div class="bg-emerald-500 text-black  px-3 py-1 rounded-full text-xs font-semibold shadow-md ">
                   {{ form.type || 'Seleccionar tipo' }}
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="space-y-5">
+          <div class="space-y-5 mt-8">
             <!-- Campo Nombre -->
-            <div class="form-group">
-              <label class="form-label">
+            <div class="form-group  ">
+              <label class="form-label  ">
                 <span class="form-icon">🐕</span>
                 Nombre de la mascota
               </label>
@@ -314,28 +314,9 @@
 
             <!-- Campo Imagen -->
             <div class="form-group">
-              <label class="form-label">
-                <span class="form-icon">📷</span>
-                URL de la foto (opcional)
-              </label>
-              <div class="relative">
-                <input 
-                  type="text" 
-                  v-model="form.image" 
-                  placeholder="https://ejemplo.com/foto.jpg"
-                  class="form-input pl-10"
-                />
-                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  🌐
-                </div>
-              </div>
-              <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                <span>💡</span>
-                Deja vacío para usar una imagen predeterminada
-              </p>
             </div>
           </div>
-
+          
           <!-- Botones de acción -->
           <div class="modal-pet-actions">
             <button 

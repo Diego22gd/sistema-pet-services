@@ -17,15 +17,26 @@ const userSchema = new mongoose.Schema(
     },
     lastname: {
       type: String,
+      required: [true, "El apellido es obligatorio"],
       trim: true,
     },
     cedula: {
       type: String,
       trim: true,
       unique: false,
+      index: true,
+      sparse: true, // Permite valores null/undefined en índices únicos
+    },
+    rif: {
+      type: String,
+      trim: true,
+      unique: false,
+      index: true,
+      sparse: true,
     },
     phone: {
       type: String,
+      required: [true, "El teléfono es obligatorio"],
       trim: true,
     },
     birthdate: {
@@ -41,11 +52,12 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Por favor ingresa un email válido"],
     },
     password: {
       type: String,
       required: [true, "La contraseña es obligatoria"],
-      minlength: 6,
+      minlength: [8, "La contraseña debe tener al menos 8 caracteres"],
     },
 
     // PROVEEDOR
@@ -63,6 +75,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["client", "provider", "admin"],
       default: "client",
+      required: true,
     },
 
     // 🚀 **SUBSCRIPTION**
@@ -116,12 +129,45 @@ const userSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
       default: Date.now
+    },
+
+    // Verificación de email
+    emailVerified: {
+      type: Boolean,
+      default: false
+    },
+
+    // Token para verificación de email
+    emailVerificationToken: {
+      type: String
+    },
+
+    // Token para reset de contraseña
+    resetPasswordToken: {
+      type: String
+    },
+
+    resetPasswordExpires: {
+      type: Date
     }
   },
   {
     timestamps: true,
   }
 );
+
+// Índice compuesto para evitar duplicados en cédula/RIF por rol
+userSchema.index({ cedula: 1, role: 1 }, { 
+  unique: true, 
+  sparse: true,
+  partialFilterExpression: { cedula: { $exists: true, $ne: null } }
+});
+
+userSchema.index({ rif: 1, role: 1 }, { 
+  unique: true, 
+  sparse: true,
+  partialFilterExpression: { rif: { $exists: true, $ne: null } }
+});
 
 const User = mongoose.model("User", userSchema);
 

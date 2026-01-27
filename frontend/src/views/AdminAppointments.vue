@@ -1809,7 +1809,7 @@ export default {
 }
 
 .card-modern:hover {
-  border-color: #8b5cf6;
+  border-color: #24c77e;
   box-shadow: 
     0 20px 40px rgba(0, 0, 0, 0.1),
     0 0 0 1px #8b5cf6,
@@ -1818,7 +1818,7 @@ export default {
 
 /* Botón principal purple */
 .btn-primary-purple {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, #10b981, #0d9488);;
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 12px;
@@ -1837,7 +1837,7 @@ export default {
   box-shadow: 
     0 15px 35px rgba(139, 92, 246, 0.4),
     0 0 0 2px rgba(255, 255, 255, 0.2);
-  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  background: #10b981;
 }
 
 .btn-primary-purple:disabled {
@@ -1850,7 +1850,7 @@ export default {
   display: inline-flex !important;
   align-items: center !important;
   padding: 0.5rem 1rem !important;
-  background-color: #8b5cf6 !important;
+  background-color: #a69eba !important;
   color: white !important;
   font-size: 0.875rem !important;
   font-weight: 500 !important;

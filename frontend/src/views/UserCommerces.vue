@@ -1,800 +1,914 @@
 <template>
   <Layout>
-  <div class="bg-white min-h-screen">
-  
-    <!-- Chatbot Component -->
-    <Chatbot />
-    
-    <!-- Header (se mantiene igual) -->
-    <!-- Hero Section -->
-    <section class="relative bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden">
-      <!-- Patrones decorativos -->
-      <div class="absolute inset-0 opacity-5">
-        <div class="absolute top-10 left-10 w-32 h-32 rounded-full bg-emerald-300"></div>
-        <div class="absolute bottom-10 right-10 w-48 h-48 rounded-full bg-teal-300"></div>
-        <div class="absolute top-1/2 left-1/4 w-16 h-16 rounded-full bg-emerald-400"></div>
-      </div>
+    <div class="bg-white min-h-screen">
+      <!-- Chatbot Component -->
+      <Chatbot />
+      
+      <!-- Header (se mantiene igual) -->
+      <!-- Hero Section -->
+      <section class="relative bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden">
+        <!-- Patrones decorativos -->
+        <div class="absolute inset-0 opacity-5">
+          <div class="absolute top-10 left-10 w-32 h-32 rounded-full bg-emerald-300"></div>
+          <div class="absolute bottom-10 right-10 w-48 h-48 rounded-full bg-teal-300"></div>
+          <div class="absolute top-1/2 left-1/4 w-16 h-16 rounded-full bg-emerald-400"></div>
+        </div>
 
-      <div class="relative container mx-auto px-4 py-20 md:py-32">
-        <div class="text-center max-w-4xl mx-auto fade-up">
-          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg mb-8">
-            <span class="text-4xl">🏬</span>
-          </div>
-          <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Encuentra los mejores servicios para tu mascota
-          </h1>
-          <p class="text-xl text-gray-700 mb-10 max-w-3xl mx-auto">
-            Veterinarias, peluquerías, guarderías y más. Todo lo que necesitas para el cuidado de tu compañero peludo.
-          </p>
-          
-          <!-- Barra de búsqueda principal -->
-          <div class="bg-white rounded-2xl shadow-2xl p-2 mb-12">
-            <div class="flex flex-col md:flex-row gap-4">
-              <!-- Búsqueda por texto -->
-              <div class="relative flex-1">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <span class="text-emerald-500 text-xl">🔍</span>
+        <div class="relative container mx-auto px-4 py-20 md:py-32">
+          <div class="text-center max-w-4xl mx-auto fade-up">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg mb-8">
+              <span class="text-4xl">🏬</span>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              Encuentra los mejores servicios para tu mascota
+            </h1>
+            <p class="text-xl text-gray-700 mb-10 max-w-3xl mx-auto">
+              Veterinarias, peluquerías, guarderías y más. Todo lo que necesitas para el cuidado de tu compañero peludo.
+            </p>
+            
+            <!-- Barra de búsqueda principal -->
+            <div class="bg-white rounded-2xl shadow-2xl p-2 mb-12">
+              <div class="flex flex-col md:flex-row gap-4">
+                <!-- Búsqueda por texto -->
+                <div class="relative flex-1">
+                  <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                   
+                  </div>
+                  <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="¿Qué servicio necesitas para tu mascota?"
+                    class="w-full pl-12 pr-4 py-4 text-lg border-0 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    @keyup.enter="searchBusinesses"
+                  />
                 </div>
-                <input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="¿Qué servicio necesitas para tu mascota?"
-                  class="w-full pl-12 pr-4 py-4 text-lg border-0 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  @keyup.enter="searchBusinesses"
-                />
-              </div>
-              
-              <!-- Selector de categoría -->
-              <div class="relative flex-shrink-0">
-                <select 
-                  v-model="filters.category"
-                  @change="applyFilters"
-                  class="w-full md:w-64 appearance-none bg-white border border-gray-200 rounded-xl pl-4 pr-10 py-4 text-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer"
+                
+                <!-- Selector de categoría -->
+                <div class="relative flex-shrink-0">
+                  <select 
+                    v-model="filters.category"
+                    @change="applyFilters"
+                    class="w-full md:w-64 appearance-none bg-white border border-gray-200 rounded-xl pl-4 pr-10 py-4 text-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer"
+                  >
+                    <option value="">Todas las categorías</option>
+                    <option v-for="category in availableCategories" :key="category.value" :value="category.value">
+                      {{ category.icon }} {{ category.label }}
+                    </option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span class="text-gray-500">▼</span>
+                  </div>
+                </div>
+                
+                <!-- Botón de búsqueda -->
+                <button
+                  @click="searchBusinesses"
+                  class="btn-primary text-lg px-8 py-4 whitespace-nowrap"
+                  :disabled="loading"
                 >
-                  <option value="">Todas las categorías</option>
-                  <option v-for="category in availableCategories" :key="category.value" :value="category.value">
-                    {{ category.icon }} {{ category.label }}
-                  </option>
-                </select>
-                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <span class="text-gray-500">▼</span>
-                </div>
+                  <span v-if="!loading">🔍 Buscar</span>
+                  <span v-else class="flex items-center gap-2">
+                    <span class="animate-spin">⟳</span>
+                    Buscando...
+                  </span>
+                </button>
               </div>
-              
-              <!-- Botón de búsqueda -->
+            </div>
+            
+            <!-- Filtros rápidos -->
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
               <button
-                @click="searchBusinesses"
-                class="btn-primary text-lg px-8 py-4 whitespace-nowrap"
-                :disabled="loading"
+                v-for="filter in quickFilters"
+                :key="filter.id"
+                @click="applyQuickFilter(filter)"
+                class="px-6 py-3 rounded-full border-2 transition-all duration-300 hover:scale-105"
+                :class="activeQuickFilter === filter.id 
+                  ? 'border-emerald-500 bg-emerald-500 text-white shadow-lg' 
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-emerald-300'"
               >
-                <span v-if="!loading">🔍 Buscar</span>
-                <span v-else class="flex items-center gap-2">
-                  <span class="animate-spin">⟳</span>
-                  Buscando...
-                </span>
+                <span class="mr-2">{{ filter.icon }}</span>
+                {{ filter.label }}
               </button>
             </div>
           </div>
-          
-          <!-- Filtros rápidos -->
-          <div class="flex flex-wrap justify-center gap-4 mb-8">
+        </div>
+      </section>
+
+      <!-- Resultados -->
+      <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+          <!-- Header de resultados -->
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+            <div>
+              <h2 class="text-3xl font-bold text-gray-900 mb-2">
+                Comercios para tu mascota
+              </h2>
+              <p class="text-gray-600">
+                {{ pagination.totalItems }} comercios disponibles 
+                <span v-if="filters.category">en {{ getCategoryLabel(filters.category) }}</span>
+                <span v-if="searchQuery"> para "{{ searchQuery }}"</span>
+              </p>
+            </div>
+            
+            <!-- Ordenamiento -->
+            <div class="flex items-center gap-4">
+              <div class="text-gray-600">Ordenar por:</div>
+              <select 
+                v-model="sortBy"
+                @change="applyFilters"
+                class="bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              >
+                <option value="createdAt">Más recientes</option>
+                <option value="rating">Mejor calificados</option>
+                <option value="views">Más populares</option>
+                <option value="name">Nombre (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Estado de carga -->
+          <div v-if="loading" class="text-center py-20">
+            <div class="w-24 h-24 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-200">
+              <span class="text-4xl text-emerald-600 animate-pulse">🏬</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-3">Buscando comercios</h3>
+            <p class="text-gray-700">Cargando los mejores servicios para tu mascota...</p>
+          </div>
+
+          <!-- Grid de comercios - REDUCIDO 20% -->
+          <div v-else-if="businesses.length > 0" class="mb-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div
+                v-for="business in businesses"
+                :key="business._id"
+                class="card-modern group h-full flex flex-col hover-lift transform scale-95  hover:scale-100 transition-all duration-300"
+              >
+                <!-- Imagen - Reducida -->
+                <figure class="relative h-44 w-full overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50">
+                  <img 
+                    :src="getBusinessImage(business)" 
+                    :alt="business.name" 
+                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    @error="handleBusinessImageError"
+                  />
+                  <div class="absolute top-4 right-4 flex flex-col gap-2">
+                    <div v-if="business.featured" class="badge-primary bg-gradient-to-r from-amber-500 to-yellow-500">
+                      ⭐ Destacado
+                    </div>
+                  <!-- Badges -->
+                  
+                    <div v-if="business.isOpenNow" class="badge-primary bg-gradient-to-r from-emerald-500 to-green-500">
+                      🔥 Abierto ahora
+                    </div>
+                  </div>
+                  
+                  <div class="absolute top-4 left-4">
+                    <div class="badge-outline">
+                      {{ getCategoryIcon(business.categories?.[0] || business.category) }} 
+                      {{ business.categories?.[0] || business.category }}
+                    </div>
+                  </div>
+                  
+                  <!-- Botón favoritos -->
+                  <button
+                    @click="toggleFavorite(business)"
+                    class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300"
+                    :class="{ 'text-rose-500': isFavorite(business._id) }"
+                  >
+                    <span class="text-xl">{{ isFavorite(business._id) ? '❤️' : '🤍' }}</span>
+                  </button>
+                </figure>
+                
+                <!-- Contenido - Reducido -->
+                <div class="card-modern-body p-4 flex-1 flex flex-col">
+                  <!-- Nombre y calificación -->
+                  <div class="mb-3">
+                    <h3 class="card-title text-lg font-bold text-gray-900 mb-1">
+                      {{ business.name }}
+                    </h3>
+                    <div class="flex items-center gap-2">
+                      <div class="flex items-center">
+                        <span class="text-amber-500 text-md">⭐</span>
+                        <span class="ml-1 font-bold text-sm">{{ business.rating || 'N/A' }}</span>
+                      </div>
+                      
+                    </div>
+                  </div>
+                  
+                  <!-- Descripción -->
+                  <p class="text-gray-700 text-xs mb-3 line-clamp-2 flex-grow">
+                    {{ business.description || 'Servicios especializados para tu mascota' }}
+                  </p>
+                  
+                  <!-- Ubicación -->
+                  <div class="flex items-center gap-2 mb-3 text-gray-600 text-xs">
+                    <span class="text-emerald-500">📍</span>
+                    <span class="line-clamp-1">{{ business.address }}</span>
+                  </div>
+                  
+                  <!-- Servicios y precios -->
+                  <div class="mb-3">
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-xs font-medium text-gray-900">Servicios desde:</span>
+                      <span class="text-lg font-bold text-emerald-600">
+                        ${{ getMinServicePrice(business) }}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap gap-1">
+                      <span 
+                        v-for="service in business.services?.slice(0, 2)" 
+                        :key="service._id || service.name"
+                        class="badge-tag text-xs"
+                      >
+                        {{ service.name || service }}
+                      </span>
+                      <span 
+                        v-if="business.services && business.services.length > 2" 
+                        class="badge-tag bg-gray-100 text-gray-600 text-xs"
+                      >
+                        +{{ business.services.length - 2 }} más
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Horario -->
+                  <div class="mb-3 p-2 bg-gray-50 rounded-lg text-xs">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-emerald-500">⏰</span>
+                      <span class="font-medium text-gray-900">Horario:</span>
+                      <span :class="[
+                        'font-bold',
+                        business.isOpenNow ? 'text-emerald-600' : 'text-gray-600'
+                      ]">
+                        {{ business.isOpenNow ? 'Abierto ahora' : 'Cerrado' }}
+                      </span>
+                    </div>
+                    <p class="text-gray-600">{{ business.formattedHours || 'Horario no disponible' }}</p>
+                  </div>
+                  
+                  <!-- Botones de acción -->
+                  <div class="card-actions justify-between items-center mt-auto">
+                    <button 
+                      @click="openBusinessDetail(business)"
+                      class="btn-modern-outline group text-sm py-2 px-3"
+                    >
+                      <span>Ver detalles</span>
+                      <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Paginación -->
+            <div v-if="pagination.totalPages > 1" class="mt-12 flex justify-center">
+              <div class="flex items-center gap-2">
+                <button
+                  @click="prevPage"
+                  :disabled="pagination.currentPage === 1"
+                  class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                  ← Anterior
+                </button>
+                
+                <div class="flex items-center gap-1">
+                  <span
+                    v-for="page in visiblePages"
+                    :key="page"
+                    @click="goToPage(page)"
+                    :class="[
+                      'px-3 py-1 rounded-lg cursor-pointer transition-all duration-200',
+                      pagination.currentPage === page
+                        ? 'bg-emerald-500 text-white font-medium'
+                        : 'hover:bg-gray-100 text-gray-700'
+                    ]"
+                  >
+                    {{ page }}
+                  </span>
+                  <span v-if="hasMorePages" class="px-2 text-gray-500">...</span>
+                </div>
+                
+                <button
+                  @click="nextPage"
+                  :disabled="pagination.currentPage === pagination.totalPages"
+                  class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sin resultados -->
+          <div v-else class="text-center py-20">
+            <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-300">
+              <span class="text-4xl text-gray-400">🏬</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-3">No se encontraron comercios</h3>
+            <p class="text-gray-700 mb-8 max-w-md mx-auto">
+              {{ searchQuery || filters.category ? 'No hay comercios que coincidan con tu búsqueda.' : 'Pronto agregaremos más comercios.' }}
+            </p>
             <button
-              v-for="filter in quickFilters"
-              :key="filter.id"
-              @click="applyQuickFilter(filter)"
-              class="px-6 py-3 rounded-full border-2 transition-all duration-300 hover:scale-105"
-              :class="activeQuickFilter === filter.id 
-                ? 'border-emerald-500 bg-emerald-500 text-white shadow-lg' 
-                : 'border-gray-300 bg-white text-gray-700 hover:border-emerald-300'"
+              @click="resetFilters"
+              v-if="searchQuery || filters.category"
+              class="btn-primary text-lg px-8 py-4"
             >
-              <span class="mr-2">{{ filter.icon }}</span>
-              {{ filter.label }}
+              <span>🔄 Ver todos los comercios</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Modal de detalle del comercio -->
+      <div v-if="showDetailModal && selectedBusiness" class="modal-overlay" @click.self="closeDetailModal">
+        <div class="modal-modern-box max-w-5xl" @click.stop>
+          <div class="modal-modern-header flex justify-between items-start">
+            <div class="flex items-start gap-4">
+              <div class="avatar-modern-lg">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                  <span class="text-4xl">{{ getCategoryIcon(selectedBusinessCategory) }}</span>
+                </div>
+              </div>
+              <div>
+                <h2 class="text-3xl font-bold text-gray-900">{{ selectedBusiness.name }}</h2>
+                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                  <div class="badge-outline">
+                    {{ getCategoryIcon(selectedBusinessCategory) }} 
+                    {{ selectedBusinessCategory }}
+                  </div>
+                  <div class="badge-rating">
+                    ⭐ {{ selectedBusiness.rating || 'N/A' }}
+                  </div>
+                  <div v-if="selectedBusiness.featured" class="badge-rating bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0">
+                    ⭐ Destacado
+                  </div>
+                  <div v-if="selectedBusiness.isOpenNow" class="badge-rating bg-gradient-to-r from-emerald-500 to-green-500 text-white border-0">
+                    🔥 Abierto ahora
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button @click="closeDetailModal" class="btn-modal-close">
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-modern-content mt-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <!-- Columna izquierda: Información principal -->
+              <div>
+                <!-- Galería de imágenes -->
+                <div class="mb-8">
+                  <div class="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden bg-gray-100">
+                    <img 
+                      :src="getBusinessImage(selectedBusiness)" 
+                      alt="Imagen del comercio"
+                      class="w-full h-full object-cover"
+                      @error="handleBusinessImageError"
+                    />
+                  </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📝</span> Sobre este comercio
+                  </h3>
+                  <p class="text-gray-700 leading-relaxed">
+                    {{ selectedBusiness.description || 'No hay descripción disponible.' }}
+                  </p>
+                </div>
+
+                <!-- Información de contacto -->
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>📞</span> Contacto
+                  </h3>
+                  <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <span class="text-emerald-600">📍</span>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-900">Dirección</p>
+                        <p class="text-gray-600">{{ selectedBusiness.address }}</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <span class="text-emerald-600">📱</span>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-900">Teléfono</p>
+                        <p class="text-gray-600">{{ selectedBusiness.phone }}</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <span class="text-emerald-600">📧</span>
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-900">Email</p>
+                        <p class="text-gray-600">{{ selectedBusiness.email }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columna derecha: Servicios y horarios -->
+              <div>
+                <!-- Servicios -->
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>⚙️</span> Servicios y precios
+                  </h3>
+                  <div class="space-y-4">
+                    <div 
+                      v-for="(service, index) in selectedBusiness.services" 
+                      :key="index"
+                      class="border border-gray-200 rounded-xl p-4 hover:border-emerald-300 transition-colors"
+                    >
+                      <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-gray-900">{{ service.name }}</h4>
+                        <span class="text-xl font-bold text-emerald-600">${{ service.price }}</span>
+                      </div>
+                      <p class="text-sm text-gray-600 mb-2">{{ service.description || 'Sin descripción' }}</p>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Duración: {{ service.duration || 60 }} min</span>
+                        <button
+                          v-if="selectedBusiness.acceptOnlineBookings"
+                          @click="openReservationModal(service)"
+                          class="btn-modern-sm"
+                        >
+                          Reservar
+                        </button>
+                      </div>
+                    </div>
+                    <div v-if="!selectedBusiness.services || selectedBusiness.services.length === 0" class="text-center py-4">
+                      <p class="text-gray-500">No hay servicios registrados</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Horarios -->
+                <div class="modal-section">
+                  <h3 class="modal-section-title">
+                    <span>⏰</span> Horarios de atención
+                  </h3>
+                  <div class="space-y-4">
+                    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-gray-900">Horario regular</span>
+                        <span :class="[
+                          'px-3 py-1 rounded-full text-sm font-bold',
+                          selectedBusiness.isOpenNow ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'
+                        ]">
+                          {{ selectedBusiness.isOpenNow ? '🟢 Abierto ahora' : '🔴 Cerrado' }}
+                        </span>
+                      </div>
+                      <p class="text-emerald-600 font-medium">
+                        {{ selectedBusiness.workingHours?.open || '--:--' }} - {{ selectedBusiness.workingHours?.close || '--:--' }}
+                      </p>
+                      <p class="text-sm text-gray-600 mt-1">
+                        {{ selectedBusiness.formattedHours || 'Horario no disponible' }}
+                      </p>
+                    </div>
+
+                    <div v-if="selectedBusiness.workingHours?.specialDay" class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+                      <span class="font-bold text-gray-900">Horario especial</span>
+                      <p class="text-amber-600 font-medium">
+                        {{ selectedBusiness.workingHours?.specialOpen || '--:--' }} - {{ selectedBusiness.workingHours?.specialClose || '--:--' }}
+                      </p>
+                      <p class="text-sm text-gray-600 mt-1">
+                        {{ getSpecialDayLabel(selectedBusiness.workingHours?.specialDay) }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Información del proveedor -->
+                <div class="modal-section" v-if="selectedBusiness.provider">
+                  <h3 class="modal-section-title">
+                    <span>👤</span> Información del proveedor
+                  </h3>
+                  <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                      <span class="text-white text-xl">👤</span>
+                    </div>
+                    <div>
+                      <p class="font-bold text-gray-900">{{ selectedBusiness.provider.name }}</p>
+                      <p class="text-sm text-gray-600">{{ selectedBusiness.provider.email }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-modern-actions">
+            <button @click="closeDetailModal" class="btn-modal-ghost">
+              Cerrar
+            </button>
+            <button 
+              @click="toggleFavorite(selectedBusiness)"
+              class="btn-modal-outline"
+            >
+              {{ isFavorite(selectedBusiness._id) ? '❤️ Quitar de favoritos' : '🤍 Agregar a favoritos' }}
             </button>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- Resultados -->
-    <section class="py-16 bg-white">
-      <div class="container mx-auto px-4">
-        <!-- Header de resultados -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-          <div>
-            <h2 class="text-3xl font-bold text-gray-900 mb-2">
-              Comercios para tu mascota
-            </h2>
-            <p class="text-gray-600">
-              {{ pagination.totalItems }} comercios disponibles 
-              <span v-if="filters.category">en {{ getCategoryLabel(filters.category) }}</span>
-              <span v-if="searchQuery"> para "{{ searchQuery }}"</span>
-            </p>
+      <!-- Modal de Reserva - VERSIÓN CORREGIDA -->
+      <div v-if="showReservationModal && selectedBusiness && selectedService" class="modal-overlay" @click.self="closeReservationModal">
+        <div class="modal-modern-box max-w-2xl" @click.stop>
+          <div class="modal-modern-header flex justify-between items-start">
+            <div class="flex items-start gap-4">
+              <div class="avatar-modern-lg">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                  <span class="text-3xl">📅</span>
+                </div>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900">Reservar Cita</h2>
+                <p class="text-gray-600 mt-1">Completa los datos para agendar tu cita</p>
+              </div>
+            </div>
+            <button @click="closeReservationModal" class="btn-modal-close">
+              ✕
+            </button>
           </div>
-          
-          <!-- Ordenamiento -->
-          <div class="flex items-center gap-4">
-            <div class="text-gray-600">Ordenar por:</div>
-            <select 
-              v-model="sortBy"
-              @change="applyFilters"
-              class="bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            >
-              <option value="createdAt">Más recientes</option>
-              <option value="rating">Mejor calificados</option>
-              <option value="views">Más populares</option>
-              <option value="name">Nombre (A-Z)</option>
-            </select>
-          </div>
-        </div>
 
-        <!-- Estado de carga -->
-        <div v-if="loading" class="text-center py-20">
-          <div class="w-24 h-24 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-200">
-            <span class="text-4xl text-emerald-600 animate-pulse">🏬</span>
-          </div>
-          <h3 class="text-2xl font-bold text-gray-900 mb-3">Buscando comercios</h3>
-          <p class="text-gray-700">Cargando los mejores servicios para tu mascota...</p>
-        </div>
-
-        <!-- Grid de comercios -->
-        <div v-else-if="businesses.length > 0" class="mb-12">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <div
-              v-for="business in businesses"
-              :key="business._id"
-              class="card-modern group h-full flex flex-col hover-lift"
-            >
-              <!-- Imagen -->
-              <figure class="relative h-56 w-full overflow-hidden rounded-t-2xl bg-gradient-to-br from-emerald-50 to-teal-50">
-                <img 
-                  :src="getBusinessImage(business)" 
-                  :alt="business.name" 
-                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  @error="handleBusinessImageError"
-                />
-                <div class="absolute top-4 right-4 flex flex-col gap-2">
-                  <div v-if="business.featured" class="badge-primary bg-gradient-to-r from-amber-500 to-yellow-500">
-                    ⭐ Destacado
+          <div class="modal-modern-content mt-6">
+            <!-- Información del negocio -->
+            <div class="modal-section mb-6">
+              <h3 class="modal-section-title">
+                <span>🏬</span> Información del negocio
+              </h3>
+              <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                    <span class="text-white text-xl">{{ getCategoryIcon(selectedBusinessCategory) }}</span>
                   </div>
-                <!-- Badges -->
-                
-                  <div v-if="business.isOpenNow" class="badge-primary bg-gradient-to-r from-emerald-500 to-green-500">
-                    🔥 Abierto ahora
+                  <div>
+                    <p class="font-bold text-gray-900">{{ selectedBusiness.name }}</p>
+                    <p class="text-sm text-gray-600">{{ selectedBusiness.address }}</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+                        {{ selectedBusinessCategory }}
+                      </span>
+                      <span class="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full flex items-center">
+                        ⭐ {{ selectedBusiness.rating || 'N/A' }}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                
-                <div class="absolute top-4 left-4">
-                  <div class="badge-outline">
-                    {{ getCategoryIcon(business.categories?.[0] || business.category) }} 
-                    {{ business.categories?.[0] || business.category }}
+              </div>
+            </div>
+
+            <!-- Información del servicio -->
+            <div class="modal-section mb-6">
+              <h3 class="modal-section-title">
+                <span>⚙️</span> Servicio seleccionado
+              </h3>
+              <div class="bg-white border border-gray-200 rounded-xl p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-lg text-gray-900">{{ selectedService.name }}</h4>
+                    <p class="text-sm text-gray-600 mt-1">{{ selectedService.description || 'Sin descripción' }}</p>
+                    <div class="flex items-center gap-4 mt-3">
+                      <div class="flex items-center gap-1">
+                        <span class="text-gray-500">💰</span>
+                        <span class="font-bold text-emerald-600">${{ selectedService.price }}</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="text-gray-500">⏰</span>
+                        <span class="text-sm text-gray-600">{{ selectedService.duration || 60 }} minutos</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                
-                <!-- Botón favoritos -->
-                <button
-                  @click="toggleFavorite(business)"
-                  class="absolute bottom-4 right-4 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300"
-                  :class="{ 'text-rose-500': isFavorite(business._id) }"
-                >
-                  <span class="text-2xl">{{ isFavorite(business._id) ? '❤️' : '🤍' }}</span>
-                </button>
-              </figure>
-              
-              <!-- Contenido -->
-              <div class="card-modern-body p-6 flex-1 flex flex-col">
-                <!-- Nombre y calificación -->
-                <div class="mb-4">
-                  <h3 class="card-title text-xl font-bold text-gray-900 mb-2">
-                    {{ business.name }}
-                  </h3>
-                  <div class="flex items-center gap-2">
-                    <div class="flex items-center">
-                      <span class="text-amber-500 text-lg">⭐</span>
-                      <span class="ml-1 font-bold">{{ business.rating || 'N/A' }}</span>
+              </div>
+            </div>
+
+            <!-- Formulario de reserva -->
+            <div class="modal-section">
+              <h3 class="modal-section-title">
+                <span>📋</span> Datos de la reserva
+              </h3>
+              <div class="space-y-4">
+                <!-- Seleccionar mascota -->
+                <div>
+                  <label class="block mb-2 font-medium text-gray-900">
+                    <span class="text-emerald-600">🐾</span> Selecciona tu mascota:
+                    <span class="text-xs text-red-500 ml-1" v-if="!isAuthenticated">
+                      (Debes iniciar sesión)
+                    </span>
+                  </label>
+                  
+                  <div v-if="isAuthenticated">
+                    <div v-if="userPets.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div
+                        v-for="pet in userPets"
+                        :key="pet._id"
+                        @click="selectPet(pet)"
+                        :class="[
+                          'pet-card relative border-2 rounded-xl p-3 cursor-pointer transition-all duration-200 transform hover:-translate-y-1',
+                          selectedPet?._id === pet._id
+                            ? 'pet-card-selected border-emerald-500 bg-gradient-to-br from-emerald-50 to-green-50 shadow-lg scale-[1.02]'
+                            : 'pet-card-unselected border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                        ]"
+                      >
+                        <!-- Indicador de selección (check verde) -->
+                        <div 
+                          v-if="selectedPet?._id === pet._id"
+                          class="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center z-10 shadow-lg border border-white"
+                        >
+                          <span class="text-white text-xs font-bold">✓</span>
+                        </div>
+                        
+                        <!-- Punto verde animado -->
+                        <div 
+                          v-if="selectedPet?._id === pet._id"
+                          class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full animate-ping"
+                        ></div>
+                        
+                        <div class="flex items-center gap-3">
+                          <!-- Icono de mascota -->
+                          <div :class="[
+                            'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200',
+                            selectedPet?._id === pet._id
+                              ? 'bg-gradient-to-br from-emerald-500 to-teal-400 scale-110'
+                              : 'bg-gradient-to-br from-emerald-100 to-teal-100'
+                          ]">
+                            <span :class="[
+                              'text-lg transition-all duration-200',
+                              selectedPet?._id === pet._id ? 'text-white transform scale-125' : 'text-emerald-600'
+                            ]">
+                              {{ getPetIcon(pet.type) }}
+                            </span>
+                          </div>
+                          
+                          <!-- Información de la mascota -->
+                          <div>
+                            <p :class="[
+                              'font-bold transition-colors duration-200',
+                              selectedPet?._id === pet._id ? 'text-emerald-700' : 'text-gray-900'
+                            ]">
+                              {{ pet.name }}
+                              <span v-if="selectedPet?._id === pet._id" class="ml-1 text-emerald-500">✓</span>
+                            </p>
+                            <p class="text-sm text-gray-600 capitalize">{{ pet.type }} • {{ pet.breed || 'Sin raza especificada' }}</p>
+                            <p v-if="pet.age" class="text-xs text-gray-500 mt-0.5">{{ pet.age }} años</p>
+                          </div>
+                        </div>
+                        
+                        <!-- Borde decorativo animado para seleccionado -->
+                        <div 
+                          v-if="selectedPet?._id === pet._id"
+                          class="absolute inset-0 rounded-xl border-2 border-emerald-400 opacity-50 animate-pulse"
+                        ></div>
+                      </div>
                     </div>
                     
-                  </div>
-                </div>
-                
-                <!-- Descripción -->
-                <p class="text-gray-700 text-sm mb-4 line-clamp-2 flex-grow">
-                  {{ business.description || 'Servicios especializados para tu mascota' }}
-                </p>
-                
-                <!-- Ubicación -->
-                <div class="flex items-center gap-2 mb-4 text-gray-600">
-                  <span class="text-emerald-500">📍</span>
-                  <span class="line-clamp-1">{{ business.address }}</span>
-                </div>
-                
-                <!-- Servicios y precios -->
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm font-medium text-gray-900">Servicios desde:</span>
-                    <span class="text-xl font-bold text-emerald-600">
-                      ${{ getMinServicePrice(business) }}
-                    </span>
-                  </div>
-                  <div class="flex flex-wrap gap-2">
-                    <span 
-                      v-for="service in business.services?.slice(0, 2)" 
-                      :key="service._id || service.name"
-                      class="badge-tag"
-                    >
-                      {{ service.name || service }}
-                    </span>
-                    <span 
-                      v-if="business.services && business.services.length > 2" 
-                      class="badge-tag bg-gray-100 text-gray-600"
-                    >
-                      +{{ business.services.length - 2 }} más
-                    </span>
-                  </div>
-                </div>
-                
-                <!-- Horario -->
-                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-emerald-500">⏰</span>
-                    <span class="text-sm font-medium text-gray-900">Horario:</span>
-                    <span :class="[
-                      'text-sm font-bold',
-                      business.isOpenNow ? 'text-emerald-600' : 'text-gray-600'
-                    ]">
-                      {{ business.isOpenNow ? 'Abierto ahora' : 'Cerrado' }}
-                    </span>
-                  </div>
-                  <p class="text-xs text-gray-600">{{ business.formattedHours || 'Horario no disponible' }}</p>
-                </div>
-                
-                <!-- Botones de acción -->
-                <div class="card-actions justify-between items-center mt-auto">
-                  <button 
-                    @click="openBusinessDetail(business)"
-                    class="btn-modern-outline group"
-                  >
-                    <span>Ver detalles</span>
-                    <span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Paginación -->
-          <div v-if="pagination.totalPages > 1" class="mt-12 flex justify-center">
-            <div class="flex items-center gap-2">
-              <button
-                @click="prevPage"
-                :disabled="pagination.currentPage === 1"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                ← Anterior
-              </button>
-              
-              <div class="flex items-center gap-1">
-                <span
-                  v-for="page in visiblePages"
-                  :key="page"
-                  @click="goToPage(page)"
-                  :class="[
-                    'px-3 py-1 rounded-lg cursor-pointer transition-all duration-200',
-                    pagination.currentPage === page
-                      ? 'bg-emerald-500 text-white font-medium'
-                      : 'hover:bg-gray-100 text-gray-700'
-                  ]"
-                >
-                  {{ page }}
-                </span>
-                <span v-if="hasMorePages" class="px-2 text-gray-500">...</span>
-              </div>
-              
-              <button
-                @click="nextPage"
-                :disabled="pagination.currentPage === pagination.totalPages"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                Siguiente →
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sin resultados -->
-        <div v-else class="text-center py-20">
-          <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-300">
-            <span class="text-4xl text-gray-400">🏬</span>
-          </div>
-          <h3 class="text-2xl font-bold text-gray-900 mb-3">No se encontraron comercios</h3>
-          <p class="text-gray-700 mb-8 max-w-md mx-auto">
-            {{ searchQuery || filters.category ? 'No hay comercios que coincidan con tu búsqueda.' : 'Pronto agregaremos más comercios.' }}
-          </p>
-          <button
-            @click="resetFilters"
-            v-if="searchQuery || filters.category"
-            class="btn-primary text-lg px-8 py-4"
-          >
-            <span>🔄 Ver todos los comercios</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Modal de detalle del comercio -->
-    <div v-if="showDetailModal && selectedBusiness" class="modal-overlay" @click.self="closeDetailModal">
-      <div class="modal-modern-box max-w-6xl" @click.stop>
-        <div class="modal-modern-header flex justify-between items-start">
-          <div class="flex items-start gap-4">
-            <div class="avatar-modern-lg">
-              <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
-                <span class="text-4xl">{{ getCategoryIcon(selectedBusinessCategory) }}</span>
-              </div>
-            </div>
-            <div>
-              <h2 class="text-3xl font-bold text-gray-900">{{ selectedBusiness.name }}</h2>
-              <div class="flex items-center gap-2 mt-2 flex-wrap">
-                <div class="badge-outline">
-                  {{ getCategoryIcon(selectedBusinessCategory) }} 
-                  {{ selectedBusinessCategory }}
-                </div>
-                <div class="badge-rating">
-                  ⭐ {{ selectedBusiness.rating || 'N/A' }}
-                </div>
-                <div v-if="selectedBusiness.featured" class="badge-rating bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0">
-                  ⭐ Destacado
-                </div>
-                <div v-if="selectedBusiness.isOpenNow" class="badge-rating bg-gradient-to-r from-emerald-500 to-green-500 text-white border-0">
-                  🔥 Abierto ahora
-                </div>
-              </div>
-            </div>
-          </div>
-          <button @click="closeDetailModal" class="btn-modal-close">
-            ✕
-          </button>
-        </div>
-
-        <div class="modal-modern-content mt-6">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Columna izquierda: Información principal -->
-            <div>
-              <!-- Galería de imágenes -->
-              <div class="mb-8">
-                <div class="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden bg-gray-100">
-                  <img 
-                    :src="getBusinessImage(selectedBusiness)" 
-                    alt="Imagen del comercio"
-                    class="w-full h-full object-cover"
-                    @error="handleBusinessImageError"
-                  />
-                </div>
-              </div>
-
-              <!-- Descripción -->
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📝</span> Sobre este comercio
-                </h3>
-                <p class="text-gray-700 leading-relaxed">
-                  {{ selectedBusiness.description || 'No hay descripción disponible.' }}
-                </p>
-              </div>
-
-              <!-- Información de contacto -->
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>📞</span> Contacto
-                </h3>
-                <div class="space-y-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <span class="text-emerald-600">📍</span>
-                    </div>
-                    <div>
-                      <p class="font-medium text-gray-900">Dirección</p>
-                      <p class="text-gray-600">{{ selectedBusiness.address }}</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <span class="text-emerald-600">📱</span>
-                    </div>
-                    <div>
-                      <p class="font-medium text-gray-900">Teléfono</p>
-                      <p class="text-gray-600">{{ selectedBusiness.phone }}</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <span class="text-emerald-600">📧</span>
-                    </div>
-                    <div>
-                      <p class="font-medium text-gray-900">Email</p>
-                      <p class="text-gray-600">{{ selectedBusiness.email }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Columna derecha: Servicios y horarios -->
-            <div>
-              <!-- Servicios -->
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>⚙️</span> Servicios y precios
-                </h3>
-                <div class="space-y-4">
-                  <div 
-                    v-for="(service, index) in selectedBusiness.services" 
-                    :key="index"
-                    class="border border-gray-200 rounded-xl p-4 hover:border-emerald-300 transition-colors"
-                  >
-                    <div class="flex justify-between items-center mb-2">
-                      <h4 class="font-bold text-gray-900">{{ service.name }}</h4>
-                      <span class="text-xl font-bold text-emerald-600">${{ service.price }}</span>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-2">{{ service.description || 'Sin descripción' }}</p>
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm text-gray-500">Duración: {{ service.duration || 60 }} min</span>
+                    <div v-else class="text-center py-6">
+                      <p class="text-gray-500 mb-3">No tienes mascotas registradas</p>
                       <button
-                        v-if="selectedBusiness.acceptOnlineBookings"
-                        @click="openReservationModal(service)"
-                        class="btn-modern-sm"
+                        @click="goToRegisterPet"
+                        class="btn-modern-outline text-sm"
                       >
-                        Reservar
+                        🐶 Registrar mascota
                       </button>
                     </div>
                   </div>
-                  <div v-if="!selectedBusiness.services || selectedBusiness.services.length === 0" class="text-center py-4">
-                    <p class="text-gray-500">No hay servicios registrados</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Horarios -->
-              <div class="modal-section">
-                <h3 class="modal-section-title">
-                  <span>⏰</span> Horarios de atención
-                </h3>
-                <div class="space-y-4">
-                  <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="font-bold text-gray-900">Horario regular</span>
-                      <span :class="[
-                        'px-3 py-1 rounded-full text-sm font-bold',
-                        selectedBusiness.isOpenNow ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'
-                      ]">
-                        {{ selectedBusiness.isOpenNow ? '🟢 Abierto ahora' : '🔴 Cerrado' }}
-                      </span>
-                    </div>
-                    <p class="text-emerald-600 font-medium">
-                      {{ selectedBusiness.workingHours?.open || '--:--' }} - {{ selectedBusiness.workingHours?.close || '--:--' }}
-                    </p>
-                    <p class="text-sm text-gray-600 mt-1">
-                      {{ selectedBusiness.formattedHours || 'Horario no disponible' }}
-                    </p>
-                  </div>
-
-                  <div v-if="selectedBusiness.workingHours?.specialDay" class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
-                    <span class="font-bold text-gray-900">Horario especial</span>
-                    <p class="text-amber-600 font-medium">
-                      {{ selectedBusiness.workingHours?.specialOpen || '--:--' }} - {{ selectedBusiness.workingHours?.specialClose || '--:--' }}
-                    </p>
-                    <p class="text-sm text-gray-600 mt-1">
-                      {{ getSpecialDayLabel(selectedBusiness.workingHours?.specialDay) }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Información del proveedor -->
-              <div class="modal-section" v-if="selectedBusiness.provider">
-                <h3 class="modal-section-title">
-                  <span>👤</span> Información del proveedor
-                </h3>
-                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                  <div class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
-                    <span class="text-white text-xl">👤</span>
-                  </div>
-                  <div>
-                    <p class="font-bold text-gray-900">{{ selectedBusiness.provider.name }}</p>
-                    <p class="text-sm text-gray-600">{{ selectedBusiness.provider.email }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-modern-actions">
-          <button @click="closeDetailModal" class="btn-modal-ghost">
-            Cerrar
-          </button>
-          <button 
-            @click="toggleFavorite(selectedBusiness)"
-            class="btn-modal-outline"
-          >
-            {{ isFavorite(selectedBusiness._id) ? '❤️ Quitar de favoritos' : '🤍 Agregar a favoritos' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal de Reserva - VERSIÓN CORREGIDA -->
-    <div v-if="showReservationModal && selectedBusiness && selectedService" class="modal-overlay" @click.self="closeReservationModal">
-      <div class="modal-modern-box max-w-2xl" @click.stop>
-        <div class="modal-modern-header flex justify-between items-start">
-          <div class="flex items-start gap-4">
-            <div class="avatar-modern-lg">
-              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
-                <span class="text-3xl">📅</span>
-              </div>
-            </div>
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900">Reservar Cita</h2>
-              <p class="text-gray-600 mt-1">Completa los datos para agendar tu cita</p>
-            </div>
-          </div>
-          <button @click="closeReservationModal" class="btn-modal-close">
-            ✕
-          </button>
-        </div>
-
-        <div class="modal-modern-content mt-6">
-          <!-- Información del negocio -->
-          <div class="modal-section mb-6">
-            <h3 class="modal-section-title">
-              <span>🏬</span> Información del negocio
-            </h3>
-            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
-                  <span class="text-white text-xl">{{ getCategoryIcon(selectedBusinessCategory) }}</span>
-                </div>
-                <div>
-                  <p class="font-bold text-gray-900">{{ selectedBusiness.name }}</p>
-                  <p class="text-sm text-gray-600">{{ selectedBusiness.address }}</p>
-                  <div class="flex items-center gap-2 mt-1">
-                    <span class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
-                      {{ selectedBusinessCategory }}
-                    </span>
-                    <span class="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full flex items-center">
-                      ⭐ {{ selectedBusiness.rating || 'N/A' }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Información del servicio -->
-          <div class="modal-section mb-6">
-            <h3 class="modal-section-title">
-              <span>⚙️</span> Servicio seleccionado
-            </h3>
-            <div class="bg-white border border-gray-200 rounded-xl p-4">
-              <div class="flex justify-between items-start">
-                <div>
-                  <h4 class="font-bold text-lg text-gray-900">{{ selectedService.name }}</h4>
-                  <p class="text-sm text-gray-600 mt-1">{{ selectedService.description || 'Sin descripción' }}</p>
-                  <div class="flex items-center gap-4 mt-3">
-                    <div class="flex items-center gap-1">
-                      <span class="text-gray-500">💰</span>
-                      <span class="font-bold text-emerald-600">${{ selectedService.price }}</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <span class="text-gray-500">⏰</span>
-                      <span class="text-sm text-gray-600">{{ selectedService.duration || 60 }} minutos</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Formulario de reserva -->
-          <div class="modal-section">
-            <h3 class="modal-section-title">
-              <span>📋</span> Datos de la reserva
-            </h3>
-            <div class="space-y-4">
-              <!-- Seleccionar mascota - CORREGIDO -->
-              <div>
-                <label class="block mb-2 font-medium text-gray-900">
-                  <span class="text-emerald-600">🐾</span> Selecciona tu mascota:
-                  <span class="text-xs text-red-500 ml-1" v-if="!isAuthenticated">
-                    (Debes iniciar sesión)
-                  </span>
-                </label>
-                
-                <div v-if="isAuthenticated">
-                  <div v-if="userPets.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div
-                      v-for="pet in userPets"
-                      :key="pet._id"
-                      @click="selectPet(pet)"
-                      :class="[
-                        'pet-card relative border-2 rounded-xl p-3 cursor-pointer transition-all duration-200 transform hover:-translate-y-1',
-                        selectedPet?._id === pet._id
-                          ? 'pet-card-selected border-emerald-500 bg-gradient-to-br from-emerald-50 to-green-50 shadow-lg scale-[1.02]'
-                          : 'pet-card-unselected border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-                      ]"
+                  
+                  <div v-else class="text-center py-6 border-2 border-dashed border-gray-300 rounded-xl">
+                    <p class="text-gray-500 mb-3">Debes iniciar sesión para reservar</p>
+                    <button
+                      @click="goToLogin"
+                      class="btn-primary text-sm px-4 py-2"
                     >
-                      <!-- Indicador de selección (check verde) -->
-                      <div 
-                        v-if="selectedPet?._id === pet._id"
-                        class="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center z-10 shadow-lg border border-white"
-                      >
-                        <span class="text-white text-xs font-bold">✓</span>
-                      </div>
-                      
-                      <!-- Punto verde animado -->
-                      <div 
-                        v-if="selectedPet?._id === pet._id"
-                        class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full animate-ping"
-                      ></div>
-                      
-                      <div class="flex items-center gap-3">
-                        <!-- Icono de mascota -->
-                        <div :class="[
-                          'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200',
-                          selectedPet?._id === pet._id
-                            ? 'bg-gradient-to-br from-emerald-500 to-teal-400 scale-110'
-                            : 'bg-gradient-to-br from-emerald-100 to-teal-100'
-                        ]">
-                          <span :class="[
-                            'text-lg transition-all duration-200',
-                            selectedPet?._id === pet._id ? 'text-white transform scale-125' : 'text-emerald-600'
-                          ]">
-                            {{ getPetIcon(pet.type) }}
-                          </span>
-                        </div>
-                        
-                        <!-- Información de la mascota -->
-                        <div>
-                          <p :class="[
-                            'font-bold transition-colors duration-200',
-                            selectedPet?._id === pet._id ? 'text-emerald-700' : 'text-gray-900'
-                          ]">
-                            {{ pet.name }}
-                            <span v-if="selectedPet?._id === pet._id" class="ml-1 text-emerald-500">✓</span>
-                          </p>
-                          <p class="text-sm text-gray-600 capitalize">{{ pet.type }} • {{ pet.breed || 'Sin raza especificada' }}</p>
-                          <p v-if="pet.age" class="text-xs text-gray-500 mt-0.5">{{ pet.age }} años</p>
-                        </div>
-                      </div>
-                      
-                      <!-- Borde decorativo animado para seleccionado -->
-                      <div 
-                        v-if="selectedPet?._id === pet._id"
-                        class="absolute inset-0 rounded-xl border-2 border-emerald-400 opacity-50 animate-pulse"
-                      ></div>
-                    </div>
+                      🔐 Iniciar sesión
+                    </button>
                   </div>
                   
-                  <div v-else class="text-center py-6">
-                    <p class="text-gray-500 mb-3">No tienes mascotas registradas</p>
-                    <button
-                      @click="goToRegisterPet"
-                      class="btn-modern-outline text-sm"
-                    >
-                      🐶 Registrar mascota
-                    </button>
-                  </div>
-                </div>
-                
-                <div v-else class="text-center py-6 border-2 border-dashed border-gray-300 rounded-xl">
-                  <p class="text-gray-500 mb-3">Debes iniciar sesión para reservar</p>
-                  <button
-                    @click="goToLogin"
-                    class="btn-primary text-sm px-4 py-2"
-                  >
-                    🔐 Iniciar sesión
-                  </button>
-                </div>
-                
-                <!-- Mostrar mascota seleccionada -->
-                <div v-if="selectedPet && isAuthenticated" class="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
-                        <span class="text-white text-sm">{{ getPetIcon(selectedPet.type) }}</span>
+                  <!-- Mostrar mascota seleccionada -->
+                  <div v-if="selectedPet && isAuthenticated" class="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                          <span class="text-white text-sm">{{ getPetIcon(selectedPet.type) }}</span>
+                        </div>
+                        <div>
+                          <p class="font-bold text-emerald-700">{{ selectedPet.name }} seleccionada</p>
+                          <p class="text-xs text-gray-600">Para: {{ selectedService.name }}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p class="font-bold text-emerald-700">{{ selectedPet.name }} seleccionada</p>
-                        <p class="text-xs text-gray-600">Para: {{ selectedService.name }}</p>
-                      </div>
+                      <button
+                        @click="clearPetSelection"
+                        class="text-xs text-gray-500 hover:text-red-500 transition-colors"
+                      >
+                        Cambiar
+                      </button>
                     </div>
-                    <button
-                      @click="clearPetSelection"
-                      class="text-xs text-gray-500 hover:text-red-500 transition-colors"
-                    >
-                      Cambiar
-                    </button>
                   </div>
                 </div>
-              </div>
 
-              <!-- Fecha y hora -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Fecha y hora -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block mb-2 font-medium text-gray-900">
+                      <span class="text-emerald-600">📅</span> Fecha de la cita:
+                    </label>
+                    <input
+                      type="date"
+                      v-model="reservationDate"
+                      :min="minDate"
+                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      @change="onDateChange"
+                    />
+                    <!-- Mensaje de validación para fecha pasada -->
+                    <div v-if="dateValidationError" class="mt-2 text-red-500 text-sm flex items-center gap-1 animate-pulse">
+                      <span>⚠️</span>
+                      <span>{{ dateValidationError }}</span>
+                    </div>
+                    <div v-else-if="reservationDate && !dateValidationError" class="mt-2 text-emerald-500 text-sm flex items-center gap-1">
+                      <span>✅</span>
+                      <span>Fecha válida seleccionada</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block mb-2 font-medium text-gray-900">
+                      <span class="text-emerald-600">⏰</span> Hora de la cita:
+                    </label>
+                    <select
+                      v-model="reservationTime"
+                      class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+                      :class="[
+                        !reservationDate || availableHours.length === 0 
+                          ? 'border-gray-300 bg-gray-50' 
+                          : hourValidationError
+                          ? 'border-red-500 bg-red-50'
+                          : reservationTime && !hourValidationError
+                          ? 'border-emerald-500 bg-emerald-50'
+                          : 'border-gray-300'
+                      ]"
+                      :disabled="!reservationDate || availableHours.length === 0"
+                    >
+                      <option value="">Selecciona una hora</option>
+                      <option 
+                        v-for="hour in availableHours" 
+                        :key="hour.time" 
+                        :value="hour.time"
+                        :disabled="hour.isBooked"
+                        :class="[
+                          hour.isBooked 
+                            ? 'text-red-500 bg-red-100 cursor-not-allowed' 
+                            : 'text-gray-700'
+                        ]"
+                      >
+                        {{ hour.time }} 
+                        <span v-if="hour.isBooked" class="text-red-500 font-medium">(Reservado)</span>
+                        <span v-else class="text-emerald-500">(Disponible)</span>
+                      </option>
+                    </select>
+                    
+                    <!-- Mensajes de validación para hora -->
+                    <div v-if="hourValidationError" class="mt-2 text-red-500 text-sm flex items-center gap-1 animate-pulse">
+                      <span>⚠️</span>
+                      <span>{{ hourValidationError }}</span>
+                    </div>
+                    <div v-else-if="reservationTime && !hourValidationError" class="mt-2 text-emerald-500 text-sm flex items-center gap-1">
+                      <span>✅</span>
+                      <span>Hora disponible seleccionada</span>
+                    </div>
+                    <div v-else-if="reservationDate && availableHours.length > 0" class="mt-2 text-blue-500 text-sm flex items-center gap-1">
+                      <span>ℹ️</span>
+                      <span>Las horas en <span class="text-red-500">rojo</span> ya están reservadas</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Notas adicionales -->
                 <div>
                   <label class="block mb-2 font-medium text-gray-900">
-                    <span class="text-emerald-600">📅</span> Fecha de la cita:
+                    <span class="text-emerald-600">📝</span> Notas adicionales (opcional):
                   </label>
-                  <input
-                    type="date"
-                    v-model="reservationDate"
-                    :min="minDate"
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
-                    @change="loadAvailableHours"
-                  />
+                  <textarea
+                    v-model="reservationNotes"
+                    rows="3"
+                    placeholder="¿Alguna indicación especial para el servicio?"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-none"
+                  ></textarea>
                 </div>
-                <div>
-                  <label class="block mb-2 font-medium text-gray-900">
-                    <span class="text-emerald-600">⏰</span> Hora de la cita:
-                  </label>
-                  <select
-                    v-model="reservationTime"
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
-                    :disabled="!reservationDate"
-                  >
-                    <option value="">Selecciona una hora</option>
-                    <option v-for="hour in availableHours" :key="hour" :value="hour">
-                      {{ hour }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Notas adicionales -->
-              <div>
-                <label class="block mb-2 font-medium text-gray-900">
-                  <span class="text-emerald-600">📝</span> Notas adicionales (opcional):
-                </label>
-                <textarea
-                  v-model="reservationNotes"
-                  rows="3"
-                  placeholder="¿Alguna indicación especial para el servicio?"
-                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-none"
-                ></textarea>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="modal-modern-actions">
-          <button @click="closeReservationModal" class="btn-modal-ghost">
-            Cancelar
-          </button>
-          <button 
-            @click="confirmReservation"
-            class="btn-modal-primary relative group"
-            :disabled="!isReservationValid || reserving"
-          >
-            <!-- Indicador de mascota seleccionada -->
-            <span v-if="selectedPet" class="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs px-2 py-1 rounded-full shadow-lg border border-white">
-              {{ selectedPet.name }}
-            </span>
-            
-            <span v-if="!reserving" class="flex items-center gap-2">
-              <span class="text-lg">✅</span>
-              <span>Confirmar reserva</span>
-              <span class="font-bold ml-1">${{ selectedService.price }}</span>
-              <span v-if="selectedPet" class="ml-2 text-xs opacity-75">
-                para {{ selectedPet.name }}
+          <div class="modal-modern-actions">
+            <button @click="closeReservationModal" class="btn-modal-ghost">
+              Cancelar
+            </button>
+            <button 
+              @click="confirmReservation"
+              class="btn-modal-primary relative group"
+              :disabled="!isReservationValid || reserving"
+            >
+              <!-- Indicador de mascota seleccionada -->
+              <span v-if="!reserving" class="flex items-center gap-2">
+                <span>Confirmar reserva</span>
+                <span class="font-bold ml-1">${{ selectedService.price }}</span>
+                
+                <!-- Indicador de validaciones exitosas -->
+                <span v-if="isReservationValid" class="ml-1 text-white animate-pulse">
+                  ✅
+                </span>
               </span>
-            </span>
-            <span v-else class="flex items-center gap-2">
-              <span class="animate-spin">⟳</span>
-              Procesando...
-            </span>
-          </button>
+              <span v-else class="flex items-center gap-2">
+                <span class="animate-spin">⟳</span>
+                Procesando...
+              </span>
+              
+              <!-- Tooltip para botón deshabilitado -->
+              <div v-if="(!isReservationValid || reserving) && !reserving" 
+                   class="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-10 min-w-[200px]">
+                <div class="flex flex-col gap-1">
+                  <span v-if="!isAuthenticated">🔸 Debes iniciar sesión</span>
+                  <span v-if="!selectedPet">🔸 Selecciona una mascota</span>
+                  <span v-if="!reservationDate">🔸 Selecciona una fecha</span>
+                  <span v-if="!reservationTime">🔸 Selecciona una hora</span>
+                  <span v-if="dateValidationError">🔸 {{ dateValidationError }}</span>
+                  <span v-if="hourValidationError">🔸 {{ hourValidationError }}</span>
+                  <span v-if="selectedHour && selectedHour.isBooked">🔸 Esta hora ya está reservada</span>
+                </div>
+                <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-800"></div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Éxito - COMPACTO (mitad de altura) -->
+      <div v-if="showSuccessModal" class="modal-overlay" @click.self="closeSuccessModal">
+        <div class="success-modal-compact" @click.stop>
+          <!-- Contenedor principal del modal -->
+          <div class="success-modal-content-compact">
+            <!-- Icono de éxito animado -->
+            <div class="success-icon-compact">
+              <div class="success-check-compact">✓</div>
+            </div>
+
+            <!-- Título de éxito -->
+            <h2 class="success-title-compact">
+              ¡Cita Reservada!
+            </h2>
+
+            <!-- Resumen de la cita -->
+            <div class="appointment-summary-compact">
+              <div class="summary-row-compact">
+                <span class="summary-label-compact">Servicio:</span>
+                <span class="summary-value-compact">{{ successData?.serviceName || 'Servicio' }}</span>
+              </div>
+              <div class="summary-row-compact">
+                <span class="summary-label-compact">Fecha:</span>
+                <span class="summary-value-compact">{{ successData?.formattedDate || 'Fecha' }}</span>
+              </div>
+              <div class="summary-row-compact">
+                <span class="summary-label-compact">Hora:</span>
+                <span class="summary-value-compact">{{ successData?.time || 'Hora' }}</span>
+              </div>
+              <div class="summary-row-compact">
+                <span class="summary-label-compact">Mascota:</span>
+                <span class="summary-value-compact">{{ successData?.petName || 'Mascota' }}</span>
+              </div>
+              <div class="summary-row-compact total-row-compact">
+                <span class="summary-label-compact">Total:</span>
+                <span class="summary-total-compact">${{ successData?.servicePrice || '0' }}</span>
+              </div>
+            </div>
+
+            <!-- Información del negocio (muy compacta) -->
+            <div class="business-info-compact">
+              <div class="business-icon-compact">🏬</div>
+              <div>
+                <p class="business-name-compact">{{ successData?.businessName || 'Negocio' }}</p>
+                <p class="business-address-compact">{{ successData?.businessAddress || 'Dirección' }}</p>
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="success-modal-actions-compact">
+              <button @click="closeSuccessModal" class="btn-success-outline-compact">
+                Continuar
+              </button>
+              
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
- </Layout>
+  </Layout>
 </template>
 
 <script>
@@ -863,6 +977,14 @@ export default {
       reservationNotes: "",
       availableHours: [],
       reserving: false,
+      
+      // Modal de éxito
+      showSuccessModal: false,
+      successData: null,
+      
+      // Validaciones
+      dateValidationError: "",
+      hourValidationError: "",
       
       // Filtros rápidos
       quickFilters: [
@@ -934,12 +1056,59 @@ export default {
     },
     
     minDate() {
+      // CORRECCIÓN: Usar la fecha local en lugar de UTC
       const today = new Date();
-      return today.toISOString().split('T')[0];
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    },
+    
+    selectedHour() {
+      if (!this.reservationTime || this.availableHours.length === 0) return null;
+      return this.availableHours.find(h => h.time === this.reservationTime);
     },
     
     isReservationValid() {
-      return this.isAuthenticated && this.selectedPet && this.reservationDate && this.reservationTime;
+      // Verificar que todos los campos requeridos estén completos
+      const hasRequiredFields = this.isAuthenticated && 
+                               this.selectedPet && 
+                               this.reservationDate && 
+                               this.reservationTime;
+      
+      if (!hasRequiredFields) {
+        return false;
+      }
+      
+      // Verificar que no haya errores de validación
+      const hasValidationErrors = this.dateValidationError || this.hourValidationError;
+      
+      if (hasValidationErrors) {
+        return false;
+      }
+      
+      // Verificar que la hora seleccionada no esté reservada
+      const selectedHour = this.availableHours.find(h => h.time === this.reservationTime);
+      const isHourBooked = selectedHour && selectedHour.isBooked;
+      
+      if (isHourBooked) {
+        return false;
+      }
+      
+      // Si llegamos aquí, todo está válido
+      return true;
+    }
+  },
+  
+  watch: {
+    // Observar cambios en la fecha para validar
+    reservationDate(newDate) {
+      this.validateDate(newDate);
+    },
+    
+    // Observar cambios en la hora para validar
+    reservationTime(newTime) {
+      this.validateHour(newTime);
     }
   },
   
@@ -1085,6 +1254,85 @@ export default {
         'default': '🐾'
       };
       return icons[petType?.toLowerCase()] || icons.default;
+    },
+    
+    // ============ VALIDACIONES ============
+    validateDate(dateString) {
+      if (!dateString) {
+        this.dateValidationError = "";
+        return;
+      }
+      
+      // CORRECCIÓN: Usar fecha local
+      const selectedDate = new Date(dateString + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Resetear hora para comparación
+      
+      if (selectedDate < today) {
+        this.dateValidationError = "⚠️ No puedes seleccionar una fecha anterior al día de hoy";
+        return;
+      }
+      
+      // Validar que no sea más de 3 meses en el futuro
+      const maxDate = new Date();
+      maxDate.setMonth(maxDate.getMonth() + 3);
+      
+      if (selectedDate > maxDate) {
+        this.dateValidationError = "⚠️ No puedes reservar con más de 3 meses de anticipación";
+        return;
+      }
+      
+      // Validar que no sea fin de semana (opcional)
+      const dayOfWeek = selectedDate.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        this.dateValidationError = "ℹ️ Los fines de semana pueden tener disponibilidad limitada";
+        return;
+      }
+      
+      this.dateValidationError = "";
+    },
+    
+    validateHour(timeString) {
+      if (!timeString) {
+        this.hourValidationError = "";
+        return;
+      }
+      
+      const selectedHour = this.availableHours.find(h => h.time === timeString);
+      
+      if (!selectedHour) {
+        this.hourValidationError = "⚠️ Por favor, selecciona una hora válida";
+        return;
+      }
+      
+      if (selectedHour.isBooked) {
+        this.hourValidationError = "❌ Esta hora ya está reservada, selecciona otra hora";
+        return;
+      }
+      
+      // Validar que la hora no sea en el pasado si es hoy
+      if (this.reservationDate === this.minDate) {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const [selectedHourValue, selectedMinutesValue] = timeString.split(':').map(Number);
+        
+        if (selectedHourValue < currentHour || 
+            (selectedHourValue === currentHour && selectedMinutesValue < currentMinutes)) {
+          this.hourValidationError = "⚠️ No puedes seleccionar una hora que ya pasó para hoy";
+          return;
+        }
+      }
+      
+      // Si llegamos aquí, la hora es válida
+      this.hourValidationError = "";
+    },
+    
+    onDateChange() {
+      this.validateDate(this.reservationDate);
+      this.loadAvailableHours();
+      // Limpiar hora seleccionada cuando cambia la fecha
+      this.reservationTime = "";
     },
     
     // ============ MÉTODOS DE AUTENTICACIÓN ============
@@ -1339,10 +1587,15 @@ export default {
       this.selectedService = service;
       this.showReservationModal = true;
       
-      // Establecer fecha mínima como hoy
+      // CORRECCIÓN: Usar fecha local correcta
       const today = new Date();
-      const todayString = today.toISOString().split('T')[0];
-      this.reservationDate = todayString;
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      this.reservationDate = `${year}-${month}-${day}`;
+      
+      // Validar fecha inicial
+      this.validateDate(this.reservationDate);
       
       // Verificar si tenemos datos de mascotas actualizados
       if (this.userPets.length === 0) {
@@ -1360,7 +1613,7 @@ export default {
       }
       
       // Cargar horas disponibles
-      this.loadAvailableHours();
+      await this.loadAvailableHours();
     },
     
     closeReservationModal() {
@@ -1372,6 +1625,8 @@ export default {
       this.reservationNotes = "";
       this.availableHours = [];
       this.reserving = false;
+      this.dateValidationError = "";
+      this.hourValidationError = "";
     },
     
     selectPet(pet) {
@@ -1385,17 +1640,102 @@ export default {
       console.log('Selección de mascota limpiada');
     },
     
+    // ============ MÉTODO CORREGIDO: loadAvailableHours ============
     async loadAvailableHours() {
       if (!this.reservationDate) return;
       
       try {
-        // Generar horas disponibles basadas en el horario del negocio
-        const businessHours = this.selectedBusiness?.workingHours;
-        let hours = [];
+        // CORRECCIÓN: Verificar que los IDs sean válidos
+        if (!this.selectedBusiness?._id) {
+          console.error('❌ ID del negocio no disponible');
+          this.availableHours = this.generateDefaultHours([]);
+          return;
+        }
         
-        if (businessHours && businessHours.open && businessHours.close) {
+        if (!this.selectedService?._id) {
+          console.warn('⚠️ ID del servicio no disponible, usando null');
+        }
+        
+        // CORRECCIÓN: Crear parámetros con validación
+        const params = {
+          date: this.reservationDate,
+          businessId: this.selectedBusiness._id
+        };
+        
+        // Solo agregar serviceId si está disponible y es válido
+        if (this.selectedService?._id && this.selectedService._id.length >= 12) {
+          params.serviceId = this.selectedService._id;
+        }
+        
+        console.log('📋 Cargando horas disponibles con parámetros:', params);
+        
+        // CORRECCIÓN: Manejo de errores mejorado
+        let res;
+        try {
+          // En loadAvailableHours() del componente
+            res = await api.get(`/appointments/hours/available`, { params });
+          
+          if (!res.data.success) {
+            throw new Error(res.data.message || 'Error en la respuesta del servidor');
+          }
+          
+        } catch (err) {
+          console.warn('⚠️ Error cargando horas disponibles:', err.message);
+          
+          // Verificar tipo de error
+          if (err.response?.status === 400) {
+            console.error('❌ Error 400 Detalles:', {
+              params: params,
+              response: err.response?.data
+            });
+            
+            // Mostrar mensaje amigable al usuario
+            this.showTemporaryMessage(
+              '⚠️ El servicio de disponibilidad está temporalmente limitado. Usando horario estándar.',
+              'warning'
+            );
+          }
+          
+          throw err; // Esto hará que caiga en el catch y use las horas por defecto
+        }
+        
+        const bookedHours = res.data?.bookedHours || [];
+        
+        console.log('✅ Horas reservadas recibidas:', bookedHours);
+        
+        // Generar horas disponibles
+        const hours = this.generateBusinessHours(bookedHours);
+        
+        this.availableHours = hours;
+        
+        console.log('✅ Horas disponibles cargadas:', hours.length);
+        
+        // Si hay una hora seleccionada, validarla nuevamente
+        if (this.reservationTime) {
+          this.validateHour(this.reservationTime);
+        }
+        
+      } catch (err) {
+        console.warn("⚠️ Usando horas por defecto debido a:", err.message);
+        
+        // Horas por defecto (9am a 6pm, saltando la hora de almuerzo)
+        this.availableHours = this.generateDefaultHours([]);
+        
+        console.log("ℹ️ Usando horario predeterminado (9:00 - 18:00)");
+      }
+    },
+    
+    // Método auxiliar para generar horas basadas en el negocio
+    generateBusinessHours(bookedHours) {
+      const businessHours = this.selectedBusiness?.workingHours;
+      let hours = [];
+      
+      if (businessHours && businessHours.open && businessHours.close) {
+        try {
           const openHour = parseInt(businessHours.open.split(':')[0]);
           const closeHour = parseInt(businessHours.close.split(':')[0]);
+          
+          console.log('🏪 Horario del negocio:', openHour, 'a', closeHour);
           
           for (let hour = openHour; hour < closeHour; hour++) {
             // Saltar la hora de almuerzo (13:00)
@@ -1403,19 +1743,36 @@ export default {
             
             // Formatear hora con dos dígitos
             const formattedHour = hour.toString().padStart(2, '0') + ':00';
-            hours.push(formattedHour);
+            
+            hours.push({
+              time: formattedHour,
+              isBooked: bookedHours.includes(formattedHour)
+            });
           }
-        } else {
-          // Horas por defecto si no hay horario específico
-          hours = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+        } catch (error) {
+          console.error('❌ Error procesando horario del negocio:', error);
+          hours = this.generateDefaultHours(bookedHours);
         }
-        
-        this.availableHours = hours;
-        
-      } catch (err) {
-        console.error("❌ Error cargando horas disponibles:", err);
-        this.availableHours = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+      } else {
+        // Horas por defecto si no hay horario específico
+        hours = this.generateDefaultHours(bookedHours);
       }
+      
+      return hours;
+    },
+    
+    // Método para horas por defecto
+    generateDefaultHours(bookedHours) {
+      // Horario por defecto: 9am a 6pm, saltando 1pm (almuerzo)
+      const defaultHours = [
+        "09:00", "10:00", "11:00", "12:00", 
+        "14:00", "15:00", "16:00", "17:00", "18:00"
+      ];
+      
+      return defaultHours.map(time => ({
+        time: time,
+        isBooked: bookedHours.includes(time)
+      }));
     },
     
     goToRegisterPet() {
@@ -1433,6 +1790,7 @@ export default {
       });
     },
     
+    // ============ MÉTODO DE ÉXITO ============
     async confirmReservation() {
       // Verificar autenticación
       if (!this.isAuthenticated) {
@@ -1442,8 +1800,31 @@ export default {
         return;
       }
       
+      // Verificar que la reservación sea válida
       if (!this.isReservationValid) {
-        alert("⚠️ Por favor, completa todos los campos requeridos");
+        let errorMessage = "⚠️ Por favor, completa todos los campos requeridos:\n\n";
+        
+        if (!this.selectedPet) errorMessage += "• Selecciona una mascota\n";
+        if (!this.reservationDate) errorMessage += "• Selecciona una fecha\n";
+        if (!this.reservationTime) errorMessage += "• Selecciona una hora\n";
+        
+        if (this.dateValidationError) errorMessage += `• ${this.dateValidationError}\n`;
+        if (this.hourValidationError) errorMessage += `• ${this.hourValidationError}\n`;
+        
+        const selectedHour = this.availableHours.find(h => h.time === this.reservationTime);
+        if (selectedHour && selectedHour.isBooked) {
+          errorMessage += "• La hora seleccionada ya está reservada\n";
+        }
+        
+        alert(errorMessage);
+        return;
+      }
+      
+      // Verificar que la hora seleccionada no esté reservada (doble verificación)
+      const selectedHour = this.availableHours.find(h => h.time === this.reservationTime);
+      if (selectedHour && selectedHour.isBooked) {
+        alert("⚠️ Esta hora ya está reservada. Por favor, selecciona otra hora.");
+        this.hourValidationError = "❌ Esta hora ya está reservada, selecciona otra hora";
         return;
       }
       
@@ -1470,17 +1851,27 @@ export default {
         // Crear la cita
         const res = await api.post("/appointments", reservationData);
         
-        // Mostrar mensaje de éxito (MODIFICADO: No redirige a citas)
-        this.showSuccessMessage(
-          `✅ Cita reservada exitosamente!\n\n` +
-          `Tu cita para "${this.selectedService.name}" ha sido agendada para el ${this.formatDate(this.reservationDate)} a las ${this.reservationTime}.\n\n` +
-          `El precio total es: $${this.selectedService.price}\n` +
-          `Podrás ver los detalles de tu cita en tu historial de citas.`
-        );
+        // Preparar datos para el modal de éxito
+        this.successData = {
+          serviceName: this.selectedService.name,
+          formattedDate: this.formatDate(this.reservationDate),
+          time: this.reservationTime,
+          petName: this.selectedPet.name,
+          servicePrice: this.selectedService.price,
+          businessName: this.selectedBusiness.name,
+          businessAddress: this.selectedBusiness.address,
+          businessPhone: this.selectedBusiness.phone,
+          appointmentId: res.data.appointment?._id
+        };
         
-        // Cerrar modales sin redirigir
+        // Cerrar modal de reserva
         this.closeReservationModal();
         this.closeDetailModal();
+        
+        // Mostrar modal de éxito después de un breve retraso
+        setTimeout(() => {
+          this.showSuccessModal = true;
+        }, 300);
         
       } catch (err) {
         console.error("❌ Error creando la cita:", err);
@@ -1506,20 +1897,23 @@ export default {
     
     formatDate(dateString) {
       const date = new Date(dateString);
+      // Formato compacto: "Lun 15 Ene 2024"
       return date.toLocaleDateString('es-ES', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
       });
     },
     
-    showSuccessMessage(message) {
-      // Mostrar alerta de éxito
-      alert(message);
-      
-      // También puedes usar un toast más elegante si lo prefieres
-      this.showTemporaryMessage('✅ Cita creada exitosamente', 'success');
+    closeSuccessModal() {
+      this.showSuccessModal = false;
+      this.successData = null;
+    },
+    
+    goToAppointments() {
+      this.closeSuccessModal();
+      this.$router.push('/user/appointments');
     },
     
     showErrorMessage(message) {
@@ -1569,58 +1963,61 @@ export default {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-/* Cards modernas */
+/* Cards modernas - REDUCIDAS 20% */
 .card-modern {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 20px;
+  border-radius: 16px; /* Reducido de 20px */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05); /* Reducido */
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transform: scale(0.95); /* Reducción del 5% */
+  transform-origin: center;
 }
 
 .card-modern:hover {
   border-color: #10b981;
   box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 16px 32px rgba(0, 0, 0, 0.1), /* Reducido */
     0 0 0 1px #10b981,
-    0 0 20px rgba(16, 185, 129, 0.1);
+    0 0 16px rgba(16, 185, 129, 0.1); /* Reducido */
+  transform: scale(1); /* Restaurar tamaño en hover */
 }
 
 .card-modern-body {
-  padding: 1.5rem;
+  padding: 1rem; /* Reducido de 1.5rem */
   display: flex;
   flex-direction: column;
   flex: 1;
 }
 
 .card-title {
-  font-size: 1.125rem;
+  font-size: 1rem; /* Reducido de 1.125rem */
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 0.5rem;
 }
 
-/* Badges */
+/* Badges - Reducidos */
 .badge-primary {
   color: white;
-  padding: 0.25rem 0.75rem;
+  padding: 0.2rem 0.6rem; /* Reducido */
   border-radius: 9999px;
   font-weight: bold;
-  font-size: 0.75rem;
+  font-size: 0.7rem; /* Reducido de 0.75rem */
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Reducido */
 }
 
 .badge-outline {
   background: white;
   color: #10b981;
-  padding: 0.25rem 0.75rem;
+  padding: 0.2rem 0.6rem; /* Reducido */
   border-radius: 9999px;
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.7rem; /* Reducido de 0.75rem */
   border: 1px solid #10b981;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -1628,17 +2025,17 @@ export default {
 .badge-tag {
   background: #f0fdfa;
   color: #0d9488;
-  padding: 0.25rem 0.5rem;
+  padding: 0.2rem 0.4rem; /* Reducido */
   border-radius: 6px;
-  font-size: 0.7rem;
+  font-size: 0.65rem; /* Reducido de 0.7rem */
   border: 1px solid #99f6e4;
 }
 
 .badge-rating {
-  padding: 0.25rem 0.75rem;
+  padding: 0.2rem 0.6rem; /* Reducido */
   border-radius: 8px;
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.7rem; /* Reducido de 0.75rem */
   border: 1px solid #e5e7eb;
   background: #f9fafb;
   color: #6b7280;
@@ -1834,6 +2231,7 @@ export default {
 .btn-modal-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
 }
 
 .btn-modal-outline {
@@ -1944,131 +2342,318 @@ export default {
   }
 }
 
-/* Borde animado para selección */
-@keyframes borderGlow {
-  0%, 100% {
-    opacity: 0.5;
-    border-color: rgba(16, 185, 129, 0.5);
-  }
-  50% {
-    opacity: 0.8;
-    border-color: rgba(16, 185, 129, 0.8);
-  }
-}
-
-.pet-card-selected::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border-radius: 14px;
-  border: 2px solid transparent;
-  background: linear-gradient(45deg, #10b981, #0d9488, #10b981) border-box;
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) padding-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out;
-  mask-composite: exclude;
-  animation: borderGlow 2s ease-in-out infinite;
-  pointer-events: none;
-}
-
-/* Efecto de brillo para botón con mascota seleccionada */
-.btn-modal-primary:not(:disabled) {
+/* ============ MODAL DE ÉXITO COMPACTO (MITAD DE ALTURA) ============ */
+.success-modal-compact {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 
+    0 20px 40px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px #10b981,
+    0 0 30px rgba(16, 185, 129, 0.1);
   position: relative;
   overflow: hidden;
+  max-width: 400px;
+  width: 95%;
+  max-height: 70vh; /* Mitad de altura */
+  animation: successModalCompactAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.btn-modal-primary:not(:disabled)::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.15) 50%,
-    transparent 70%
-  );
-  transform: rotate(45deg);
-  animation: shimmer 3s infinite;
-  pointer-events: none;
-}
-
-@keyframes shimmer {
+@keyframes successModalCompactAppear {
   0% {
-    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
   }
   100% {
-    transform: translateX(100%) translateY(100%) rotate(45deg);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
-/* Indicador en el botón de confirmar para mascota seleccionada */
-.btn-modal-primary:not(:disabled)::before {
-  content: '🐾';
-  position: absolute;
-  left: -12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.9rem;
-  background: white;
+.success-modal-content-compact {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Espaciado reducido */
+}
+
+/* Icono de éxito compacto */
+.success-icon-compact {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+}
+
+.success-check-compact {
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  background: linear-gradient(135deg, #10b981, #0d9488);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #10b981;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 1;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  animation: checkSpin 0.6s ease-out;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-/* Efecto de pulso para el indicador de selección */
-@keyframes ping {
+@keyframes checkSpin {
   0% {
-    transform: scale(0.8);
-    opacity: 0.8;
-  }
-  80%, 100% {
-    transform: scale(2);
+    transform: rotate(-180deg) scale(0);
     opacity: 0;
   }
+  70% {
+    transform: rotate(10deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(0) scale(1);
+    opacity: 1;
+  }
 }
 
-.animate-ping {
-  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+/* Título compacto */
+.success-title-compact {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* Resumen de cita compacto */
+.appointment-summary-compact {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.summary-row-compact {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.summary-row-compact:last-child {
+  border-bottom: none;
+}
+
+.summary-label-compact {
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 0.8125rem;
+}
+
+.summary-value-compact {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  text-align: right;
+  max-width: 60%;
+  word-break: break-word;
+}
+
+.total-row-compact {
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 2px solid #10b981;
+}
+
+.summary-total-compact {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* Información del negocio compacta */
+.business-info-compact {
+  background: linear-gradient(135deg, #f0fdfa, #ecfdf5);
+  border-radius: 8px;
+  padding: 0.5rem;
+  border: 1px solid #a7f3d0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+}
+
+.business-icon-compact {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #10b981, #0d9488);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: white;
+}
+
+.business-name-compact {
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+}
+
+.business-address-compact {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+}
+
+/* Acciones compactas */
+.success-modal-actions-compact {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-success-outline-compact {
+  flex: 1;
+  background: transparent;
+  color: #6b7280;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.btn-success-outline-compact:hover {
+  background: #f9fafb;
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.btn-success-primary-compact {
+  flex: 1;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.btn-success-primary-compact:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, #0d9488, #047857);
+}
+
+/* ============ ESTILOS PARA VALIDACIONES ============ */
+.text-red-500 {
+  color: #ef4444;
+}
+
+.text-emerald-500 {
+  color: #10b981;
+}
+
+.text-blue-500 {
+  color: #3b82f6;
+}
+
+.bg-red-50 {
+  background-color: #fef2f2;
+}
+
+.bg-emerald-50 {
+  background-color: #ecfdf5;
+}
+
+.border-red-500 {
+  border-color: #ef4444 !important;
+}
+
+.border-emerald-500 {
+  border-color: #10b981 !important;
+}
+
+/* Tooltip para botón deshabilitado */
+.tooltip-container {
+  position: relative;
+}
+
+.tooltip-container:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1f2937;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3.xl\:grid-cols-4 {
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4.xl\:grid-cols-5 {
     grid-template-columns: 1fr;
   }
   
-  .modal-modern-box {
+  .modal-modern-box,
+  .success-modal-compact {
     padding: 1rem;
     max-height: 80vh;
   }
   
-  .modal-modern-actions {
+  .modal-modern-actions,
+  .success-modal-actions-compact {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
   
   .btn-modal-primary,
   .btn-modal-outline,
-  .btn-modal-ghost {
+  .btn-modal-ghost,
+  .btn-success-outline-compact,
+  .btn-success-primary-compact {
     width: 100%;
     justify-content: center;
   }
   
   .card-modern figure {
-    height: 200px;
+    height: 180px; /* Reducido para móviles */
   }
   
   .text-5xl {
@@ -2084,8 +2669,47 @@ export default {
     transform: translateY(-2px) scale(1.01);
   }
   
-  .pet-card-selected::before {
-    display: none; /* Ocultar borde animado en móvil para mejor rendimiento */
+  .card-modern {
+    transform: scale(1); /* Tamaño normal en móviles */
+  }
+  
+  /* Ajustes para modal compacto en móvil */
+  .success-modal-compact {
+    width: 95%;
+    max-width: 350px;
+    max-height: 70vh; /* Un poco más alto en móvil */
+  }
+  
+  .success-icon-compact {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .success-check-compact {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+  
+  .success-title-compact {
+    font-size: 1.125rem;
+  }
+  
+  .appointment-summary-compact {
+    padding: 0.5rem;
+    font-size: 0.8125rem;
+  }
+  
+  /* Ajustes para tooltips en móvil */
+  .tooltip {
+    display: none; /* Ocultar tooltips en móvil */
+  }
+}
+
+/* Ajustes para pantallas grandes */
+@media (min-width: 1536px) {
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4.xl\:grid-cols-5 {
+    grid-template-columns: repeat(6, 1fr); /* 6 columnas en pantallas XL */
   }
 }
 

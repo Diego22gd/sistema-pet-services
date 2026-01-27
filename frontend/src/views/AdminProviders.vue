@@ -50,7 +50,7 @@
       </div>
 
       <!-- Tabla de proveedores mejorada -->
-      <div class="bg-white rounded-2xl shadow-lg border border-neutral-light overflow-hidden">
+      <div class="bg-white rounded-2xl shadow-lg border border-neutral-light overflow-hidden mb-4">
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gradient-to-r from-primary-mint to-teal-500 text-white">
