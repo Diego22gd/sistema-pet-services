@@ -45,6 +45,10 @@
           <div class="chatbot-info">
             <h3>PetBot</h3>
             <p>{{ getRoleDescription() }}</p>
+            <!-- Indicador de estado del usuario -->
+            <div v-if="userRole === 'guest'" class="guest-badge">
+              🎯 Modo visitante
+            </div>
           </div>
           <button 
             @click="toggleChat" 
@@ -57,6 +61,19 @@
 
         <!-- Área de mensajes -->
         <div ref="messagesContainer" class="chatbot-messages">
+          <!-- Mensaje de bienvenida específico por rol -->
+          <div v-if="showWelcomeMessage" class="welcome-message-container">
+            <div class="message-left">
+              <div class="message-bubble message-bot welcome-bubble">
+                <div class="message-content" v-html="formatMessage(welcomeMessage)"></div>
+                <div class="message-time message-time-bot">
+                  {{ getCurrentTime() }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mensajes de la conversación -->
           <div
             v-for="(msg, index) in messages"
             :key="index"
@@ -88,6 +105,21 @@
                 <div class="dot"></div>
               </div>
               <span class="typing-text">PetBot está pensando...</span>
+            </div>
+          </div>
+
+          <!-- Promoción para usuarios visitantes -->
+          <div v-if="userRole === 'guest' && messages.length > 0" class="guest-promotion">
+            <div class="promotion-bubble">
+              <div class="promotion-content">
+                <span class="promotion-icon">✨</span>
+                <span class="promotion-text">
+                  <strong>¡Regístrate ahora!</strong> Para acceder a todas las funciones
+                </span>
+              </div>
+              <button @click="goToRegister" class="promotion-button">
+                Registrarme
+              </button>
             </div>
           </div>
         </div>
@@ -175,6 +207,14 @@
           <div v-if="userInput.length > 0" class="char-counter">
             {{ userInput.length }}/500
           </div>
+          
+          <!-- Mensaje para visitantes -->
+          <div v-if="userRole === 'guest'" class="guest-message">
+            <span class="guest-icon">👋</span>
+            <span class="guest-text">
+              <strong>Modo visitante:</strong> Puedes chatear sin registrarte
+            </span>
+          </div>
         </div>
       </div>
     </transition>
@@ -199,15 +239,31 @@ export default {
       canScrollRight: false,
       currentScrollPage: 1,
       scrollPages: 1,
-      userRole: "client",
+      userRole: "guest",
       showFixedMessage: false,
       fixedMessageTimeout: null,
-      lastRoutePath: null
+      lastRoutePath: null,
+      showWelcomeMessage: true,
+      welcomeMessage: ""
     };
   },
   computed: {
     quickOptions() {
       const optionsByRole = {
+        guest: [
+          "¿Qué es PetServices?",
+          "Cómo registrarme",
+          "Servicios disponibles",
+          "Precios y costos",
+          "¿Cómo funciona?",
+          "Beneficios de registrarse",
+          "Seguridad y privacidad",
+          "App móvil",
+          "Contactar soporte",
+          "Emergencias veterinarias",
+          "Veterinarias cerca",
+          "Peluquerías caninas"
+        ],
         client: [
           "Buscar comercios", 
           "Servicios disponibles", 
@@ -246,7 +302,7 @@ export default {
         ]
       };
       
-      return optionsByRole[this.userRole] || optionsByRole.client;
+      return optionsByRole[this.userRole] || optionsByRole.guest;
     },
 
     apiBaseUrl() {
@@ -266,15 +322,28 @@ export default {
     getUserRole() {
       try {
         const userStore = useUserStore();
-        return userStore.user?.role || "client";
+        const token = localStorage.getItem("token");
+        
+        // Si no hay token, es visitante
+        if (!token) {
+          return "guest";
+        }
+        
+        // Si hay token pero el store no está cargado, intentamos obtener el rol
+        if (userStore.user?.role) {
+          return userStore.user.role;
+        }
+        
+        return "client"; // Default si hay token pero no hay rol
       } catch (error) {
         console.error("Error obteniendo rol:", error);
-        return "client";
+        return "guest";
       }
     },
 
     getRoleDescription() {
       const descriptions = {
+        guest: "Guía para visitantes - ¡Regístrate y descubre más!",
         client: "Asistente para clientes",
         provider: "Asistente para proveedores", 
         admin: "Asistente administrativo"
@@ -284,6 +353,7 @@ export default {
 
     getInputPlaceholder() {
       const placeholders = {
+        guest: "Pregunta sobre PetServices, registro o servicios...",
         client: "Pregunta sobre comercios, servicios o tus mascotas...",
         provider: "Consulta tu comercio, agenda o estadísticas...",
         admin: "Consulta comercios, usuarios o reportes del sistema..."
@@ -311,6 +381,36 @@ export default {
 
     addWelcomeMessage() {
       const welcomeMessages = {
+        guest: `¡Hola! 👋 Soy PetBot, tu guía en **PetServices**.
+
+🎯 **Estás en modo visitante**, puedo ayudarte con:
+
+📋 **INFORMACIÓN GENERAL:**
+• ¿Qué es PetServices?
+• ¿Cómo funciona?
+• Servicios disponibles
+
+👤 **REGISTRO Y ACCESO:**
+• Cómo registrarse
+• Beneficios de tener cuenta
+• Tipos de cuenta disponibles
+
+💰 **PRECIOS Y COSTOS:**
+• Costos para clientes
+• Planes para proveedores
+• Promociones
+
+🏢 **SERVICIOS DISPONIBLES:**
+• 🏥 Veterinarias
+• ✂️ Peluquerías caninas
+• 🏪 Guarderías
+• 🛒 Tiendas de mascotas
+• 🎓 Entrenadores
+
+✨ **¡Regístrate para acceder a todas las funciones!**
+
+**¿En qué puedo ayudarte hoy?**`,
+
         client: `¡Hola! 👋 Soy PetBot, tu asistente para servicios de mascotas.
 
 Como **cliente**, puedo ayudarte con:
@@ -348,12 +448,8 @@ Como **administrador**, puedo ayudarte con:
 ¿Qué funcionalidad administrativa necesitas?`
       };
 
-      const message = welcomeMessages[this.userRole] || welcomeMessages.client;
-      this.messages.push({ 
-        sender: "bot", 
-        text: message,
-        time: this.getCurrentTime()
-      });
+      this.welcomeMessage = welcomeMessages[this.userRole] || welcomeMessages.guest;
+      this.showWelcomeMessage = true;
     },
 
     async sendMessage() {
@@ -368,11 +464,20 @@ Como **administrador**, puedo ayudarte con:
       this.userInput = "";
       this.isLoading = true;
 
+      // Ocultar mensaje de bienvenida después del primer mensaje
+      if (this.showWelcomeMessage) {
+        this.showWelcomeMessage = false;
+      }
+
       try {
         const token = localStorage.getItem("token");
+        let headers = {
+          "Content-Type": "application/json"
+        };
         
-        if (!token) {
-          throw new Error("No hay token de autenticación");
+        // Solo añadir Authorization si hay token
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
         }
 
         const apiUrl = this.apiBaseUrl 
@@ -383,10 +488,7 @@ Como **administrador**, puedo ayudarte con:
           apiUrl,
           { message: text },
           { 
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json"
-            },
+            headers: headers,
             timeout: 30000
           }
         );
@@ -407,13 +509,13 @@ Como **administrador**, puedo ayudarte con:
         let errorMessage = "❌ Error al conectar con PetBot.";
         
         if (error.response?.status === 401) {
-          errorMessage = "🔐 Por favor, inicia sesión nuevamente.";
+          // Para usuarios no autenticados, esto es normal - usar modo visitante
+          errorMessage = "🔄 Usando modo visitante... Puedes continuar chateando.";
+          this.userRole = "guest";
         } else if (error.response?.status === 400) {
           errorMessage = "📝 Por favor, escribe un mensaje válido.";
         } else if (error.code === 'ECONNABORTED') {
           errorMessage = "⏰ El servicio está tardando en responder. Intenta nuevamente.";
-        } else if (error.message.includes("token")) {
-          errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
         } else if (error.message.includes("Network Error") || error.code === 'ERR_NETWORK') {
           errorMessage = `🌐 **Error de conexión.**\n\nVerifica tu conexión a internet o intenta más tarde.`;
         }
@@ -545,6 +647,24 @@ Como **administrador**, puedo ayudarte con:
         this.lastRoutePath = currentPath;
         this.showFixedMessageFor3Seconds();
       }
+    },
+
+    // Navegar a registro
+    goToRegister() {
+      this.toggleChat();
+      this.$router.push('/register');
+    },
+
+    // Actualizar rol cuando cambie el estado de autenticación
+    updateUserRole() {
+      const newRole = this.getUserRole();
+      if (newRole !== this.userRole) {
+        this.userRole = newRole;
+        // Si se abre el chat, actualizar mensaje de bienvenida
+        if (this.isOpen && this.messages.length === 0) {
+          this.addWelcomeMessage();
+        }
+      }
     }
   },
 
@@ -583,15 +703,37 @@ Como **administrador**, puedo ayudarte con:
     '$route.path': function(newPath, oldPath) {
       if (newPath !== oldPath) {
         this.showFixedMessageFor3Seconds();
+        // Actualizar rol cuando cambia la ruta
+        this.updateUserRole();
       }
     }
   },
 
   mounted() {
     this.userRole = this.getUserRole();
+    this.addWelcomeMessage();
     
     // Mostrar mensaje flotante al cargar por primera vez
     this.showFixedMessageFor3Seconds();
+    
+    // Escuchar cambios en el store de usuario
+    const userStore = useUserStore();
+    if (userStore) {
+      this.$watch(
+        () => userStore.user,
+        () => {
+          this.updateUserRole();
+        },
+        { deep: true }
+      );
+    }
+    
+    // Escuchar cambios en localStorage (token)
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'token') {
+        this.updateUserRole();
+      }
+    });
     
     this.$nextTick(() => {
       setTimeout(() => this.checkQuickButtonsScroll(), 200);
@@ -603,6 +745,7 @@ Como **administrador**, puedo ayudarte con:
 
   beforeUnmount() {
     window.removeEventListener('resize', this.checkQuickButtonsScroll);
+    window.removeEventListener('storage', this.updateUserRole);
     
     // Limpiar timeout al desmontar
     if (this.fixedMessageTimeout) {
@@ -778,6 +921,7 @@ Como **administrador**, puedo ayudarte con:
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
 .chatbot-avatar {
@@ -792,6 +936,7 @@ Como **administrador**, puedo ayudarte con:
 
 .chatbot-info {
   flex: 1;
+  position: relative;
 }
 
 .chatbot-info h3 {
@@ -806,6 +951,27 @@ Como **administrador**, puedo ayudarte con:
   opacity: 0.9;
   margin: 2px 0 0 0;
   font-weight: 400;
+}
+
+.guest-badge {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: pulse-guest 2s infinite;
+}
+
+@keyframes pulse-guest {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
 }
 
 .close-btn {
@@ -840,6 +1006,20 @@ Como **administrador**, puedo ayudarte con:
   gap: 12px;
 }
 
+.welcome-message-container {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.welcome-bubble {
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+  border: 2px solid #38bdf8;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .message-container {
   display: flex;
   width: 100%;
@@ -861,6 +1041,12 @@ Como **administrador**, puedo ayudarte con:
   position: relative;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  animation: messageAppear 0.3s ease-out;
+}
+
+@keyframes messageAppear {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .message-user {
@@ -958,6 +1144,68 @@ Como **administrador**, puedo ayudarte con:
   font-size: 13px;
   color: #6b7280;
   font-weight: 500;
+}
+
+/* Promoción para visitantes */
+.guest-promotion {
+  margin-top: 8px;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.promotion-bubble {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #f59e0b;
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.promotion-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.promotion-icon {
+  font-size: 18px;
+}
+
+.promotion-text {
+  font-size: 12px;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.promotion-button {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.promotion-button:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+.promotion-button:active {
+  transform: translateY(0);
 }
 
 /* =========================================== */
@@ -1105,6 +1353,7 @@ Como **administrador**, puedo ayudarte con:
   border-top: 1px solid #e5e7eb;
   background: white;
   flex-shrink: 0;
+  position: relative;
 }
 
 .input-wrapper {
@@ -1198,6 +1447,34 @@ Como **administrador**, puedo ayudarte con:
   opacity: 0.7;
 }
 
+/* Mensaje para visitantes */
+.guest-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  animation: fadeInGuest 0.5s ease-out;
+}
+
+@keyframes fadeInGuest {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.guest-icon {
+  font-size: 14px;
+}
+
+.guest-text {
+  font-size: 11px;
+  color: #0369a1;
+  font-weight: 500;
+}
+
 /* Animaciones */
 .chat-window-enter-active,
 .chat-window-leave-active {
@@ -1289,6 +1566,15 @@ Como **administrador**, puedo ayudarte con:
     height: 32px;
     right: 6px;
   }
+  
+  .promotion-bubble {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .promotion-button {
+    width: 100%;
+  }
 }
 
 /* Dark mode */
@@ -1316,8 +1602,17 @@ Como **administrador**, puedo ayudarte con:
     background: linear-gradient(135deg, #1e40af, #1e3a8a);
   }
   
+  .guest-badge {
+    background: linear-gradient(135deg, #92400e, #78350f);
+  }
+  
   .chatbot-messages {
     background: #111827;
+  }
+  
+  .welcome-bubble {
+    background: linear-gradient(135deg, #1e3a8a, #1e40af);
+    border-color: #3b82f6;
   }
   
   .message-bot {
@@ -1333,6 +1628,24 @@ Como **administrador**, puedo ayudarte con:
   
   .typing-text {
     color: #d1d5db;
+  }
+  
+  .promotion-bubble {
+    background: linear-gradient(135deg, #78350f, #92400e);
+    border-color: #f59e0b;
+  }
+  
+  .promotion-text {
+    color: #fef3c7;
+  }
+  
+  .promotion-button {
+    background: linear-gradient(135deg, #d97706, #f59e0b);
+    color: #1f2937;
+  }
+  
+  .promotion-button:hover {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
   }
   
   .quick-buttons-container {
@@ -1388,6 +1701,15 @@ Como **administrador**, puedo ayudarte con:
   
   .char-counter {
     color: #9ca3af;
+  }
+  
+  .guest-message {
+    background: #1e3a8a;
+    border-color: #3b82f6;
+  }
+  
+  .guest-text {
+    color: #bae6fd;
   }
   
   .chatbot-messages::-webkit-scrollbar-thumb {
