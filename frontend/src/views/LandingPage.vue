@@ -516,7 +516,7 @@
               <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/veterinariaservicio.jpg" 
+                  src="/veterinaria.png" 
                   alt="Servicio Veterinario" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
@@ -545,7 +545,7 @@
               <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/peluqueria.jpg" 
+                  src="/peluqueria.png" 
                   alt="Servicio de Peluquería" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
@@ -574,7 +574,7 @@
               <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/guarderia2.jpg" 
+                  src="/guarderia.png" 
                   alt="Servicio de Guardería" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
@@ -603,7 +603,7 @@
               <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/nutricion.jpg" 
+                  src="/nutricion2.png" 
                   alt="Servicio de Entrenamiento" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
@@ -632,7 +632,7 @@
               <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/paseadores.jpg" 
+                  src="/paseadores.png" 
                   alt="Servicio de Paseos" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
@@ -661,7 +661,7 @@
               <div class="relative h-[307px] w-full overflow-hidden rounded-xl">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
                 <img 
-                  src="/Adriestramiento.jpg" 
+                  src="/adiestramiento.png" 
                   alt="Servicio de Traumatología" 
                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />

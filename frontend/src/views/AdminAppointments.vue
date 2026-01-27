@@ -2,7 +2,7 @@
   <AdminLayout>
     <!-- Chatbot Component -->
     <Chatbot />
-    <div class="px-6 max-w-7xl mx-auto w-full pt-6">
+    <div class="px-6 max-w-7xl mx-auto w-full pt-6 mt-4">
       <!-- Header con estilo moderno -->
       <div class="mb-10 fade-up">
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-4 border border-emerald-200">
