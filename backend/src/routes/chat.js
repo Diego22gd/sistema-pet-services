@@ -387,12 +387,14 @@ class DataManager {
             { description: { $regex: query, $options: 'i' } }
           ]
         })
-        .select('name categories description rating averageServicePrice')
+        .populate('provider', 'phone email')
+        .select('name categories description rating averageServicePrice phone email address location')
         .limit(10)
         .lean();
       } else {
         return await Business.find(searchFilters)
-          .select('name categories description rating averageServicePrice')
+          .populate('provider', 'phone email')
+          .select('name categories description rating averageServicePrice phone email address location')
           .sort({ rating: -1 })
           .limit(10)
           .lean();
@@ -522,7 +524,7 @@ class ResponseGenerator {
           return this.generatePetsResponse(userData, name);
         
         case "book_appointment":
-          return `📅 **Para agendar una cita:**\n\n1. Ve a "Buscar Comercios"\n2. Selecciona un servicio\n3. Elige fecha y hora disponible\n4. Completa los datos de tu mascota\n5. Confirma la reserva\n\n💡 *¿Quieres que te recomiende algunos comercios?*`;
+          return `📅 **Cómo reservar una cita - Paso a paso:**\n\n**PASO 1: Buscar Comercios** 🔍\n• Ve al menú principal\n• Click en "Buscar Comercios" o [haz clic aquí](/home)\n• Usa los filtros para encontrar el servicio\n\n**PASO 2: Seleccionar Servicio** 🛎️\n• Explora los servicios del comercio\n• Revisa precios y descripciones\n• Click en "Agendar" o "Reservar"\n\n**PASO 3: Elegir Fecha y Hora** 📆\n• Selecciona una fecha disponible\n• Elige el horario que prefieras\n\n**PASO 4: Datos de tu Mascota** 🐾\n• Completa nombre de tu mascota\n• Indica tipo y raza\n• Agrega notas especiales si es necesario\n\n**PASO 5: Confirmar** ✅\n• Revisa todos los datos\n• Click en "Confirmar Reserva"\n• ¡Recibirás una notificación!\n\n💡 **Consejo:** Verifica que tus datos de contacto estén actualizados.\n\n¿Necesitas ayuda con algún paso específico?`;
         
         case "prices":
           // Usar Gemini para dar respuestas más detalladas sobre precios
@@ -577,11 +579,11 @@ class ResponseGenerator {
   
   static getHelpMessage(role, name) {
     const helpMessages = {
-      client: `¡Claro ${name}! 🤖\n\n**Como cliente, puedo ayudarte con:**\n\n🔍 **BUSCAR SERVICIOS**\n• Veterinarias, peluquerías, guarderías\n• Tiendas de mascotas\n• Entrenadores profesionales\n\n📅 **GESTIONAR CITAS**\n• Agendar nuevas citas\n• Ver citas programadas\n• Cancelar o reprogramar\n\n🐾 **TUS MASCOTAS**\n• Ver mascotas registradas\n• Agregar nueva mascota\n• Información médica\n\n⭐ **FAVORITOS**\n• Guardar comercios favoritos\n• Ver recomendaciones\n\n💰 **INFORMACIÓN**\n• Precios y costos\n• Promociones\n\n🚨 **EMERGENCIAS**\n• Contactos de urgencia\n• Primeros auxilios\n\n**¿Con qué necesitas ayuda?**`,
+      client: `¡Claro ${name}! 🤖\n\n**Como cliente, puedo ayudarte con:**\n\n🔍 **BUSCAR SERVICIOS**\n• Veterinarias, peluquerías, guarderías\n• Tiendas de mascotas\n• Entrenadores profesionales\n➡️ [Ir a Buscar Comercios](/home)\n\n📅 **GESTIONAR CITAS**\n• Agendar nuevas citas (paso a paso)\n• Ver citas programadas\n• Cancelar o reprogramar\n➡️ [Ver mis Citas](/appointments)\n\n🐾 **TUS MASCOTAS**\n• Ver mascotas registradas\n• Agregar nueva mascota\n• Información médica\n➡️ [Mis Mascotas](/profile)\n\n⭐ **FAVORITOS**\n• Guardar comercios favoritos\n• Ver recomendaciones\n• Acceso rápido\n\n💰 **INFORMACIÓN**\n• Precios y costos\n• Promociones activas\n• Comparar servicios\n\n🚨 **EMERGENCIAS**\n• Contactos de urgencia 24/7\n• Primeros auxilios\n• Veterinarias de emergencia\n\n📱 **CONTACTO COMERCIOS**\n• Ver números de teléfono\n• Correos electrónicos\n• Direcciones\n\n**¿Con qué necesitas ayuda?**`,
       
-      provider: `¡Claro ${name}! 💼\n\n**Como proveedor, puedo ayudarte con:**\n\n📅 **AGENDA Y CITAS**\n• Ver agenda del día\n• Próximas citas\n• Gestionar disponibilidad\n\n📊 **ESTADÍSTICAS**\n• Métricas de tu negocio\n• Ingresos y ganancias\n• Crecimiento mensual\n\n👥 **CLIENTES**\n• Clientes recurrentes\n• Historial por cliente\n• Comunicación directa\n\n⚙️ **CONFIGURACIÓN**\n• Actualizar servicios\n• Modificar precios\n• Cambiar horarios\n\n📈 **CRECIMIENTO**\n• Promociones\n• Marketing\n• Expansión de servicios\n\n**¿Qué área necesitas gestionar?**`,
+      provider: `¡Claro ${name}! 💼\n\n**Como proveedor, puedo ayudarte con:**\n\n📅 **AGENDA Y CITAS**\n• Ver agenda del día\n• Próximas citas\n• Gestionar disponibilidad\n• Confirmar/cancelar citas\n➡️ [Mi Agenda](/provider/appointments)\n\n📊 **ESTADÍSTICAS**\n• Métricas de tu negocio\n• Ingresos y ganancias\n• Crecimiento mensual\n• Análisis de clientes\n➡️ [Reportes](/provider/reports)\n\n👥 **CLIENTES**\n• Clientes recurrentes\n• Historial por cliente\n• Contacto directo\n• Base de datos\n\n🏪 **TU COMERCIO**\n• Actualizar información\n• Gestionar servicios\n• Modificar precios\n• Horarios de atención\n➡️ [Mi Comercio](/provider/business)\n\n⚙️ **SERVICIOS**\n• Agregar/editar servicios\n• Activar/desactivar\n• Descripción y fotos\n• Precios especiales\n\n⭐ **RESEÑAS Y CALIDAD**\n• Ver reseñas de clientes\n• Mejorar calificación\n• Responder comentarios\n\n📈 **CRECIMIENTO**\n• Estrategias de promoción\n• Marketing digital\n• Expansión de servicios\n• Análisis de competencia\n\n**¿Qué área necesitas gestionar?**`,
       
-      admin: `¡Claro ${name}! 👨‍💼\n\n**Como administrador, puedo ayudarte con:**\n\n👥 **USUARIOS**\n• Gestión de usuarios\n• Estadísticas de crecimiento\n• Actividad del sistema\n\n🏢 **COMERCIOS**\n• Aprobar/rechazar comercios\n• Supervisar actividad\n• Verificar información\n\n📊 **SISTEMA**\n• Métricas de plataforma\n• Reportes y análisis\n• Monitoreo en tiempo real\n\n🛡️ **SEGURIDAD**\n• Logs del sistema\n• Detección de anomalías\n• Backup de datos\n\n**¿Qué área necesitas supervisar?**`
+      admin: `¡Claro ${name}! 👨‍💼\n\n**Como administrador, puedo ayudarte con:**\n\n👥 **USUARIOS**\n• Gestión de usuarios\n• Estadísticas de crecimiento\n• Actividad del sistema\n• Suspender/activar cuentas\n➡️ [Gestionar Usuarios](/admin/users)\n\n🏢 **COMERCIOS**\n• Aprobar/rechazar comercios\n• Supervisar actividad\n• Verificar información\n• Reportes por comercio\n➡️ [Comercios Pendientes](/admin/businesses)\n\n📊 **SISTEMA**\n• Métricas de plataforma\n• Reportes y análisis\n• Monitoreo en tiempo real\n• KPIs del sistema\n➡️ [Dashboard](/admin/dashboard)\n\n📅 **CITAS**\n• Ver todas las citas\n• Estadísticas globales\n• Resolver conflictos\n• Auditoría de reservas\n➡️ [Todas las Citas](/admin/appointments)\n\n🛡️ **SEGURIDAD**\n• Logs del sistema\n• Detección de anomalías\n• Backup de datos\n• Control de accesos\n\n⚙️ **CONFIGURACIÓN**\n• Parámetros del sistema\n• Roles y permisos\n• Mantenimiento\n• Actualizaciones\n\n📧 **SOPORTE**\n• Atender reportes\n• Resolver tickets\n• Comunicación masiva\n\n**¿Qué área necesitas supervisar?**`
     };
     
     return helpMessages[role] || helpMessages.client;
@@ -624,12 +626,24 @@ class ResponseGenerator {
         if (business.averageServicePrice > 0) {
           response += `   💰 Desde $${business.averageServicePrice.toFixed(2)}\n`;
         }
+        // Agregar información de contacto
+        if (business.phone || business.provider?.phone) {
+          response += `   📞 ${business.phone || business.provider.phone}\n`;
+        }
+        if (business.email || business.provider?.email) {
+          response += `   ✉️ ${business.email || business.provider.email}\n`;
+        }
+        if (business.address) {
+          response += `   📍 ${business.address}\n`;
+        }
         response += `\n`;
       });
       
       if (businesses.length > 5) {
-        response += `\n🔍 **Para ver más:** Usa la función de búsqueda en la app.`;
+        response += `\n🔍 **Para ver más comercios y agendar citas:**\nUsa la función de búsqueda en la app.`;
       }
+      
+      response += `\n\n💡 **Consejo:** Contacta directamente al comercio para consultar disponibilidad y agendar tu cita.`;
       
       return response;
     } catch (error) {
@@ -864,6 +878,167 @@ class ResponseGenerator {
 
 // ============================================
 // 🚀 ENDPOINT PRINCIPAL
+// ============================================
+
+// ============================================
+// 🌍 ENDPOINT PARA INVITADOS (SIN AUTENTICACIÓN)
+// ============================================
+
+router.post("/guest", async (req, res) => {
+  console.log(`\n🌍 ======= MENSAJE CHAT INVITADO =======`);
+  
+  try {
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.json({
+        success: false,
+        reply: "Por favor, escribe un mensaje.",
+        type: "error"
+      });
+    }
+
+    const text = message.trim();
+    const role = "guest";
+    const name = "Invitado";
+    
+    console.log(`👤 Usuario: ${name} (${role})`);
+    console.log(`💭 Mensaje: "${text.substring(0, 60)}${text.length > 60 ? '...' : ''}"`);
+
+    const lowerText = text.toLowerCase();
+    
+    // Respuestas específicas para invitados
+    if (/(hola|buenos|buenas|saludos)/i.test(lowerText)) {
+      return res.json({
+        success: true,
+        reply: `¡Hola! 👋 Soy **PetBot**, tu asistente virtual de PetServices.\n\n**Para acceder a todas las funciones:**\n🔑 [Inicia sesión aquí](/login)\n\n**Puedo ayudarte con:**\n• 🏪 Información sobre servicios de mascotas\n• 🐕 Consejos para el cuidado de mascotas\n• 📍 Tipos de servicios disponibles\n• ❓ Preguntas generales\n\n¿En qué puedo ayudarte hoy?`,
+        type: "text",
+        source: "guest"
+      });
+    }
+
+    if (/(registr|cuenta|crear cuenta|sign up)/i.test(lowerText)) {
+      return res.json({
+        success: true,
+        reply: `📝 **Para crear una cuenta:**\n\n1. Haz clic aquí → [Iniciar Sesión/Registrarse](/login)\n2. Selecciona "Crear cuenta"\n3. Completa tus datos\n4. ¡Listo! Podrás:\n   • Agendar citas\n   • Guardar tus mascotas\n   • Ver comercios\n   • Mucho más\n\n¿Tienes alguna pregunta sobre el registro?`,
+        type: "text",
+        source: "guest"
+      });
+    }
+
+    if (/(login|iniciar.*sesi[oó]n|entrar|acceder)/i.test(lowerText)) {
+      return res.json({
+        success: true,
+        reply: `🔐 **Para iniciar sesión:**\n\n👉 [Haz clic aquí para ir al Login](/login)\n\n**Si no tienes cuenta:**\n• Puedes crear una desde la misma página\n• Es rápido y gratuito\n\n**Beneficios de tener cuenta:**\n✅ Agendar citas para tus mascotas\n✅ Guardar comercios favoritos\n✅ Historial de servicios\n✅ Notificaciones personalizadas`,
+        type: "text",
+        source: "guest"
+      });
+    }
+
+    if (/(comercios|veterinarias|peluquer[ií]as|guarder[ií]as|servicios.*disponibles)/i.test(lowerText)) {
+      return res.json({
+        success: true,
+        reply: `🏪 **Servicios disponibles en PetServices:**\n\n🏥 **Veterinarias**\n• Consultas médicas\n• Vacunación\n• Cirugías\n• Emergencias 24/7\n\n🛁 **Peluquerías**\n• Baño y corte\n• Estética canina\n• Spa para mascotas\n\n🏡 **Guarderías**\n• Cuidado diurno\n• Hospedaje\n• Socialización\n\n🎓 **Entrenamiento**\n• Obediencia básica\n• Adiestramiento\n\n💡 **Para ver comercios cerca de ti:**\n🔑 [Inicia sesión](/login) y accede a todas las funcionalidades`,
+        type: "text",
+        source: "guest"
+      });
+    }
+
+    if (/(agendar|reservar|cita)/i.test(lowerText)) {
+      return res.json({
+        success: true,
+        reply: `📅 **Para agendar una cita:**\n\n**Necesitas tener una cuenta activa.**\n\n📝 **Pasos:**\n1. [Inicia sesión aquí](/login)\n2. Busca el servicio que necesitas\n3. Selecciona fecha y hora\n4. Completa los datos de tu mascota\n5. ¡Confirma tu reserva!\n\n¿Aún no tienes cuenta? ¡Créala en menos de 2 minutos!`,
+        type: "text",
+        source: "guest"
+      });
+    }
+
+    if (/(precio|costo|cu[aá]nto.*cuesta)/i.test(lowerText)) {
+      return res.json({
+        success: true,
+        reply: `💰 **Información de precios:**\n\n**Rangos aproximados:**\n• 🏥 Consulta veterinaria: $20-$60\n• 🛁 Baño y corte: $15-$90\n• 🏡 Guardería (día): $15-$50\n• 🎓 Entrenamiento: $30-$120/sesión\n\n📍 Los precios varían según:\n• Tamaño de la mascota\n• Tipo de servicio\n• Ubicación del comercio\n• Experiencia del proveedor\n\n💡 **Para precios exactos:**\n[Inicia sesión](/login) y consulta directamente con cada comercio`,
+        type: "text",
+        source: "guest"
+      });
+    }
+
+    if (/(emergencia|urgencia|ayuda.*urgente)/i.test(lowerText)) {
+      return res.json({
+        success: true,
+        reply: `🚨 **EMERGENCIA VETERINARIA**\n\n**Si tu mascota está en peligro:**\n⚠️ Llama de inmediato a una clínica veterinaria\n⚠️ Contacto de emergencias: 1-800-PET-HELP\n\n**Síntomas que requieren atención inmediata:**\n• 😰 Dificultad para respirar\n• 🩸 Sangrado abundante\n• 🤢 Vómitos o diarrea severa\n• 💊 Ingesta de sustancias tóxicas\n• 🏃 Trauma o accidente\n\n**NO ESPERES - ACUDE YA A UNA CLÍNICA**\n\nPara encontrar veterinarias 24/7:\n[Inicia sesión](/login) y busca "emergencias"`,
+        type: "text",
+        source: "guest"
+      });
+    }
+
+    if (/(mascota.*enferm|mi.*perro|mi.*gato|consejo|cuidado)/i.test(lowerText)) {
+      // Usar Gemini para preguntas sobre mascotas
+      const guestPrompt = `Un usuario invitado pregunta: "${text}". 
+      
+Eres PetBot, un asistente virtual experto en mascotas. Proporciona consejos útiles y profesionales sobre el cuidado de mascotas. 
+Sé amable, conciso y usa emojis apropiados. Al final, sugiere que inicie sesión para acceso completo a servicios.
+Máximo 200 palabras.`;
+
+      const geminiResponse = await GeminiClient.generateText(
+        guestPrompt, 
+        "Eres un experto en cuidado de mascotas. Proporciona información útil y segura.",
+        0.7
+      );
+
+      if (geminiResponse) {
+        return res.json({
+          success: true,
+          reply: geminiResponse + `\n\n💡 **Para más ayuda personalizada:**\n🔑 [Inicia sesión aquí](/login)`,
+          type: "text",
+          source: "gemini-guest"
+        });
+      }
+    }
+
+    // Respuesta genérica con Gemini
+    const defaultGuestPrompt = `Usuario invitado dice: "${text}". 
+    
+Eres PetBot, asistente de PetServices. Responde de forma útil sobre servicios para mascotas. 
+Si necesita funciones avanzadas, sugiere iniciar sesión. Usa emojis. Máximo 150 palabras.`;
+
+    const defaultResponse = await GeminiClient.generateText(
+      defaultGuestPrompt,
+      "Eres un asistente amable especializado en servicios para mascotas.",
+      0.7
+    );
+
+    if (defaultResponse) {
+      return res.json({
+        success: true,
+        reply: defaultResponse + `\n\n🔑 **Para acceso completo:** [Inicia sesión aquí](/login)`,
+        type: "text",
+        source: "gemini-guest"
+      });
+    }
+
+    // Fallback si Gemini falla
+    return res.json({
+      success: true,
+      reply: `🤖 **Soy PetBot**, tu asistente virtual.\n\n**Puedo ayudarte con:**\n• Información sobre servicios\n• Consejos para mascotas\n• Precios aproximados\n• Tipos de comercios\n\n**Para funciones completas:**\n🔑 [Inicia sesión aquí](/login)\n\nEscribe tu pregunta o elige un tema.`,
+      type: "text",
+      source: "guest"
+    });
+
+  } catch (error) {
+    console.error("❌ Error en chat invitado:", error);
+    
+    return res.json({
+      success: false,
+      reply: `😔 Ocurrió un error. Por favor, intenta nuevamente.`,
+      type: "error"
+    });
+  } finally {
+    console.log(`🌍 ======= FIN MENSAJE INVITADO =======\n`);
+  }
+});
+
+// ============================================
+// 🔐 ENDPOINT PRINCIPAL PARA USUARIOS AUTENTICADOS
 // ============================================
 
 router.post("/", protect, async (req, res) => {

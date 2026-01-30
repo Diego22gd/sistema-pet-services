@@ -1328,9 +1328,7 @@
     </footer>
 
     <!-- Chatbot - POSICIONADO CORRECTAMENTE -->
-    <div class="fixed bottom-6 right-6 z-40">
-      
-    </div>
+    <Chatbot />
   </div>
 </template>
 

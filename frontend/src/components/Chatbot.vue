@@ -199,7 +199,8 @@ export default {
       canScrollRight: false,
       currentScrollPage: 1,
       scrollPages: 1,
-      userRole: "client",
+      userRole: "guest",
+      isAuthenticated: false,
       showFixedMessage: false,
       fixedMessageTimeout: null,
       lastRoutePath: null
@@ -208,6 +209,16 @@ export default {
   computed: {
     quickOptions() {
       const optionsByRole = {
+        guest: [
+          "¿Qué servicios ofrecen?",
+          "Quiero iniciar sesión",
+          "Crear una cuenta",
+          "Ver comercios",
+          "Precios aproximados",
+          "Cómo agendar cita",
+          "Emergencias veterinarias",
+          "Consejos para mascotas"
+        ],
         client: [
           "Buscar comercios", 
           "Servicios disponibles", 
@@ -246,7 +257,7 @@ export default {
         ]
       };
       
-      return optionsByRole[this.userRole] || optionsByRole.client;
+      return optionsByRole[this.userRole] || optionsByRole.guest;
     },
 
     apiBaseUrl() {
@@ -263,18 +274,41 @@ export default {
     }
   },
   methods: {
+    checkAuthentication() {
+      try {
+        const token = localStorage.getItem("token");
+        this.isAuthenticated = !!token;
+        return this.isAuthenticated;
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        this.isAuthenticated = false;
+        return false;
+      }
+    },
+
     getUserRole() {
       try {
+        if (!this.checkAuthentication()) {
+          return "guest";
+        }
         const userStore = useUserStore();
-        return userStore.user?.role || "client";
+        return userStore.user?.role || "guest";
       } catch (error) {
         console.error("Error obteniendo rol:", error);
-        return "client";
+        return "guest";
       }
     },
 
     getRoleDescription() {
       const descriptions = {
+        guest: "Asistente virtual",
+        client: "Asistente para clientes",
+        provider: "Asistente para proveedores", 
+        admin: "Asistente administrativo"
+      };
+    getRoleDescription() {
+      const descriptions = {
+        guest: "Asistente virtual",
         client: "Asistente para clientes",
         provider: "Asistente para proveedores", 
         admin: "Asistente administrativo"
@@ -284,6 +318,7 @@ export default {
 
     getInputPlaceholder() {
       const placeholders = {
+        guest: "Pregunta sobre nuestros servicios o cómo registrarte...",
         client: "Pregunta sobre comercios, servicios o tus mascotas...",
         provider: "Consulta tu comercio, agenda o estadísticas...",
         admin: "Consulta comercios, usuarios o reportes del sistema..."
@@ -311,6 +346,22 @@ export default {
 
     addWelcomeMessage() {
       const welcomeMessages = {
+        guest: `¡Hola! 👋 Soy **PetBot**, tu asistente virtual de PetServices.
+
+**Bienvenido a PetServices** 🐾
+
+Puedo ayudarte con:
+• 🏪 Información sobre nuestros servicios
+• 📍 Tipos de comercios disponibles
+• 💰 Precios aproximados
+• 🐕 Consejos para el cuidado de mascotas
+• ❓ Responder tus preguntas
+
+**Para acceso completo:**
+🔑 [Inicia sesión aquí](/login) o crea tu cuenta
+
+¿En qué puedo ayudarte hoy?`,
+
         client: `¡Hola! 👋 Soy PetBot, tu asistente para servicios de mascotas.
 
 Como **cliente**, puedo ayudarte con:
@@ -348,7 +399,7 @@ Como **administrador**, puedo ayudarte con:
 ¿Qué funcionalidad administrativa necesitas?`
       };
 
-      const message = welcomeMessages[this.userRole] || welcomeMessages.client;
+      const message = welcomeMessages[this.userRole] || welcomeMessages.guest;
       this.messages.push({ 
         sender: "bot", 
         text: message,
@@ -371,22 +422,27 @@ Como **administrador**, puedo ayudarte con:
       try {
         const token = localStorage.getItem("token");
         
-        if (!token) {
-          throw new Error("No hay token de autenticación");
-        }
-
+        // Determinar endpoint según autenticación
+        const endpoint = token ? '/api/chat' : '/api/chat/guest';
+        
         const apiUrl = this.apiBaseUrl 
-          ? `${this.apiBaseUrl}/api/chat`
-          : '/api/chat';
+          ? `${this.apiBaseUrl}${endpoint}`
+          : endpoint;
+
+        const headers = {
+          "Content-Type": "application/json"
+        };
+
+        // Solo agregar token si existe (usuarios autenticados)
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
 
         const res = await axios.post(
           apiUrl,
           { message: text },
           { 
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json"
-            },
+            headers,
             timeout: 30000
           }
         );
@@ -395,9 +451,15 @@ Como **administrador**, puedo ayudarte con:
           throw new Error(res.data.error);
         }
 
+        // Procesar links en la respuesta
+        let reply = res.data.reply || "Lo siento, no pude generar una respuesta.";
+        
+        // Convertir [text](/path) a links clicables
+        reply = this.processLinks(reply);
+
         this.messages.push({
           sender: "bot",
-          text: res.data.reply || "Lo siento, no pude generar una respuesta.",
+          text: reply,
           time: this.getCurrentTime()
         });
 
@@ -406,14 +468,12 @@ Como **administrador**, puedo ayudarte con:
         
         let errorMessage = "❌ Error al conectar con PetBot.";
         
-        if (error.response?.status === 401) {
-          errorMessage = "🔐 Por favor, inicia sesión nuevamente.";
+        if (error.response?.status === 401 && this.isAuthenticated) {
+          errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
         } else if (error.response?.status === 400) {
           errorMessage = "📝 Por favor, escribe un mensaje válido.";
         } else if (error.code === 'ECONNABORTED') {
           errorMessage = "⏰ El servicio está tardando en responder. Intenta nuevamente.";
-        } else if (error.message.includes("token")) {
-          errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
         } else if (error.message.includes("Network Error") || error.code === 'ERR_NETWORK') {
           errorMessage = `🌐 **Error de conexión.**\n\nVerifica tu conexión a internet o intenta más tarde.`;
         }
@@ -427,6 +487,13 @@ Como **administrador**, puedo ayudarte con:
         this.isLoading = false;
         this.scrollToBottom();
       }
+    },
+
+    processLinks(text) {
+      // Convertir [texto](/ruta) a elementos clicables en HTML
+      return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, path) => {
+        return `<a href="#" onclick="event.preventDefault(); window.location.href='${path}';" style="color: #3b82f6; text-decoration: underline; font-weight: 600;">${linkText}</a>`;
+      });
     },
 
     sendQuick(text) {
@@ -588,7 +655,11 @@ Como **administrador**, puedo ayudarte con:
   },
 
   mounted() {
+    // Verificar autenticación y obtener rol
+    this.checkAuthentication();
     this.userRole = this.getUserRole();
+    
+    console.log("Chatbot mounted - Role:", this.userRole, "Authenticated:", this.isAuthenticated);
     
     // Mostrar mensaje flotante al cargar por primera vez
     this.showFixedMessageFor3Seconds();

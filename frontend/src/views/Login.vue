@@ -524,6 +524,9 @@
         </p>
       </div>
     </footer>
+
+    <!-- Chatbot Component -->
+    <Chatbot />
   </div>
   
 </template>
