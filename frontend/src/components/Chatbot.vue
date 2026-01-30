@@ -199,8 +199,13 @@ export default {
       canScrollRight: false,
       currentScrollPage: 1,
       scrollPages: 1,
+<<<<<<< HEAD
       userRole: "guest", // Default to guest
       isGuest: true, // Track if user is guest
+=======
+      userRole: "guest",
+      isAuthenticated: false,
+>>>>>>> origin/copilot/improve-chatbot-functionality
       showFixedMessage: false,
       fixedMessageTimeout: null,
       lastRoutePath: null
@@ -210,6 +215,7 @@ export default {
     quickOptions() {
       const optionsByRole = {
         guest: [
+<<<<<<< HEAD
           "¿Cómo me registro?",
           "Servicios disponibles",
           "¿Cuánto cuestan?",
@@ -220,6 +226,16 @@ export default {
           "Ayuda",
           "Contacto",
           "Iniciar sesión"
+=======
+          "¿Qué servicios ofrecen?",
+          "Quiero iniciar sesión",
+          "Crear una cuenta",
+          "Ver comercios",
+          "Precios aproximados",
+          "Cómo agendar cita",
+          "Emergencias veterinarias",
+          "Consejos para mascotas"
+>>>>>>> origin/copilot/improve-chatbot-functionality
         ],
         client: [
           "Buscar comercios", 
@@ -276,9 +292,25 @@ export default {
     }
   },
   methods: {
+    checkAuthentication() {
+      try {
+        const token = localStorage.getItem("token");
+        this.isAuthenticated = !!token;
+        return this.isAuthenticated;
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        this.isAuthenticated = false;
+        return false;
+      }
+    },
+
     getUserRole() {
       try {
+        if (!this.checkAuthentication()) {
+          return "guest";
+        }
         const userStore = useUserStore();
+<<<<<<< HEAD
         if (userStore && userStore.user && userStore.user.role) {
           this.isGuest = false;
           return userStore.user.role;
@@ -288,13 +320,29 @@ export default {
       } catch (error) {
         console.error("Error obteniendo rol:", error);
         this.isGuest = true;
+=======
+        return userStore.user?.role || "guest";
+      } catch (error) {
+        console.error("Error obteniendo rol:", error);
+>>>>>>> origin/copilot/improve-chatbot-functionality
         return "guest";
       }
     },
 
     getRoleDescription() {
       const descriptions = {
+<<<<<<< HEAD
         guest: "Asistente virtual de PetServices",
+=======
+        guest: "Asistente virtual",
+        client: "Asistente para clientes",
+        provider: "Asistente para proveedores", 
+        admin: "Asistente administrativo"
+      };
+    getRoleDescription() {
+      const descriptions = {
+        guest: "Asistente virtual",
+>>>>>>> origin/copilot/improve-chatbot-functionality
         client: "Asistente para clientes",
         provider: "Asistente para proveedores", 
         admin: "Asistente administrativo"
@@ -304,7 +352,11 @@ export default {
 
     getInputPlaceholder() {
       const placeholders = {
+<<<<<<< HEAD
         guest: "Pregunta sobre servicios, precios o cómo registrarte...",
+=======
+        guest: "Pregunta sobre nuestros servicios o cómo registrarte...",
+>>>>>>> origin/copilot/improve-chatbot-functionality
         client: "Pregunta sobre comercios, servicios o tus mascotas...",
         provider: "Consulta tu comercio, agenda o estadísticas...",
         admin: "Consulta comercios, usuarios o reportes del sistema..."
@@ -332,6 +384,7 @@ export default {
 
     addWelcomeMessage() {
       const welcomeMessages = {
+<<<<<<< HEAD
         guest: `¡Hola! 👋 Soy PetBot, tu asistente virtual de PetServices.
 
 🐾 **Bienvenido a la plataforma líder en servicios para mascotas**
@@ -345,6 +398,21 @@ Como **visitante**, puedo ayudarte con:
 
 **Para reservar servicios necesitas una cuenta:**
 👉 [Iniciar sesión](/login) | [Registrarse](/login)
+=======
+        guest: `¡Hola! 👋 Soy **PetBot**, tu asistente virtual de PetServices.
+
+**Bienvenido a PetServices** 🐾
+
+Puedo ayudarte con:
+• 🏪 Información sobre nuestros servicios
+• 📍 Tipos de comercios disponibles
+• 💰 Precios aproximados
+• 🐕 Consejos para el cuidado de mascotas
+• ❓ Responder tus preguntas
+
+**Para acceso completo:**
+🔑 [Inicia sesión aquí](/login) o crea tu cuenta
+>>>>>>> origin/copilot/improve-chatbot-functionality
 
 ¿En qué puedo ayudarte hoy?`,
 
@@ -408,6 +476,7 @@ Como **administrador**, puedo ayudarte con:
       try {
         const token = localStorage.getItem("token");
         
+<<<<<<< HEAD
         // Determine API endpoint based on authentication
         const apiUrl = this.apiBaseUrl 
           ? `${this.apiBaseUrl}/api/chat${this.isGuest ? '/guest' : ''}`
@@ -427,21 +496,50 @@ Como **administrador**, puedo ayudarte con:
           requestConfig.headers = {
             "Content-Type": "application/json"
           };
+=======
+        // Determinar endpoint según autenticación
+        const endpoint = token ? '/api/chat' : '/api/chat/guest';
+        
+        const apiUrl = this.apiBaseUrl 
+          ? `${this.apiBaseUrl}${endpoint}`
+          : endpoint;
+
+        const headers = {
+          "Content-Type": "application/json"
+        };
+
+        // Solo agregar token si existe (usuarios autenticados)
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+>>>>>>> origin/copilot/improve-chatbot-functionality
         }
 
         const res = await axios.post(
           apiUrl,
           { message: text },
+<<<<<<< HEAD
           requestConfig
+=======
+          { 
+            headers,
+            timeout: 30000
+          }
+>>>>>>> origin/copilot/improve-chatbot-functionality
         );
 
         if (res.data.error) {
           throw new Error(res.data.error);
         }
 
+        // Procesar links en la respuesta
+        let reply = res.data.reply || "Lo siento, no pude generar una respuesta.";
+        
+        // Convertir [text](/path) a links clicables
+        reply = this.processLinks(reply);
+
         this.messages.push({
           sender: "bot",
-          text: res.data.reply || "Lo siento, no pude generar una respuesta.",
+          text: reply,
           time: this.getCurrentTime()
         });
 
@@ -450,14 +548,22 @@ Como **administrador**, puedo ayudarte con:
         
         let errorMessage = "❌ Error al conectar con PetBot.";
         
+<<<<<<< HEAD
         if (error.response?.status === 401 && !this.isGuest) {
           errorMessage = "🔐 Por favor, inicia sesión nuevamente.\n\n👉 [Ir a Login](/login)";
+=======
+        if (error.response?.status === 401 && this.isAuthenticated) {
+          errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
+>>>>>>> origin/copilot/improve-chatbot-functionality
         } else if (error.response?.status === 400) {
           errorMessage = "📝 Por favor, escribe un mensaje válido.";
         } else if (error.code === 'ECONNABORTED') {
           errorMessage = "⏰ El servicio está tardando en responder. Intenta nuevamente.";
+<<<<<<< HEAD
         } else if (error.message.includes("token") && !this.isGuest) {
           errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.\n\n👉 [Ir a Login](/login)";
+=======
+>>>>>>> origin/copilot/improve-chatbot-functionality
         } else if (error.message.includes("Network Error") || error.code === 'ERR_NETWORK') {
           errorMessage = `🌐 **Error de conexión.**\n\nVerifica tu conexión a internet o intenta más tarde.`;
         }
@@ -471,6 +577,13 @@ Como **administrador**, puedo ayudarte con:
         this.isLoading = false;
         this.scrollToBottom();
       }
+    },
+
+    processLinks(text) {
+      // Convertir [texto](/ruta) a elementos clicables en HTML
+      return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, path) => {
+        return `<a href="#" onclick="event.preventDefault(); window.location.href='${path}';" style="color: #3b82f6; text-decoration: underline; font-weight: 600;">${linkText}</a>`;
+      });
     },
 
     sendQuick(text) {
@@ -643,10 +756,16 @@ Como **administrador**, puedo ayudarte con:
   },
 
   mounted() {
+    // Verificar autenticación y obtener rol
+    this.checkAuthentication();
     this.userRole = this.getUserRole();
     
+<<<<<<< HEAD
     // Register chatbot instance globally for link navigation
     window.__chatbot = this;
+=======
+    console.log("Chatbot mounted - Role:", this.userRole, "Authenticated:", this.isAuthenticated);
+>>>>>>> origin/copilot/improve-chatbot-functionality
     
     // Mostrar mensaje flotante al cargar por primera vez
     this.showFixedMessageFor3Seconds();
