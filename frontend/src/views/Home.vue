@@ -80,9 +80,10 @@
 <script>
 import Layout from "@/components/Layout.vue";
 import ServiceCard from "@/components/ServiceCard.vue";
+import Chatbot from "@/components/Chatbot.vue";
 
 export default {
   name: "Home",
-  components: { Layout, ServiceCard }
+  components: { Layout, ServiceCard, Chatbot }
 };
 </script>

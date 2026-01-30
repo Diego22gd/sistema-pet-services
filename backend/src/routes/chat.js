@@ -13,7 +13,7 @@ const router = express.Router();
 // 🚀 CONFIGURACIÓN GEMINI
 // ============================================
 
-const GEMINI_API_KEY = "AIzaSyD-1PJz4a29qauVNnNEaEB4u9Bla-X1UmM";
+const GEMINI_API_KEY = "AIzaSyBf3K82SoHXmrZLL61QwGinI4Tvz1xqjfY";
 const GEMINI_MODEL = "gemini-2.5-flash"; // Modelo más estable
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -524,43 +524,39 @@ class ResponseGenerator {
         case "get_user_pets":
           return this.generatePetsResponse(userData, name);
         
-        case "book_appointment":
-<<<<<<< HEAD
-          return `📅 **Guía Paso a Paso para Agendar una Cita:**
+          case "book_appointment":
+           return `📅 **Guía Paso a Paso para Agendar una Cita:**
 
-**1️⃣ Explora Comercios**
-   👉 Ve a [Buscar Comercios](/comercios)
-   • Filtra por categoría (Veterinaria, Peluquería, etc.)
-   • Ve calificaciones y precios
-   • Lee reseñas de otros clientes
+    **1️⃣ Explora Comercios**
+      👉 Ve a [Buscar Comercios](/commerces)
+      • Filtra por categoría (Veterinaria, Peluquería, etc.)
+      • Ve calificaciones y precios
+      • Lee reseñas de otros clientes
 
-**2️⃣ Selecciona un Servicio**
-   • Haz clic en el comercio que te guste
-   • Revisa servicios disponibles
-   • Verifica horarios y precios
+    **2️⃣ Selecciona un Servicio**
+      • Haz clic en el comercio que te guste
+      • Revisa servicios disponibles
+      • Verifica horarios y precios
 
-**3️⃣ Elige Fecha y Hora**
-   • Selecciona la fecha que prefieras
-   • Escoge la hora disponible
-   • Confirma disponibilidad
+    **3️⃣ Elige Fecha y Hora**
+      • Selecciona la fecha que prefieras
+      • Escoge la hora disponible
+      • Confirma disponibilidad
 
-**4️⃣ Selecciona tu Mascota**
-   • Escoge cuál mascota atenderás
-   • Si no la tienes registrada, créala primero
-   👉 [Mis Mascotas](/pets)
+    **4️⃣ Selecciona tu Mascota**
+      • Escoge cuál mascota atenderás
+      • Si no la tienes registrada, créala primero
+      👉 [Mis Mascotas](/MyPets)
 
-**5️⃣ Confirma la Reserva**
-   • Revisa todos los detalles
-   • Confirma tu cita
-   • ¡Recibirás confirmación al instante!
+    **5️⃣ Confirma la Reserva**
+      • Revisa todos los detalles
+      • Confirma tu cita
+      • ¡Recibirás confirmación al instante!
 
-**📱 Gestiona tus citas:**
-👉 [Ver Mis Citas](/user/appointments)
+    **📱 Gestiona tus citas:**
+    👉 [Ver Mis Citas](/appointments)
 
-💡 *¿Buscas un tipo específico de servicio? Dime y te ayudo a encontrar el mejor comercio.*`;
-=======
-          return `📅 **Cómo reservar una cita - Paso a paso:**\n\n**PASO 1: Buscar Comercios** 🔍\n• Ve al menú principal\n• Click en "Buscar Comercios" o [haz clic aquí](/home)\n• Usa los filtros para encontrar el servicio\n\n**PASO 2: Seleccionar Servicio** 🛎️\n• Explora los servicios del comercio\n• Revisa precios y descripciones\n• Click en "Agendar" o "Reservar"\n\n**PASO 3: Elegir Fecha y Hora** 📆\n• Selecciona una fecha disponible\n• Elige el horario que prefieras\n\n**PASO 4: Datos de tu Mascota** 🐾\n• Completa nombre de tu mascota\n• Indica tipo y raza\n• Agrega notas especiales si es necesario\n\n**PASO 5: Confirmar** ✅\n• Revisa todos los datos\n• Click en "Confirmar Reserva"\n• ¡Recibirás una notificación!\n\n💡 **Consejo:** Verifica que tus datos de contacto estén actualizados.\n\n¿Necesitas ayuda con algún paso específico?`;
->>>>>>> origin/copilot/improve-chatbot-functionality
+    💡 *¿Buscas un tipo específico de servicio? Dime y te ayudo a encontrar el mejor comercio.*`;
         
         case "prices":
           // Usar Gemini para dar respuestas más detalladas sobre precios
@@ -615,11 +611,11 @@ class ResponseGenerator {
   
   static getHelpMessage(role, name) {
     const helpMessages = {
-      client: `¡Claro ${name}! 🤖\n\n**Como cliente, puedo ayudarte con:**\n\n🔍 **BUSCAR SERVICIOS**\n• Veterinarias, peluquerías, guarderías\n• Tiendas de mascotas\n• Entrenadores profesionales\n➡️ [Ir a Buscar Comercios](/home)\n\n📅 **GESTIONAR CITAS**\n• Agendar nuevas citas (paso a paso)\n• Ver citas programadas\n• Cancelar o reprogramar\n➡️ [Ver mis Citas](/appointments)\n\n🐾 **TUS MASCOTAS**\n• Ver mascotas registradas\n• Agregar nueva mascota\n• Información médica\n➡️ [Mis Mascotas](/profile)\n\n⭐ **FAVORITOS**\n• Guardar comercios favoritos\n• Ver recomendaciones\n• Acceso rápido\n\n💰 **INFORMACIÓN**\n• Precios y costos\n• Promociones activas\n• Comparar servicios\n\n🚨 **EMERGENCIAS**\n• Contactos de urgencia 24/7\n• Primeros auxilios\n• Veterinarias de emergencia\n\n📱 **CONTACTO COMERCIOS**\n• Ver números de teléfono\n• Correos electrónicos\n• Direcciones\n\n**¿Con qué necesitas ayuda?**`,
+      client: `¡Claro ${name}! 🤖\n\n**Como cliente, puedo ayudarte con:**\n\n🔍 **BUSCAR SERVICIOS**\n• Veterinarias, peluquerías, guarderías\n• Tiendas de mascotas\n• Entrenadores profesionales\n➡️ [Ir a Buscar Comercios](/commerces)\n\n📅 **GESTIONAR CITAS**\n• Agendar nuevas citas (paso a paso)\n• Ver citas programadas\n• Cancelar o reprogramar\n➡️ [Ver mis Citas](/appointments)\n\n🐾 **TUS MASCOTAS**\n• Ver mascotas registradas\n• Agregar nueva mascota\n• Información médica\n➡️ [Mis Mascotas](/MyPets)\n\n⭐ **FAVORITOS**\n• Guardar comercios favoritos\n• Ver recomendaciones\n• Acceso rápido\n\n💰 **INFORMACIÓN**\n• Precios y costos\n• Promociones activas\n• Comparar servicios\n\n🚨 **EMERGENCIAS**\n• Contactos de urgencia 24/7\n• Primeros auxilios\n• Veterinarias de emergencia\n\n📱 **CONTACTO COMERCIOS**\n• Ver números de teléfono\n• Correos electrónicos\n• Direcciones\n\n**¿Con qué necesitas ayuda?**`,
       
-      provider: `¡Claro ${name}! 💼\n\n**Como proveedor, puedo ayudarte con:**\n\n📅 **AGENDA Y CITAS**\n• Ver agenda del día\n• Próximas citas\n• Gestionar disponibilidad\n• Confirmar/cancelar citas\n➡️ [Mi Agenda](/provider/appointments)\n\n📊 **ESTADÍSTICAS**\n• Métricas de tu negocio\n• Ingresos y ganancias\n• Crecimiento mensual\n• Análisis de clientes\n➡️ [Reportes](/provider/reports)\n\n👥 **CLIENTES**\n• Clientes recurrentes\n• Historial por cliente\n• Contacto directo\n• Base de datos\n\n🏪 **TU COMERCIO**\n• Actualizar información\n• Gestionar servicios\n• Modificar precios\n• Horarios de atención\n➡️ [Mi Comercio](/provider/business)\n\n⚙️ **SERVICIOS**\n• Agregar/editar servicios\n• Activar/desactivar\n• Descripción y fotos\n• Precios especiales\n\n⭐ **RESEÑAS Y CALIDAD**\n• Ver reseñas de clientes\n• Mejorar calificación\n• Responder comentarios\n\n📈 **CRECIMIENTO**\n• Estrategias de promoción\n• Marketing digital\n• Expansión de servicios\n• Análisis de competencia\n\n**¿Qué área necesitas gestionar?**`,
+      provider: `¡Claro ${name}! 💼\n\n**Como proveedor, puedo ayudarte con:**\n\n📅 **AGENDA Y CITAS**\n• Ver agenda del día\n• Próximas citas\n• Gestionar disponibilidad\n• Confirmar/cancelar citas\n➡️ [Mi Agenda](/provider/appointments)\n\n📊 **ESTADÍSTICAS**\n• Métricas de tu negocio\n• Ingresos y ganancias\n• Crecimiento mensual\n• Análisis de clientes\n➡️ [Reportes](/provider/reports)\n\n👥 **CLIENTES**\n• Clientes recurrentes\n• Historial por cliente\n• Contacto directo\n• Base de datos\n\n🏪 **TU COMERCIO**\n• Actualizar información\n• Gestionar servicios\n• Modificar precios\n• Horarios de atención\n➡️ [Mi Comercio](/provider/commerces)\n\n⚙️ **SERVICIOS**\n• Agregar/editar servicios\n• Activar/desactivar\n• Descripción y fotos\n• Precios especiales\n\n⭐ **RESEÑAS Y CALIDAD**\n• Ver reseñas de clientes\n• Mejorar calificación\n• Responder comentarios\n\n📈 **CRECIMIENTO**\n• Estrategias de promoción\n• Marketing digital\n• Expansión de servicios\n• Análisis de competencia\n\n**¿Qué área necesitas gestionar?**`,
       
-      admin: `¡Claro ${name}! 👨‍💼\n\n**Como administrador, puedo ayudarte con:**\n\n👥 **USUARIOS**\n• Gestión de usuarios\n• Estadísticas de crecimiento\n• Actividad del sistema\n• Suspender/activar cuentas\n➡️ [Gestionar Usuarios](/admin/users)\n\n🏢 **COMERCIOS**\n• Aprobar/rechazar comercios\n• Supervisar actividad\n• Verificar información\n• Reportes por comercio\n➡️ [Comercios Pendientes](/admin/businesses)\n\n📊 **SISTEMA**\n• Métricas de plataforma\n• Reportes y análisis\n• Monitoreo en tiempo real\n• KPIs del sistema\n➡️ [Dashboard](/admin/dashboard)\n\n📅 **CITAS**\n• Ver todas las citas\n• Estadísticas globales\n• Resolver conflictos\n• Auditoría de reservas\n➡️ [Todas las Citas](/admin/appointments)\n\n🛡️ **SEGURIDAD**\n• Logs del sistema\n• Detección de anomalías\n• Backup de datos\n• Control de accesos\n\n⚙️ **CONFIGURACIÓN**\n• Parámetros del sistema\n• Roles y permisos\n• Mantenimiento\n• Actualizaciones\n\n📧 **SOPORTE**\n• Atender reportes\n• Resolver tickets\n• Comunicación masiva\n\n**¿Qué área necesitas supervisar?**`
+      admin: `¡Claro ${name}! 👨‍💼\n\n**Como administrador, puedo ayudarte con:**\n\n👥 **USUARIOS**\n• Gestión de usuarios\n• Estadísticas de crecimiento\n• Actividad del sistema\n• Suspender/activar cuentas\n➡️ [Gestionar Usuarios](/admin/users)\n\n🏢 **COMERCIOS**\n• Aprobar/rechazar comercios\n• Supervisar actividad\n• Verificar información\n• Reportes por comercio\n➡️ [Comercios Pendientes](/admin/commerces)\n\n📊 **SISTEMA**\n• Métricas de plataforma\n• Reportes y análisis\n• Monitoreo en tiempo real\n• KPIs del sistema\n➡️ [Dashboard](/admin/dashboard)\n\n📅 **CITAS**\n• Ver todas las citas\n• Estadísticas globales\n• Resolver conflictos\n• Auditoría de reservas\n➡️ [Todas las Citas](/admin/appointments)\n\n🛡️ **SEGURIDAD**\n• Logs del sistema\n• Detección de anomalías\n• Backup de datos\n• Control de accesos\n\n⚙️ **CONFIGURACIÓN**\n• Parámetros del sistema\n• Roles y permisos\n• Mantenimiento\n• Actualizaciones\n\n📧 **SOPORTE**\n• Atender reportes\n• Resolver tickets\n• Comunicación masiva\n\n**¿Qué área necesitas supervisar?**`
     };
     
     return helpMessages[role] || helpMessages.client;
@@ -658,7 +654,7 @@ class ResponseGenerator {
 • "tiendas" - 🛒 Productos
 • "entrenamiento" - 🎓 Adiestramiento
 
-👉 [Explorar todos los comercios](/comercios)`;
+👉 [Explorar todos los comercios](/commerces)`;
       }
       
       let response = `🏢 **Encontré ${businesses.length} comercios:**\n\n`;
@@ -698,43 +694,25 @@ class ResponseGenerator {
         if (business.averageServicePrice > 0) {
           response += `💰 Desde $${business.averageServicePrice.toFixed(2)}\n`;
         }
-<<<<<<< HEAD
-        
-=======
-        // Agregar información de contacto
-        if (business.phone || business.provider?.phone) {
-          response += `   📞 ${business.phone || business.provider.phone}\n`;
-        }
-        if (business.email || business.provider?.email) {
-          response += `   ✉️ ${business.email || business.provider.email}\n`;
-        }
-        if (business.address) {
-          response += `   📍 ${business.address}\n`;
-        }
->>>>>>> origin/copilot/improve-chatbot-functionality
         response += `\n`;
       });
       
       response += `📱 **Para reservar:**
-1. Haz clic en el comercio en [Buscar Comercios](/comercios)
+1. Haz clic en el comercio en [Buscar Comercios](/commerces)
 2. Selecciona el servicio
 3. Elige fecha y hora
 4. ¡Confirma tu cita!`;
       
-      if (businesses.length > 5) {
-<<<<<<< HEAD
+            if (businesses.length > 5) {
         response += `\n\n💡 *Mostrando los primeros 5 de ${businesses.length}. Para ver más, usa la búsqueda avanzada.*`;
-=======
-        response += `\n🔍 **Para ver más comercios y agendar citas:**\nUsa la función de búsqueda en la app.`;
->>>>>>> origin/copilot/improve-chatbot-functionality
-      }
+            }
       
       response += `\n\n💡 **Consejo:** Contacta directamente al comercio para consultar disponibilidad y agendar tu cita.`;
       
       return response;
     } catch (error) {
       console.error('Error generando respuesta de comercios:', error);
-      return `🏢 **Comercios disponibles:**\n\nPuedes buscar por:\n• Veterinarias 🏥\n• Peluquerías caninas ✂️\n• Guarderías 🏠\n• Entrenadores 🎓\n• Tiendas de mascotas 🛒\n\n👉 [Explorar comercios](/comercios)\n\n💡 **Tip:** Usa los filtros para resultados más específicos.`;
+      return `🏢 **Comercios disponibles:**\n\nPuedes buscar por:\n• Veterinarias 🏥\n• Peluquerías caninas ✂️\n• Guarderías 🏠\n• Entrenadores 🎓\n• Tiendas de mascotas 🛒\n\n👉 [Explorar comercios](/commerces)\n\n💡 **Tip:** Usa los filtros para resultados más específicos.`;
     }
   }
   
@@ -1460,7 +1438,7 @@ Para **reservar servicios** necesitas una cuenta.
 • Juguetes
 • Medicina
 
-👉 [Explorar comercios](/comercios)
+👉 [Explorar comercios](/commerces)
 Para reservar servicios: [Iniciar sesión](/login)`;
     }
     // Precios
@@ -1583,7 +1561,7 @@ Para información específica sobre la salud de tu mascota, te recomiendo:
 
 **¿Preguntas sobre un comercio específico?**
 Cada comercio tiene su información de contacto.
-👉 [Explora comercios](/comercios)
+👉 [Explora comercios](/commerces)
 
 Para soporte técnico o dudas:
 👉 [Iniciar sesión](/login) → Centro de ayuda`;
@@ -1596,7 +1574,7 @@ Para soporte técnico o dudas:
 
 **Próximos pasos:**
 👉 [Crear cuenta](/login) - Accede a todos los servicios
-👉 [Ver comercios](/comercios) - Explora nuestros aliados
+👉 [Ver comercios](/commerces) - Explora nuestros aliados
 
 ¡Que tengas un excelente día! 🌟`;
     }
@@ -1628,7 +1606,7 @@ Para soporte técnico o dudas:
 • Reservar citas
 • Cuidado de mascotas
 
-👉 [Iniciar sesión](/login) | [Ver servicios](/comercios)`;
+👉 [Iniciar sesión](/login) | [Ver servicios](/commerces)`;
       }
     }
 

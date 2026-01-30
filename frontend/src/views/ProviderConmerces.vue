@@ -500,26 +500,26 @@
                         <label class="form-label">Horario Regular *</label>
                         <div class="grid grid-cols-2 gap-3">
                           <div>
-                            <label class="form-label-sm">Apertura (HH:MM)</label>
+                            <label class="form-label-sm">Apertura (hh:mm AM/PM)</label>
                             <input
                               v-model="businessData.workingHours.open"
                               type="text"
                               required
                               class="form-input"
-                              placeholder="09:00"
-                              pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                              placeholder="9:00 AM"
+                              pattern="^((0?[1-9]|1[0-2]):[0-5][0-9] ?(AM|PM)|([01][0-9]|2[0-3]):[0-5][0-9])$"
                               :disabled="saving"
                             />
                           </div>
                           <div>
-                            <label class="form-label-sm">Cierre (HH:MM)</label>
+                            <label class="form-label-sm">Cierre (hh:mm AM/PM)</label>
                             <input
                               v-model="businessData.workingHours.close"
                               type="text"
                               required
                               class="form-input"
-                              placeholder="18:00"
-                              pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                              placeholder="6:00 PM"
+                              pattern="^((0?[1-9]|1[0-2]):[0-5][0-9] ?(AM|PM)|([01][0-9]|2[0-3]):[0-5][0-9])$"
                               :disabled="saving"
                             />
                           </div>
@@ -586,16 +586,16 @@
                               v-model="businessData.workingHours.specialOpen"
                               type="text"
                               class="form-input"
-                              placeholder="10:00"
-                              pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                              placeholder="10:00 AM"
+                              pattern="^((0?[1-9]|1[0-2]):[0-5][0-9] ?(AM|PM)|([01][0-9]|2[0-3]):[0-5][0-9])$"
                               :disabled="saving"
                             />
                             <input
                               v-model="businessData.workingHours.specialClose"
                               type="text"
                               class="form-input"
-                              placeholder="14:00"
-                              pattern="^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                              placeholder="2:00 PM"
+                              pattern="^((0?[1-9]|1[0-2]):[0-5][0-9] ?(AM|PM)|([01][0-9]|2[0-3]):[0-5][0-9])$"
                               :disabled="saving"
                             />
                           </div>
@@ -1003,17 +1003,19 @@
         </div>
       </div>
     </div>
+    <Chatbot />
   </ProviderLayout>
 </template>
 
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
-import { formatTimeTo12Hour } from "@/utils/timeFormatter";
+import { formatTimeTo12Hour, formatTimeTo24Hour } from "@/utils/timeFormatter";
 
 export default {
   name: "ProviderCommerces",
-  components: { ProviderLayout },
+  components: { ProviderLayout, Chatbot },
   data() {
     return {
       businesses: [],
@@ -1198,8 +1200,27 @@ export default {
       return workingHours.regular || 'No especificado';
     },
     
-    formatTime(time24) {
-      return formatTimeTo12Hour(time24);
+    formatTime(timeValue) {
+      if (!timeValue) return '';
+      if (this.isTime12HourFormat(timeValue)) {
+        return timeValue.toUpperCase().replace(/\s+/g, ' ');
+      }
+      return formatTimeTo12Hour(timeValue);
+    },
+
+    isTime12HourFormat(time) {
+      return /^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i.test(time || '');
+    },
+
+    isTime24HourFormat(time) {
+      return /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(time || '');
+    },
+
+    normalizeTimeTo24(time) {
+      if (!time) return '';
+      if (this.isTime24HourFormat(time)) return time;
+      if (this.isTime12HourFormat(time)) return formatTimeTo24Hour(time.trim().toUpperCase());
+      return time;
     },
 
     formatWorkDays(days) {
@@ -1522,12 +1543,12 @@ export default {
       
       // Preparar workingHours
       let workingHours = {
-        open: business.workingHours?.open || "",
-        close: business.workingHours?.close || "",
+        open: this.formatTime(business.workingHours?.open || ""),
+        close: this.formatTime(business.workingHours?.close || ""),
         days: [],
         specialDay: business.workingHours?.specialDay || "",
-        specialOpen: business.workingHours?.specialOpen || "",
-        specialClose: business.workingHours?.specialClose || ""
+        specialOpen: this.formatTime(business.workingHours?.specialOpen || ""),
+        specialClose: this.formatTime(business.workingHours?.specialClose || "")
       };
 
       // Procesar días de trabajo
@@ -1670,14 +1691,14 @@ export default {
       // Validar horarios
       if (!this.businessData.workingHours.open) {
         this.validationErrors['workingHours.open'] = "La hora de apertura es requerida";
-      } else if (!/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/.test(this.businessData.workingHours.open)) {
-        this.validationErrors['workingHours.open'] = "Formato inválido (use HH:MM)";
+      } else if (!this.isTime24HourFormat(this.businessData.workingHours.open) && !this.isTime12HourFormat(this.businessData.workingHours.open)) {
+        this.validationErrors['workingHours.open'] = "Formato inválido (use hh:mm AM/PM)";
       }
 
       if (!this.businessData.workingHours.close) {
         this.validationErrors['workingHours.close'] = "La hora de cierre es requerida";
-      } else if (!/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/.test(this.businessData.workingHours.close)) {
-        this.validationErrors['workingHours.close'] = "Formato inválido (use HH:MM)";
+      } else if (!this.isTime24HourFormat(this.businessData.workingHours.close) && !this.isTime12HourFormat(this.businessData.workingHours.close)) {
+        this.validationErrors['workingHours.close'] = "Formato inválido (use hh:mm AM/PM)";
       }
 
       if (this.businessData.workingHours.days.length === 0) {
@@ -1727,12 +1748,12 @@ export default {
           image: this.businessData.image, // Base64
           status: this.businessData.status,
           workingHours: {
-            open: this.businessData.workingHours.open,
-            close: this.businessData.workingHours.close,
+            open: this.normalizeTimeTo24(this.businessData.workingHours.open),
+            close: this.normalizeTimeTo24(this.businessData.workingHours.close),
             days: this.businessData.workingHours.days,
             specialDay: this.businessData.workingHours.specialDay || "",
-            specialOpen: this.businessData.workingHours.specialOpen || "",
-            specialClose: this.businessData.workingHours.specialClose || ""
+            specialOpen: this.normalizeTimeTo24(this.businessData.workingHours.specialOpen || ""),
+            specialClose: this.normalizeTimeTo24(this.businessData.workingHours.specialClose || "")
           },
           services: this.businessData.services.map(service => ({
             name: service.name.trim(),

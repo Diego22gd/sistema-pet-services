@@ -184,17 +184,19 @@
         </button>
       </div>
     </div>
+    <Chatbot />
   </ProviderLayout>
 </template>
 
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
+import Chatbot from "@/components/Chatbot.vue";
 import axios from "axios";
 import { formatTimeTo12Hour } from "@/utils/timeFormatter";
 
 export default {
   name: "ProviderNotifications",
-  components: { ProviderLayout },
+  components: { ProviderLayout, Chatbot },
   
   data() {
     return {
