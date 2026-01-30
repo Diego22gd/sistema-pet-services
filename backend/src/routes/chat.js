@@ -523,7 +523,38 @@ class ResponseGenerator {
           return this.generatePetsResponse(userData, name);
         
         case "book_appointment":
-          return `📅 **Para agendar una cita:**\n\n1. Ve a "Buscar Comercios"\n2. Selecciona un servicio\n3. Elige fecha y hora disponible\n4. Completa los datos de tu mascota\n5. Confirma la reserva\n\n💡 *¿Quieres que te recomiende algunos comercios?*`;
+          return `📅 **Guía Paso a Paso para Agendar una Cita:**
+
+**1️⃣ Explora Comercios**
+   👉 Ve a [Buscar Comercios](/comercios)
+   • Filtra por categoría (Veterinaria, Peluquería, etc.)
+   • Ve calificaciones y precios
+   • Lee reseñas de otros clientes
+
+**2️⃣ Selecciona un Servicio**
+   • Haz clic en el comercio que te guste
+   • Revisa servicios disponibles
+   • Verifica horarios y precios
+
+**3️⃣ Elige Fecha y Hora**
+   • Selecciona la fecha que prefieras
+   • Escoge la hora disponible
+   • Confirma disponibilidad
+
+**4️⃣ Selecciona tu Mascota**
+   • Escoge cuál mascota atenderás
+   • Si no la tienes registrada, créala primero
+   👉 [Mis Mascotas](/pets)
+
+**5️⃣ Confirma la Reserva**
+   • Revisa todos los detalles
+   • Confirma tu cita
+   • ¡Recibirás confirmación al instante!
+
+**📱 Gestiona tus citas:**
+👉 [Ver Mis Citas](/user/appointments)
+
+💡 *¿Buscas un tipo específico de servicio? Dime y te ayudo a encontrar el mejor comercio.*`;
         
         case "prices":
           // Usar Gemini para dar respuestas más detalladas sobre precios
@@ -599,7 +630,10 @@ class ResponseGenerator {
       // Extraer término de búsqueda del mensaje
       const searchTerm = message.toLowerCase().includes('veterinaria') ? 'veterinaria' :
                         message.toLowerCase().includes('peluqueria') ? 'peluqueria' :
+                        message.toLowerCase().includes('peluquer') ? 'peluqueria' :
                         message.toLowerCase().includes('guarderia') ? 'guarderia' :
+                        message.toLowerCase().includes('tienda') ? 'tienda' :
+                        message.toLowerCase().includes('entrena') ? 'entrenamiento' :
                         '';
       
       if (searchTerm) {
@@ -609,33 +643,73 @@ class ResponseGenerator {
       }
       
       if (businesses.length === 0) {
-        return `🔍 **No encontré comercios.**\n\nIntenta con términos como:\n• "veterinarias"\n• "peluquerías caninas"\n• "guarderías para perros"\n• "tiendas de mascotas"`;
+        return `🔍 **No encontré comercios con ese término.**
+
+**Intenta buscar:**
+• "veterinarias" - 🏥 Atención médica
+• "peluquerías" - ✂️ Estética canina  
+• "guarderías" - 🏠 Cuidado diario
+• "tiendas" - 🛒 Productos
+• "entrenamiento" - 🎓 Adiestramiento
+
+👉 [Explorar todos los comercios](/comercios)`;
       }
       
       let response = `🏢 **Encontré ${businesses.length} comercios:**\n\n`;
       
       businesses.slice(0, 5).forEach((business, index) => {
-        response += `${index + 1}. **${business.name}**\n`;
+        response += `**${index + 1}. ${business.name}**\n`;
+        
         if (business.categories?.length) {
-          response += `   📍 ${business.categories.join(', ')}\n`;
+          const categoryIcon = business.categories[0]?.toLowerCase().includes('veterinaria') ? '🏥' :
+                               business.categories[0]?.toLowerCase().includes('peluquer') ? '✂️' :
+                               business.categories[0]?.toLowerCase().includes('guarderia') ? '🏠' :
+                               business.categories[0]?.toLowerCase().includes('tienda') ? '🛒' :
+                               business.categories[0]?.toLowerCase().includes('entrena') ? '🎓' : '🏪';
+          response += `${categoryIcon} ${business.categories.join(', ')}\n`;
         }
+        
         if (business.rating) {
-          response += `   ⭐ ${business.rating.toFixed(1)}/5.0\n`;
+          response += `⭐ ${business.rating.toFixed(1)}/5.0`;
+          if (business.reviewCount) {
+            response += ` (${business.reviewCount} reseñas)`;
+          }
+          response += `\n`;
         }
+        
+        if (business.address) {
+          response += `📍 ${business.address}\n`;
+        }
+        
+        if (business.phone) {
+          response += `📞 ${business.phone}\n`;
+        }
+        
+        if (business.workingHours?.open && business.workingHours?.close) {
+          response += `⏰ ${formatTimeTo12Hour(business.workingHours.open)} - ${formatTimeTo12Hour(business.workingHours.close)}\n`;
+        }
+        
         if (business.averageServicePrice > 0) {
-          response += `   💰 Desde $${business.averageServicePrice.toFixed(2)}\n`;
+          response += `💰 Desde $${business.averageServicePrice.toFixed(2)}\n`;
         }
+        
         response += `\n`;
       });
       
+      response += `📱 **Para reservar:**
+1. Haz clic en el comercio en [Buscar Comercios](/comercios)
+2. Selecciona el servicio
+3. Elige fecha y hora
+4. ¡Confirma tu cita!`;
+      
       if (businesses.length > 5) {
-        response += `\n🔍 **Para ver más:** Usa la función de búsqueda en la app.`;
+        response += `\n\n💡 *Mostrando los primeros 5 de ${businesses.length}. Para ver más, usa la búsqueda avanzada.*`;
       }
       
       return response;
     } catch (error) {
       console.error('Error generando respuesta de comercios:', error);
-      return `🏢 **Comercios disponibles:**\n\nPuedes buscar por:\n• Veterinarias\n• Peluquerías caninas\n• Guarderías\n• Entrenadores\n• Tiendas de mascotas\n\n💡 **Consejo:** Usa los filtros en "Buscar Comercios" para resultados más específicos.`;
+      return `🏢 **Comercios disponibles:**\n\nPuedes buscar por:\n• Veterinarias 🏥\n• Peluquerías caninas ✂️\n• Guarderías 🏠\n• Entrenadores 🎓\n• Tiendas de mascotas 🛒\n\n👉 [Explorar comercios](/comercios)\n\n💡 **Tip:** Usa los filtros para resultados más específicos.`;
     }
   }
   
