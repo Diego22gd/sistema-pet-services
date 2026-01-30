@@ -5,6 +5,7 @@ import Pet from "../models/Pet.js";
 import Service from "../models/Service.js";
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
+import { formatTimeTo12Hour } from "../utils/timeFormatter.js";
 
 // ======================================================
 // 📌 Obtener reportes con filtros
@@ -480,7 +481,7 @@ export const exportReportPDF = async (req, res) => {
           .text(`Cita #${index + 1}`, leftMargin, doc.y, { bold: true, continued: false });
         doc.moveDown(0.3);
         
-        doc.text(`• Fecha y Hora: ${appt.date} ${appt.time}`, leftMargin, doc.y);
+        doc.text(`• Fecha y Hora: ${appt.date} ${formatTimeTo12Hour(appt.time)}`, leftMargin, doc.y);
         doc.moveDown(0.3);
         
         doc.text(`• Cliente: ${appt.user.name} ${appt.user.lastname}${appt.user.phone ? ` | Tel: ${appt.user.phone}` : ''}`, leftMargin, doc.y);
@@ -752,7 +753,7 @@ export const exportReportExcel = async (req, res) => {
         
         row.getCell(1).value = index + 1;
         row.getCell(2).value = appt.date;
-        row.getCell(3).value = appt.time;
+        row.getCell(3).value = formatTimeTo12Hour(appt.time);
         row.getCell(4).value = `${appt.user.name} ${appt.user.lastname}`;
         row.getCell(5).value = appt.user.phone || 'N/A';
         row.getCell(6).value = appt.pet.name;

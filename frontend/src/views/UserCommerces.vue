@@ -762,7 +762,7 @@
                             : 'text-gray-700'
                         ]"
                       >
-                        {{ hour.time }} 
+                        {{ formatTime(hour.time) }} 
                         <span v-if="hour.isBooked" class="text-red-500 font-medium">(Reservado)</span>
                         <span v-else class="text-emerald-500">(Disponible)</span>
                       </option>
@@ -870,7 +870,7 @@
               </div>
               <div class="summary-row-compact">
                 <span class="summary-label-compact">Hora:</span>
-                <span class="summary-value-compact">{{ successData?.time || 'Hora' }}</span>
+                <span class="summary-value-compact">{{ successData?.time ? formatTime(successData.time) : 'Hora' }}</span>
               </div>
               <div class="summary-row-compact">
                 <span class="summary-label-compact">Mascota:</span>
@@ -910,6 +910,7 @@ import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
 import { useUserStore } from "@/stores/userStore";
 import Layout from "../components/Layout.vue";
+import { formatTimeTo12Hour } from "@/utils/timeFormatter";
 
 export default {
   name: "UserCommerces",
@@ -1248,6 +1249,10 @@ export default {
         'default': '🐾'
       };
       return icons[petType?.toLowerCase()] || icons.default;
+    },
+    
+    formatTime(time24) {
+      return formatTimeTo12Hour(time24);
     },
     
     // ============ VALIDACIONES ============

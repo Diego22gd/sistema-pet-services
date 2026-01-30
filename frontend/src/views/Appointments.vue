@@ -132,7 +132,7 @@
                     <span>{{ formatDate(appointment.date) }}</span>
                     <span class="text-gray-400">•</span>
                     <span class="text-emerald-500">⏰</span>
-                    <span>{{ appointment.time }}</span>
+                    <span>{{ formatTime(appointment.time) }}</span>
                   </div>
                 </div>
                 
@@ -241,7 +241,7 @@
                   📅 {{ formatDate(selectedAppointment.date) }}
                 </div>
                 <div class="badge-outline">
-                  ⏰ {{ selectedAppointment.time }}
+                  ⏰ {{ formatTime(selectedAppointment.time) }}
                 </div>
               </div>
             </div>
@@ -338,7 +338,7 @@
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="font-medium text-gray-900">Hora:</span>
-                    <span class="font-bold">{{ selectedAppointment.time }}</span>
+                    <span class="font-bold">{{ formatTime(selectedAppointment.time) }}</span>
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="font-medium text-gray-900">Estado:</span>
@@ -419,7 +419,7 @@
             <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
               <h3 class="font-bold text-gray-900 mb-2">Cita Actual</h3>
               <p class="text-gray-700">
-                {{ formatDate(selectedAppointment.date) }} a las {{ selectedAppointment.time }}
+                {{ formatDate(selectedAppointment.date) }} a las {{ formatTime(selectedAppointment.time) }}
               </p>
               <p class="text-sm text-gray-600 mt-1">{{ selectedAppointment.serviceName }}</p>
             </div>
@@ -514,7 +514,7 @@
               {{ selectedAppointment.serviceName }} para {{ selectedAppointment.pet?.name }}
             </p>
             <p class="text-gray-700">
-              {{ formatDate(selectedAppointment.date) }} a las {{ selectedAppointment.time }}
+              {{ formatDate(selectedAppointment.date) }} a las {{ formatTime(selectedAppointment.time) }}
             </p>
             <p class="text-gray-700 font-bold mt-2">
               Precio: ${{ selectedAppointment.servicePrice || selectedAppointment.service?.price }}
@@ -575,6 +575,7 @@ import Layout from "@/components/Layout.vue";
 import Chatbot from "@/components/Chatbot.vue";
 import api from "@/api/api";
 import { useUserStore } from "@/stores/userStore";
+import { formatTimeTo12Hour } from "@/utils/timeFormatter";
 
 export default {
   name: "UserAppointments",
@@ -762,6 +763,10 @@ export default {
       });
     },
     
+    formatTime(time24) {
+      return formatTimeTo12Hour(time24);
+    },
+    
     formatDateTime(dateTimeString) {
       if (!dateTimeString) return '';
       const date = new Date(dateTimeString);
@@ -906,7 +911,7 @@ export default {
         console.log('✅ Cita reprogramada:', response.data);
         
         // Mostrar mensaje de éxito
-        alert(`✅ Cita reprogramada exitosamente!\n\nNueva fecha: ${this.formatDate(this.rescheduleData.date)}\nNueva hora: ${this.rescheduleData.time}`);
+        alert(`✅ Cita reprogramada exitosamente!\n\nNueva fecha: ${this.formatDate(this.rescheduleData.date)}\nNueva hora: ${this.formatTime(this.rescheduleData.time)}`);
         
         // Cerrar modal y actualizar lista
         this.closeRescheduleModal();

@@ -168,7 +168,7 @@
                 <!-- Fecha y hora -->
                 <div class="col-span-2">
                   <div class="text-sm font-medium text-gray-900">{{ formatDate(appt.date) }}</div>
-                  <div class="text-sm text-gray-600">{{ appt.time }}</div>
+                  <div class="text-sm text-gray-600">{{ formatTime(appt.time) }}</div>
                 </div>
 
                 <!-- Estado -->
@@ -259,7 +259,7 @@
                   📅 {{ formatDate(selectedAppointment.date) }}
                 </div>
                 <div class="badge-outline">
-                  ⏰ {{ selectedAppointment.time }}
+                  ⏰ {{ formatTime(selectedAppointment.time) }}
                 </div>
               </div>
             </div>
@@ -386,7 +386,7 @@
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="font-medium text-gray-900">Hora:</span>
-                    <span class="font-bold">{{ selectedAppointment.time }}</span>
+                    <span class="font-bold">{{ formatTime(selectedAppointment.time) }}</span>
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="font-medium text-gray-900">Estado:</span>
@@ -603,6 +603,7 @@
 import api from "@/api/api";
 import ProviderLayout from "@/components/ProviderLayout.vue";
 import Chatbot from "@/components/Chatbot.vue";
+import { formatTimeTo12Hour } from "@/utils/timeFormatter";
 
 export default {
   name: "ProviderAppointments",
@@ -798,6 +799,10 @@ export default {
         console.error("Error formateando fecha:", error, dateString);
         return 'Fecha inválida';
       }
+    },
+    
+    formatTime(time24) {
+      return formatTimeTo12Hour(time24);
     },
     
     formatDateTime(dateTimeString) {

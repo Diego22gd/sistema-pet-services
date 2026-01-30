@@ -234,7 +234,7 @@
                 <!-- Fecha y hora -->
                 <div class="col-span-2">
                   <div class="text-sm font-medium text-gray-900">{{ formatDate(appt.date) }}</div>
-                  <div class="text-sm text-gray-600">{{ appt.time }}</div>
+                  <div class="text-sm text-gray-600">{{ formatTime(appt.time) }}</div>
                 </div>
 
                 <!-- Estado -->
@@ -492,7 +492,7 @@
                     {{ selectedAppointment.date ? formatDate(selectedAppointment.date) : 'Fecha no disponible' }}
                   </div>
                   <div class="text-lg text-gray-600 mb-4">
-                    {{ selectedAppointment.time || 'Hora no disponible' }}
+                    {{ selectedAppointment.time ? formatTime(selectedAppointment.time) : 'Hora no disponible' }}
                   </div>
                   <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-800">
                     <span class="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>
@@ -894,7 +894,7 @@
                 </div>
                 <div>
                   <span class="text-gray-500">Hora actual:</span>
-                  <p class="font-medium">{{ appointmentToReschedule.time }}</p>
+                  <p class="font-medium">{{ formatTime(appointmentToReschedule.time) }}</p>
                 </div>
               </div>
             </div>
@@ -972,6 +972,7 @@
 import api from "@/api/api";
 import AdminLayout from "@/components/AdminLayout.vue";
 import Chatbot from "@/components/Chatbot.vue";
+import { formatTimeTo12Hour } from "@/utils/timeFormatter";
 
 export default {
   name: "AdminAppointments",
@@ -1310,6 +1311,10 @@ export default {
         console.error("Error formateando fecha:", error);
         return 'Fecha inválida';
       }
+    },
+    
+    formatTime(time24) {
+      return formatTimeTo12Hour(time24);
     },
     
     formatDateTime(dateTimeString) {

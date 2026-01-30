@@ -190,6 +190,7 @@
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
 import axios from "axios";
+import { formatTimeTo12Hour } from "@/utils/timeFormatter";
 
 export default {
   name: "ProviderNotifications",
@@ -391,7 +392,7 @@ export default {
     
     formatDateTime(appointment) {
       if (!appointment) return '';
-      return `${appointment.date} a las ${appointment.time}`;
+      return `${appointment.date} a las ${formatTimeTo12Hour(appointment.time)}`;
     },
     
     formatExactTime(timestamp) {
