@@ -199,7 +199,8 @@ export default {
       canScrollRight: false,
       currentScrollPage: 1,
       scrollPages: 1,
-      userRole: "client",
+      userRole: "guest", // Default to guest
+      isGuest: true, // Track if user is guest
       showFixedMessage: false,
       fixedMessageTimeout: null,
       lastRoutePath: null
@@ -208,6 +209,18 @@ export default {
   computed: {
     quickOptions() {
       const optionsByRole = {
+        guest: [
+          "¿Cómo me registro?",
+          "Servicios disponibles",
+          "¿Cuánto cuestan?",
+          "Encontrar veterinarias",
+          "¿Cómo reservar?",
+          "Mi mascota está enferma",
+          "Peluquerías caninas",
+          "Ayuda",
+          "Contacto",
+          "Iniciar sesión"
+        ],
         client: [
           "Buscar comercios", 
           "Servicios disponibles", 
@@ -246,7 +259,7 @@ export default {
         ]
       };
       
-      return optionsByRole[this.userRole] || optionsByRole.client;
+      return optionsByRole[this.userRole] || optionsByRole.guest;
     },
 
     apiBaseUrl() {
@@ -266,15 +279,22 @@ export default {
     getUserRole() {
       try {
         const userStore = useUserStore();
-        return userStore.user?.role || "client";
+        if (userStore && userStore.user && userStore.user.role) {
+          this.isGuest = false;
+          return userStore.user.role;
+        }
+        this.isGuest = true;
+        return "guest";
       } catch (error) {
         console.error("Error obteniendo rol:", error);
-        return "client";
+        this.isGuest = true;
+        return "guest";
       }
     },
 
     getRoleDescription() {
       const descriptions = {
+        guest: "Asistente virtual de PetServices",
         client: "Asistente para clientes",
         provider: "Asistente para proveedores", 
         admin: "Asistente administrativo"
@@ -284,6 +304,7 @@ export default {
 
     getInputPlaceholder() {
       const placeholders = {
+        guest: "Pregunta sobre servicios, precios o cómo registrarte...",
         client: "Pregunta sobre comercios, servicios o tus mascotas...",
         provider: "Consulta tu comercio, agenda o estadísticas...",
         admin: "Consulta comercios, usuarios o reportes del sistema..."
@@ -311,6 +332,22 @@ export default {
 
     addWelcomeMessage() {
       const welcomeMessages = {
+        guest: `¡Hola! 👋 Soy PetBot, tu asistente virtual de PetServices.
+
+🐾 **Bienvenido a la plataforma líder en servicios para mascotas**
+
+Como **visitante**, puedo ayudarte con:
+• 📋 Información sobre servicios disponibles
+• 💰 Consultar precios aproximados  
+• 🏥 Encontrar veterinarias y peluquerías
+• 🐕 Consejos básicos para el cuidado de mascotas
+• 📱 Guía para registrarte y reservar
+
+**Para reservar servicios necesitas una cuenta:**
+👉 [Iniciar sesión](/login) | [Registrarse](/login)
+
+¿En qué puedo ayudarte hoy?`,
+
         client: `¡Hola! 👋 Soy PetBot, tu asistente para servicios de mascotas.
 
 Como **cliente**, puedo ayudarte con:
@@ -348,7 +385,7 @@ Como **administrador**, puedo ayudarte con:
 ¿Qué funcionalidad administrativa necesitas?`
       };
 
-      const message = welcomeMessages[this.userRole] || welcomeMessages.client;
+      const message = welcomeMessages[this.userRole] || welcomeMessages.guest;
       this.messages.push({ 
         sender: "bot", 
         text: message,
@@ -371,24 +408,31 @@ Como **administrador**, puedo ayudarte con:
       try {
         const token = localStorage.getItem("token");
         
-        if (!token) {
-          throw new Error("No hay token de autenticación");
-        }
-
+        // Determine API endpoint based on authentication
         const apiUrl = this.apiBaseUrl 
-          ? `${this.apiBaseUrl}/api/chat`
-          : '/api/chat';
+          ? `${this.apiBaseUrl}/api/chat${this.isGuest ? '/guest' : ''}`
+          : `/api/chat${this.isGuest ? '/guest' : ''}`;
+
+        const requestConfig = {
+          timeout: 30000
+        };
+
+        // Only add auth header if not guest
+        if (!this.isGuest && token) {
+          requestConfig.headers = {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          };
+        } else {
+          requestConfig.headers = {
+            "Content-Type": "application/json"
+          };
+        }
 
         const res = await axios.post(
           apiUrl,
           { message: text },
-          { 
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json"
-            },
-            timeout: 30000
-          }
+          requestConfig
         );
 
         if (res.data.error) {
@@ -406,14 +450,14 @@ Como **administrador**, puedo ayudarte con:
         
         let errorMessage = "❌ Error al conectar con PetBot.";
         
-        if (error.response?.status === 401) {
-          errorMessage = "🔐 Por favor, inicia sesión nuevamente.";
+        if (error.response?.status === 401 && !this.isGuest) {
+          errorMessage = "🔐 Por favor, inicia sesión nuevamente.\n\n👉 [Ir a Login](/login)";
         } else if (error.response?.status === 400) {
           errorMessage = "📝 Por favor, escribe un mensaje válido.";
         } else if (error.code === 'ECONNABORTED') {
           errorMessage = "⏰ El servicio está tardando en responder. Intenta nuevamente.";
-        } else if (error.message.includes("token")) {
-          errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.";
+        } else if (error.message.includes("token") && !this.isGuest) {
+          errorMessage = "🔐 Sesión expirada. Por favor, inicia sesión nuevamente.\n\n👉 [Ir a Login](/login)";
         } else if (error.message.includes("Network Error") || error.code === 'ERR_NETWORK') {
           errorMessage = `🌐 **Error de conexión.**\n\nVerifica tu conexión a internet o intenta más tarde.`;
         }
@@ -506,10 +550,21 @@ Como **administrador**, puedo ayudarte con:
     formatMessage(text) {
       if (!text) return '';
       
-      // Formato simple y limpio
-      return text
+      // Convert markdown links to clickable HTML links
+      let formatted = text
         .replace(/\n/g, '<br>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Convert [Text](/path) to router-link style links
+        .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="#" data-route="$2" class="chat-link" onclick="event.preventDefault(); if(window.__chatbot) { window.__chatbot.navigateTo(\'$2\'); }">$1 →</a>');
+      
+      return formatted;
+    },
+
+    navigateTo(path) {
+      // Navigate to the path
+      this.$router.push(path);
+      // Close chat after navigation
+      this.isOpen = false;
     },
 
     // MÉTODOS PARA MOSTRAR/OCULTAR MENSAJE FLOTANTE
@@ -589,6 +644,9 @@ Como **administrador**, puedo ayudarte con:
 
   mounted() {
     this.userRole = this.getUserRole();
+    
+    // Register chatbot instance globally for link navigation
+    window.__chatbot = this;
     
     // Mostrar mensaje flotante al cargar por primera vez
     this.showFixedMessageFor3Seconds();
@@ -887,6 +945,29 @@ Como **administrador**, puedo ayudarte con:
 .message-content >>> strong {
   font-weight: 600;
 }
+
+.message-content >>> .chat-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.message-content >>> .chat-link:hover {
+  color: #2563eb;
+  border-bottom: 2px solid #2563eb;
+}
+
+.message-bot .message-content >>> .chat-link {
+  color: #10b981;
+}
+
+.message-bot .message-content >>> .chat-link:hover {
+  color: #059669;
+  border-bottom: 2px solid #059669;
+}
+
 
 .message-time {
   font-size: 11px;

@@ -1109,4 +1109,292 @@ router.get("/my-data", protect, async (req, res) => {
   }
 });
 
+// ============================================
+// 🌐 ENDPOINT PARA USUARIOS INVITADOS (SIN AUTENTICACIÓN)
+// ============================================
+
+router.post("/guest", async (req, res) => {
+  console.log(`\n👤 ======= NUEVO MENSAJE INVITADO =======`);
+  
+  try {
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.json({
+        success: false,
+        reply: "Por favor, escribe un mensaje.",
+        type: "error"
+      });
+    }
+
+    const text = message.trim().toLowerCase();
+    console.log(`💭 Mensaje invitado: "${text.substring(0, 60)}${text.length > 60 ? '...' : ''}"`);
+
+    // Detectar intención del invitado
+    let reply = "";
+
+    // Saludo
+    if (text.match(/hola|buenos|buenas|hey|hi/i)) {
+      reply = `¡Hola! 👋 Soy **PetBot**, tu asistente virtual de PetServices.
+
+🐾 **Bienvenido a PetServices** - La plataforma líder en servicios para mascotas.
+
+**¿Qué puedo hacer por ti?**
+• 📋 Información sobre nuestros servicios
+• 🏥 Encontrar veterinarias y peluquerías
+• 💰 Consultar precios
+• 📱 Ayuda para registrarte
+• 🐕 Consejos para el cuidado de mascotas
+
+Para **reservar servicios** necesitas una cuenta.
+👉 [Iniciar sesión](/login) | [Registrarse](/login)`;
+    }
+    // Login / Registro
+    else if (text.match(/login|iniciar|sesion|cuenta|registr|sign/i)) {
+      reply = `🔐 **Para acceder a todos nuestros servicios:**
+
+**Ya tienes cuenta:**
+👉 [Iniciar sesión aquí](/login)
+
+**¿Eres nuevo?**
+1. Haz clic en [Registrarse](/login)
+2. Completa tus datos
+3. ¡Listo! Ya puedes reservar servicios
+
+**Beneficios de tener cuenta:**
+✅ Reservar citas online
+✅ Gestionar tus mascotas
+✅ Historial de servicios
+✅ Promociones exclusivas
+✅ Atención personalizada`;
+    }
+    // Servicios
+    else if (text.match(/servicio|comercio|veterinaria|peluquer|tienda|guarderia|entrena/i)) {
+      reply = `🏪 **Nuestros Servicios para Mascotas:**
+
+🏥 **Veterinarias**
+• Consultas generales
+• Vacunación
+• Cirugías
+• Emergencias 24/7
+
+✂️ **Peluquerías Caninas**
+• Baño y secado
+• Corte de pelo
+• Limpieza de oídos
+• Corte de uñas
+
+🏠 **Guarderías**
+• Cuidado diario
+• Hotel para mascotas
+• Socialización
+
+🎓 **Entrenamiento**
+• Obediencia básica
+• Comportamiento
+• Adiestramiento
+
+🛒 **Tiendas**
+• Alimentos premium
+• Accesorios
+• Juguetes
+• Medicina
+
+👉 [Explorar comercios](/comercios)
+Para reservar servicios: [Iniciar sesión](/login)`;
+    }
+    // Precios
+    else if (text.match(/precio|costo|cuanto|pagar|tarifa/i)) {
+      reply = `💰 **Información de Precios:**
+
+Los precios varían según el servicio y comercio:
+
+**Rangos aproximados:**
+• 🏥 Consulta veterinaria: $30 - $80
+• ✂️ Peluquería: $20 - $60
+• 💉 Vacunas: $15 - $40
+• 🏠 Guardería (día): $15 - $35
+• 🎓 Entrenamiento (sesión): $30 - $100
+
+**Nota:** Estos son precios referenciales.
+Cada comercio establece sus propias tarifas.
+
+📱 Para ver precios exactos y reservar:
+👉 [Registrarse](/login) → Explorar comercios`;
+    }
+    // Reservar / Agendar
+    else if (text.match(/reservar|agendar|cita|turno|appointment/i)) {
+      reply = `📅 **¿Cómo Reservar una Cita?**
+
+**Paso a paso:**
+
+1️⃣ **Crea tu cuenta**
+   👉 [Registrarse aquí](/login)
+
+2️⃣ **Explora comercios**
+   • Busca por tipo de servicio
+   • Ve ubicaciones cerca de ti
+   • Compara precios y reseñas
+
+3️⃣ **Selecciona servicio**
+   • Elige el comercio
+   • Escoge el servicio que necesitas
+
+4️⃣ **Agenda tu cita**
+   • Selecciona fecha y hora
+   • Elige tu mascota
+   • Confirma la reserva
+
+5️⃣ **¡Listo!**
+   • Recibirás confirmación
+   • Gestiona tus citas desde tu panel
+
+¿Ya tienes cuenta? 👉 [Iniciar sesión](/login)`;
+    }
+    // Mascotas / Salud
+    else if (text.match(/mascota|perro|gato|pet|enferm|salud|veterinario|sick/i)) {
+      // Usar Gemini para respuestas sobre mascotas
+      const geminiResponse = await GeminiClient.generateText(
+        `Usuario invitado pregunta sobre mascotas: "${text}". 
+        Proporciona una respuesta útil, amable y en español. 
+        Incluye consejos básicos y recomienda consultar un veterinario si es necesario.
+        Mantén la respuesta concisa (máximo 150 palabras).`,
+        `Eres PetBot, un asistente virtual especializado en mascotas. 
+        Brindas información general, pero siempre recomiendas consultar profesionales para casos específicos.
+        Usa emojis apropiados y sé empático.`
+      );
+      
+      if (geminiResponse) {
+        reply = geminiResponse + `\n\n🏥 **¿Necesitas atención veterinaria?**
+👉 [Regístrate](/login) para encontrar veterinarias cerca de ti.`;
+      } else {
+        reply = `🐾 **Cuidado de Mascotas**
+
+Para información específica sobre la salud de tu mascota, te recomiendo:
+
+1. **Emergencias:** Contacta inmediatamente una veterinaria
+2. **Consultas generales:** Agenda una cita con un veterinario
+3. **Prevención:** Mantén al día vacunas y desparasitación
+
+🏥 **Encuentra veterinarias cerca:**
+👉 [Registrarse](/login) → Buscar veterinarias
+
+⚠️ **Emergencia:** Si tu mascota está en peligro, busca atención inmediata.`;
+      }
+    }
+    // Ayuda general
+    else if (text.match(/ayuda|help|como|que puedes/i)) {
+      reply = `🤖 **¿Cómo puedo ayudarte?**
+
+**Información sin registro:**
+• 📋 Servicios disponibles
+• 💰 Precios aproximados
+• 📍 Tipos de comercios
+• 🐾 Consejos para mascotas
+
+**Con cuenta registrada:**
+• 📅 Reservar citas
+• 🐕 Gestionar mascotas
+• ⭐ Ver reseñas
+• 📊 Historial de servicios
+
+**Preguntas frecuentes:**
+• "¿Cómo me registro?"
+• "¿Qué servicios tienen?"
+• "¿Cuánto cuestan los servicios?"
+• "Mi mascota está enferma"
+• "¿Cómo reservo una cita?"
+
+👉 [Iniciar sesión](/login) | [Más información](/)`;
+    }
+    // Contacto
+    else if (text.match(/contacto|telefono|email|ubicacion|direcc/i)) {
+      reply = `📞 **Contacto de PetServices**
+
+**Soporte al cliente:**
+📧 Email: soporte@petservices.com
+📱 WhatsApp: +58 424-1234567
+⏰ Horario: Lun-Vie 8AM-6PM
+
+**Redes sociales:**
+📘 Facebook: @petservices
+📸 Instagram: @petservices
+🐦 Twitter: @petservices
+
+**¿Preguntas sobre un comercio específico?**
+Cada comercio tiene su información de contacto.
+👉 [Explora comercios](/comercios)
+
+Para soporte técnico o dudas:
+👉 [Iniciar sesión](/login) → Centro de ayuda`;
+    }
+    // Gracias / Despedida
+    else if (text.match(/gracias|thank|bye|adios|chao/i)) {
+      reply = `😊 ¡De nada! Fue un placer ayudarte.
+
+🐾 Recuerda que estoy aquí para ayudarte siempre que lo necesites.
+
+**Próximos pasos:**
+👉 [Crear cuenta](/login) - Accede a todos los servicios
+👉 [Ver comercios](/comercios) - Explora nuestros aliados
+
+¡Que tengas un excelente día! 🌟`;
+    }
+    // Respuesta por defecto con Gemini
+    else {
+      const geminiResponse = await GeminiClient.generateText(
+        `Usuario invitado pregunta: "${text}". 
+        Responde de manera amable y útil en español. 
+        Si es sobre servicios para mascotas, proporciona información general.
+        Si necesita crear cuenta, indícale cómo hacerlo.
+        Máximo 150 palabras.`,
+        `Eres PetBot, asistente virtual de PetServices. 
+        Ayudas a usuarios invitados con información general.
+        Siempre sugieres crear cuenta para acceder a servicios completos.
+        Sé amable, profesional y usa emojis apropiados.`
+      );
+      
+      if (geminiResponse) {
+        reply = geminiResponse + `\n\n✨ **¿Necesitas más ayuda?**
+👉 [Crear cuenta](/login) para acceder a todos los servicios
+💬 O pregúntame algo más sobre PetServices`;
+      } else {
+        reply = `🤔 No estoy seguro de entender tu pregunta.
+
+**¿Qué te gustaría saber?**
+• Servicios disponibles
+• Cómo registrarse
+• Precios
+• Reservar citas
+• Cuidado de mascotas
+
+👉 [Iniciar sesión](/login) | [Ver servicios](/comercios)`;
+      }
+    }
+
+    console.log(`✅ Respuesta enviada (${reply.length} caracteres)`);
+    
+    return res.json({
+      success: true,
+      reply: reply,
+      type: "text",
+      source: "guest",
+      guestMode: true
+    });
+
+  } catch (error) {
+    console.error("❌ Error en chat invitado:", error);
+    
+    return res.json({
+      success: false,
+      reply: `😔 Ocurrió un error. Por favor, intenta nuevamente.
+
+👉 [Iniciar sesión](/login) para soporte personalizado`,
+      type: "error"
+    });
+  } finally {
+    console.log(`👤 ======= FIN MENSAJE INVITADO =======\n`);
+  }
+});
+
 export default router;
