@@ -5,6 +5,7 @@ import Pet from "../models/Pet.js";
 import Business from "../models/Business.js";
 import Appointment from "../models/Appointment.js";
 import mongoose from "mongoose";
+import { formatTimeTo12Hour } from "../utils/timeFormatter.js";
 
 const router = express.Router();
 
