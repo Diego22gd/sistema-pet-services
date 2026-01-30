@@ -211,7 +211,7 @@
             <div class="pt-3 border-t border-emerald-500/20">
               <div class="text-emerald-200 text-sm text-center">
                 <p v-if="userEmail">📧 {{ userEmail }}</p>
-                <p class="text-xs text-emerald-300/70 mt-1">Panel de usuario</p>
+                <p class="text-xs text-emerald-300/70 mt-1">Panel de Clientes</p>
               </div>
             </div>
           </div>
@@ -223,7 +223,7 @@
     <main class="pt-24 pb-16 px-4 min-h-screen bg-gradient-to-b from-emerald-50 to-white">
       <!-- Encabezado con notificaciones -->
       <div class="flex justify-between items-center px-6 pt-8 pb-6 max-w-7xl mx-auto">
-        <h1 class="text-3xl font-extrabold text-neutral-dark">Panel del Usuario</h1>
+        <h1 class="text-3xl font-extrabold text-neutral-dark">Panel del Cliente</h1>
         
         <!-- Botón de notificaciones -->
         <button 

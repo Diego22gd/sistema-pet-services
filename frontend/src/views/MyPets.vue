@@ -7,7 +7,7 @@
     <div class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 mt-12">
       <div class="container mx-auto px-4 py-8 md:py-12">
         <!-- Header de la página -->
-        <div class="mb-8 md:mb-12 text-center ">
+        <div class="mb-8 md:mb-12 text-center">
           <div class="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full bg-white shadow-lg mb-4 md:mb-6 mt-12">
             <span class="text-3xl md:text-4xl">🐾</span>
           </div>
@@ -77,6 +77,14 @@
                         <span class="font-semibold">Edad:</span> {{ pet.age }} año{{ pet.age !== 1 ? 's' : '' }}
                       </div>
                       
+                      <div v-if="pet.breed" class="text-sm text-gray-600">
+                        <span class="font-semibold">Raza:</span> {{ pet.breed }}
+                      </div>
+                      
+                      <div v-if="pet.weight" class="text-sm text-gray-600">
+                        <span class="font-semibold">Peso:</span> {{ pet.weight }} kg
+                      </div>
+                      
                       <div class="text-xs text-gray-500">
                         ID: {{ pet._id.slice(-6) }}
                       </div>
@@ -141,6 +149,14 @@
                     <span class="font-semibold">Edad:</span> {{ pet.age }} año{{ pet.age !== 1 ? 's' : '' }}
                   </div>
                   
+                  <div v-if="pet.breed" class="text-sm text-gray-600">
+                    <span class="font-semibold">Raza:</span> {{ pet.breed }}
+                  </div>
+                  
+                  <div v-if="pet.weight" class="text-sm text-gray-600">
+                    <span class="font-semibold">Peso:</span> {{ pet.weight }} kg
+                  </div>
+                  
                   <div class="text-xs text-gray-500 font-mono">
                     ID: {{ pet._id.slice(-8) }}
                   </div>
@@ -193,24 +209,24 @@
       </div>
     </div>
 
-    <!-- Modal de Mascota - MEJORADO -->
+    <!-- Modal de Mascota - COMPACTO -->
     <div 
       v-if="showAddModal"
       class="modal-overlay"
       @click.self="closeModal"
     >
-      <div class="modal-pet-box">
+      <div class="modal-pet-box-compact">
         <!-- Header del modal con animación -->
         <div class="modal-pet-header">
           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-              <span class="text-2xl">{{ editMode ? '✏️' : '➕' }}</span>
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+              <span class="text-xl">{{ editMode ? '✏️' : '➕' }}</span>
             </div>
             <div>
-              <h2 class="text-xl md:text-2xl font-bold text-white">
+              <h2 class="text-lg md:text-xl font-bold text-white">
                 {{ editMode ? 'Editar Mascota' : 'Agregar Mascota' }}
               </h2>
-              <p class="text-sm text-white/90">
+              <p class="text-xs text-white/90">
                 {{ editMode ? 'Actualiza la información de tu mascota' : 'Registra una nueva mascota en tu cuenta' }}
               </p>
             </div>
@@ -221,11 +237,11 @@
         </div>
 
         <!-- Contenido del modal -->
-        <div class="modal-pet-content">
-          <!-- Vista previa de mascota -->
-          <div class="mb-6 text-center">
-            <div class="inline-block relative">
-              <div class="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden border-4 border-white shadow-lg mx-auto">
+        <div class="modal-pet-content-compact">
+          <!-- Vista previa de mascota (SIN ETIQUETA DEBAJO) -->
+          <div class="mb-4 text-center">
+            <div class="inline-block">
+              <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden border-4 border-white shadow-lg mx-auto">
                 <img 
                   :src="form.image || getDefaultPetImage(form.type || 'Perro')" 
                   :alt="form.name || 'Mascota'"
@@ -233,27 +249,23 @@
                   @error="handleImageError"
                 />
               </div>
-              <div class="absolute -bottom-2 left-1/2  transform -translate-x-1/2">
-                <div class="bg-emerald-500 text-black  px-3 py-1 rounded-full text-xs font-semibold shadow-md ">
-                  {{ form.type || 'Seleccionar tipo' }}
-                </div>
-              </div>
             </div>
           </div>
 
-          <div class="space-y-5 mt-8">
+          <div class="space-y-4">
             <!-- Campo Nombre -->
-            <div class="form-group  ">
-              <label class="form-label  ">
+            <div class="form-group-compact">
+              <label class="form-label-compact">
                 <span class="form-icon">🐕</span>
-                Nombre de la mascota
+                Nombre de la mascota *
               </label>
               <div class="relative">
                 <input 
                   type="text" 
                   v-model="form.name" 
                   placeholder="Ej: Max, Luna, Simba..."
-                  class="form-input pl-10"
+                  class="form-input-compact pl-10"
+                  required
                 />
                 <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                   📛
@@ -262,15 +274,16 @@
             </div>
 
             <!-- Campo Tipo -->
-            <div class="form-group">
-              <label class="form-label">
+            <div class="form-group-compact">
+              <label class="form-label-compact">
                 <span class="form-icon">🏷️</span>
-                Tipo de mascota
+                Tipo de mascota *
               </label>
               <div class="relative">
                 <select 
                   v-model="form.type" 
-                  class="form-input pl-10 appearance-none"
+                  class="form-input-compact pl-10 appearance-none"
+                  required
                 >
                   <option disabled value="">Selecciona el tipo</option>
                   <option value="Perro">🐕 Perro</option>
@@ -291,11 +304,30 @@
               </div>
             </div>
 
+            <!-- Campo Raza -->
+            <div class="form-group-compact">
+              <label class="form-label-compact">
+                <span class="form-icon">🎯</span>
+                Raza (opcional)
+              </label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  v-model="form.breed" 
+                  placeholder="Ej: Labrador, Siames, etc."
+                  class="form-input-compact pl-10"
+                />
+                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  🎯
+                </div>
+              </div>
+            </div>
+
             <!-- Campo Edad -->
-            <div class="form-group">
-              <label class="form-label">
+            <div class="form-group-compact">
+              <label class="form-label-compact">
                 <span class="form-icon">🎂</span>
-                Edad (años)
+                Edad (años) *
               </label>
               <div class="relative">
                 <input 
@@ -304,7 +336,8 @@
                   min="0" 
                   max="30"
                   placeholder="0"
-                  class="form-input pl-10"
+                  class="form-input-compact pl-10"
+                  required
                 />
                 <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                   🎂
@@ -312,15 +345,33 @@
               </div>
             </div>
 
-            <!-- Campo Imagen -->
-            <div class="form-group">
+            <!-- Campo Peso -->
+            <div class="form-group-compact">
+              <label class="form-label-compact">
+                <span class="form-icon">⚖️</span>
+                Peso (kg) (opcional)
+              </label>
+              <div class="relative">
+                <input 
+                  type="number" 
+                  v-model="form.weight" 
+                  min="0" 
+                  max="100"
+                  step="0.1"
+                  placeholder="Ej: 5.5"
+                  class="form-input-compact pl-10"
+                />
+                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  ⚖️
+                </div>
+              </div>
             </div>
           </div>
           
           <!-- Botones de acción -->
-          <div class="modal-pet-actions">
+          <div class="modal-pet-actions-compact">
             <button 
-              class="btn-modal-ghost"
+              class="btn-modal-ghost-compact"
               @click="closeModal"
             >
               <span>↩️</span>
@@ -328,17 +379,17 @@
             </button>
             
             <button 
-              class="btn-modal-primary"
+              class="btn-modal-primary-compact"
               @click="savePet"
               :disabled="!isFormValid"
             >
               <span v-if="editMode" class="flex items-center gap-2">
                 <span>💾</span>
-                <span>Guardar Cambios</span>
+                <span>Guardar</span>
               </span>
               <span v-else class="flex items-center gap-2">
                 <span>✅</span>
-                <span>Agregar Mascota</span>
+                <span>Agregar</span>
               </span>
             </button>
           </div>
@@ -356,13 +407,20 @@ import { useUserStore } from "@/stores/userStore"
 
 export default {
   name: "MyPets",
-  components: { Layout , Chatbot },
+  components: { Layout, Chatbot },
   data() {
     return {
       pets: [],
       showAddModal: false,
       editMode: false,
-      form: { name: "", type: "", age: "", image: "" },
+      form: { 
+        name: "", 
+        type: "", 
+        breed: "", 
+        age: "", 
+        weight: "", 
+        image: "" 
+      },
     }
   },
 
@@ -410,11 +468,26 @@ export default {
     closeModal() {
       this.showAddModal = false
       this.editMode = false
-      this.form = { name: "", type: "", age: "", image: "" }
+      this.form = { 
+        name: "", 
+        type: "", 
+        breed: "", 
+        age: "", 
+        weight: "", 
+        image: "" 
+      }
     },
 
     editPet(pet) {
-      this.form = { ...pet }
+      this.form = { 
+        _id: pet._id,
+        name: pet.name, 
+        type: pet.type, 
+        breed: pet.breed || "", 
+        age: pet.age, 
+        weight: pet.weight || "", 
+        image: pet.image || "" 
+      }
       this.editMode = true
       this.showAddModal = true
     },
@@ -424,13 +497,22 @@ export default {
       const token = userStore.token
 
       try {
+        const petData = {
+          name: this.form.name,
+          type: this.form.type,
+          breed: this.form.breed || "",
+          age: this.form.age,
+          weight: this.form.weight ? parseFloat(this.form.weight) : null,
+          image: this.form.image || ""
+        }
+
         if (this.editMode) {
-          const { data } = await api.put(`/pets/${this.form._id}`, this.form, {
+          const { data } = await api.put(`/pets/${this.form._id}`, petData, {
             headers: { Authorization: `Bearer ${token}` }
           })
           this.pets = this.pets.map(p => p._id === data._id ? data : p)
         } else {
-          const { data } = await api.post("/pets", this.form, {
+          const { data } = await api.post("/pets", petData, {
             headers: { Authorization: `Bearer ${token}` }
           })
           this.pets.push(data)
@@ -586,7 +668,7 @@ export default {
   box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
 }
 
-/* ============ MODAL MEJORADO ============ */
+/* ============ MODAL COMPACTO ============ */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -594,7 +676,7 @@ export default {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -608,23 +690,25 @@ export default {
   to { opacity: 1; }
 }
 
-.modal-pet-box {
+.modal-pet-box-compact {
   background: white;
-  border-radius: 24px;
+  border-radius: 16px;
   overflow: hidden;
   box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.25),
-    0 0 0 1px #10b981,
-    0 0 40px rgba(16, 185, 129, 0.1);
-  max-width: 480px;
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 0 0 1px #10b981;
+  max-width: 400px;
   width: 100%;
-  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(20px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -634,16 +718,17 @@ export default {
 
 .modal-pet-header {
   background: linear-gradient(135deg, #10b981, #0d9488);
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  flex-shrink: 0;
 }
 
 .btn-modal-close {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   color: white;
@@ -651,9 +736,11 @@ export default {
   align-items: center;
   justify-content: center;
   border: none;
-  font-size: 1rem;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
 }
 
 .btn-modal-close:hover {
@@ -661,110 +748,116 @@ export default {
   transform: rotate(90deg);
 }
 
-.modal-pet-content {
-  padding: 1.5rem;
+.modal-pet-content-compact {
+  padding: 1.25rem;
   background: #f8fafc;
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(85vh - 130px);
 }
 
-/* Formulario mejorado */
-.form-group {
-  margin-bottom: 1.25rem;
+/* Formulario compacto */
+.form-group-compact {
+  margin-bottom: 1rem;
 }
 
-.form-label {
+.form-label-compact {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
   color: #1f2937;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  margin-bottom: 0.375rem;
+  font-size: 0.8rem;
 }
 
 .form-icon {
-  font-size: 1rem;
+  font-size: 0.875rem;
 }
 
-.form-input {
+.form-input-compact {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  padding: 0.625rem 0.875rem 0.625rem 2.25rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
   font-size: 0.875rem;
   background: white;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   color: #1f2937;
 }
 
-.form-input:focus {
+.form-input-compact:focus {
   outline: none;
   border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
 }
 
-.form-input::placeholder {
+.form-input-compact::placeholder {
   color: #9ca3af;
+  font-size: 0.875rem;
 }
 
-.form-input:disabled {
+.form-input-compact:disabled {
   background-color: #f3f4f6;
   cursor: not-allowed;
 }
 
-/* Botones del modal */
-.modal-pet-actions {
+/* Botones del modal compacto */
+.modal-pet-actions-compact {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
   align-items: center;
-  padding-top: 1.5rem;
+  padding-top: 1.25rem;
   border-top: 1px solid #e5e7eb;
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
+  flex-shrink: 0;
 }
 
-.btn-modal-primary {
+.btn-modal-primary-compact {
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
+  padding: 0.625rem 1.25rem;
+  border-radius: 10px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 160px;
+  min-width: 120px;
   justify-content: center;
+  font-size: 0.875rem;
 }
 
-.btn-modal-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+.btn-modal-primary-compact:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
   background: linear-gradient(135deg, #059669, #10b981);
 }
 
-.btn-modal-primary:disabled {
+.btn-modal-primary-compact:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-modal-ghost {
+.btn-modal-ghost-compact {
   background: transparent;
   color: #6b7280;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
+  padding: 0.625rem 1.25rem;
+  border-radius: 10px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  border: 2px solid #e5e7eb;
+  gap: 0.375rem;
+  border: 1.5px solid #e5e7eb;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 0.875rem;
 }
 
-.btn-modal-ghost:hover:not(:disabled) {
+.btn-modal-ghost-compact:hover:not(:disabled) {
   background: #f3f4f6;
   border-color: #10b981;
   color: #10b981;
@@ -780,26 +873,49 @@ export default {
   display: none;
 }
 
-/* Media queries */
+/* Media queries para mejor responsividad */
 @media (max-width: 640px) {
-  .modal-pet-box {
-    margin: 0.5rem;
-    max-width: calc(100% - 1rem);
+  .modal-pet-box-compact {
+    max-width: calc(100% - 2rem);
+    margin: 1rem;
+    max-height: 80vh;
   }
   
-  .modal-pet-content {
+  .modal-pet-content-compact {
     padding: 1rem;
+    max-height: calc(80vh - 120px);
   }
   
-  .modal-pet-actions {
+  .modal-pet-header {
+    padding: 0.875rem 1rem;
+  }
+  
+  .modal-pet-actions-compact {
     flex-direction: column;
     gap: 0.5rem;
   }
   
-  .btn-modal-primary,
-  .btn-modal-ghost {
+  .btn-modal-primary-compact,
+  .btn-modal-ghost-compact {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 380px) {
+  .modal-pet-box-compact {
+    max-width: calc(100% - 1rem);
+    margin: 0.5rem;
+  }
+  
+  .form-input-compact {
+    padding: 0.5rem 0.75rem 0.5rem 2rem;
+    font-size: 0.8125rem;
+  }
+  
+  .form-label-compact {
+    font-size: 0.75rem;
   }
 }
 
@@ -819,5 +935,24 @@ export default {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* Scrollbar personalizado para el modal */
+.modal-pet-content-compact::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-pet-content-compact::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.modal-pet-content-compact::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.modal-pet-content-compact::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
 }
 </style>

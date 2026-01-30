@@ -12,7 +12,7 @@ const router = express.Router();
 // 🚀 CONFIGURACIÓN GEMINI
 // ============================================
 
-const GEMINI_API_KEY = "AIzaSyC_0mKWjKub2CUzXO5MJXI45e_UxYZASuQ";
+const GEMINI_API_KEY = "AIzaSyD-1PJz4a29qauVNnNEaEB4u9Bla-X1UmM";
 const GEMINI_MODEL = "gemini-2.5-flash"; // Modelo más estable
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 

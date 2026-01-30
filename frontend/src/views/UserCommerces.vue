@@ -157,10 +157,9 @@
                     </div>
                   <!-- Badges -->
                   
-                    <div v-if="business.isOpenNow" class="badge-primary bg-gradient-to-r from-emerald-500 to-green-500">
-                      🔥 Abierto ahora
-                    </div>
+                    
                   </div>
+                  
                   
                   <div class="absolute top-4 left-4">
                     <div class="badge-outline">
@@ -188,8 +187,7 @@
                     </h3>
                     <div class="flex items-center gap-2">
                       <div class="flex items-center">
-                        <span class="text-amber-500 text-md">⭐</span>
-                        <span class="ml-1 font-bold text-sm">{{ business.rating || 'N/A' }}</span>
+                        
                       </div>
                       
                     </div>
@@ -336,9 +334,7 @@
                     {{ getCategoryIcon(selectedBusinessCategory) }} 
                     {{ selectedBusinessCategory }}
                   </div>
-                  <div class="badge-rating">
-                    ⭐ {{ selectedBusiness.rating || 'N/A' }}
-                  </div>
+                  
                   <div v-if="selectedBusiness.featured" class="badge-rating bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0">
                     ⭐ Destacado
                   </div>
@@ -558,9 +554,7 @@
                       <span class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
                         {{ selectedBusinessCategory }}
                       </span>
-                      <span class="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full flex items-center">
-                        ⭐ {{ selectedBusiness.rating || 'N/A' }}
-                      </span>
+                      
                     </div>
                   </div>
                 </div>

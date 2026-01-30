@@ -1,17 +1,18 @@
-// backend/controllers/pets.controller.js
 import Pet from "../models/Pet.js";
 
 // ➕ Crear mascota
 export const createPet = async (req, res) => {
   try {
-    const { name, type, age, image } = req.body;
+    const { name, type, breed, age, weight, image } = req.body;
     const userId = req.user.id;
 
     const newPet = await Pet.create({
       owner: userId,
       name,
       type,
+      breed: breed || "",
       age,
+      weight: weight || null,
       image,
     });
 
@@ -37,14 +38,16 @@ export const getUserPets = async (req, res) => {
 export const updatePet = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, type, age, image } = req.body;
+    const { name, type, breed, age, weight, image } = req.body;
 
     const pet = await Pet.findOne({ _id: id, owner: req.user.id });
     if (!pet) return res.status(404).json({ message: "Mascota no encontrada" });
 
     pet.name = name;
     pet.type = type;
+    pet.breed = breed || "";
     pet.age = age;
+    pet.weight = weight || null;
     pet.image = image;
 
     await pet.save();

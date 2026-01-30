@@ -19,6 +19,38 @@
               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50"
             />
           </div>
+          
+          <!-- Filtros -->
+          <div class="flex flex-wrap gap-2">
+            <select
+              v-model="filterStatus"
+              class="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
+            >
+              <option value="">Todos los estados</option>
+              <option value="active">Activo</option>
+              <option value="blocked">Bloqueado</option>
+              <option value="paused">Pausado</option>
+              <option value="expired">Vencido</option>
+            </select>
+            
+            <select
+              v-model="filterService"
+              class="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
+            >
+              <option value="">Todos los servicios</option>
+              <option value="Veterinaria">Veterinaria</option>
+              <option value="Peluquería">Peluquería</option>
+              <option value="Guardería">Guardería</option>
+              <option value="Entrenamiento">Entrenamiento</option>
+              <option value="Spa">Spa para mascotas</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Tienda">Tienda de mascotas</option>
+              <option value="Hotel">Hotel para mascotas</option>
+              <option value="Adiestramiento">Adiestramiento</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          
           <button
             @click="openModal"
             class="btn-primary-purple flex items-center space-x-2 whitespace-nowrap"
@@ -174,6 +206,20 @@
                       <span>✏️</span>
                       <span>Editar</span>
                     </button>
+                    
+                    <!-- Botón de bloquear/activar -->
+                    <button
+                      @click="toggleProviderStatus(provider)"
+                      :class="provider.isActive === false 
+                        ? 'bg-green-600 hover:bg-green-700' 
+                        : 'bg-amber-600 hover:bg-amber-700'"
+                      class="flex items-center space-x-1 px-3 py-2 rounded-lg text-white font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                      :title="provider.isActive === false ? 'Activar cuenta' : 'Bloquear cuenta'"
+                    >
+                      <span>{{ provider.isActive === false ? '✅' : '⛔' }}</span>
+                      <span>{{ provider.isActive === false ? 'Activar' : 'Bloquear' }}</span>
+                    </button>
+                    
                     <button
                       @click="deleteProvider(provider._id)"
                       class="btn-cancel-admin"
@@ -353,6 +399,66 @@
       </div>
     </div>
 
+    <!-- Modal de confirmación para bloquear/activar -->
+    <div v-if="showStatusModal" class="modal-overlay">
+      <div class="modal-modern-box w-full max-w-md">
+        <div class="modal-modern-header">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="modal-section-title-admin">
+                {{ statusAction === 'block' ? '🔒 Bloquear Proveedor' : '✅ Activar Proveedor' }}
+              </h2>
+              <p class="text-gray-600 text-sm">
+                {{ statusAction === 'block' 
+                  ? 'El proveedor no podrá iniciar sesión en el sistema.' 
+                  : 'El proveedor podrá acceder nuevamente al sistema.' }}
+              </p>
+            </div>
+            <button @click="closeStatusModal" class="btn-modal-close">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-modern-content">
+          <div class="p-4 bg-gray-50 rounded-lg mb-6">
+            <div class="flex items-center space-x-3">
+              <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <span class="text-purple-600 font-semibold">
+                  {{ getInitials(selectedProvider?.name) }}
+                </span>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-800">{{ selectedProvider?.name }}</h4>
+                <p class="text-sm text-gray-600">{{ selectedProvider?.email }}</p>
+                <p class="text-xs text-gray-500">{{ selectedProvider?.serviceType }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-modern-actions">
+            <button 
+              type="button" 
+              @click="closeStatusModal"
+              class="btn-modal-ghost"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="button" 
+              @click="confirmToggleStatus"
+              :class="statusAction === 'block' 
+                ? 'bg-amber-600 hover:bg-amber-700' 
+                : 'bg-green-600 hover:bg-green-700'"
+              class="px-6 py-3 rounded-lg text-white font-medium transition-all shadow-sm hover:shadow-md"
+            >
+              {{ statusAction === 'block' ? 'Confirmar Bloqueo' : 'Confirmar Activación' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <Chatbot />
   </AdminLayout>
 </template>
@@ -369,9 +475,14 @@ export default {
   data() {
     return {
       searchQuery: "",
+      filterStatus: "",
+      filterService: "",
       providers: [],
       showModal: false,
+      showStatusModal: false,
       editingProvider: null,
+      selectedProvider: null,
+      statusAction: 'block',
       form: {
         name: "",
         email: "",
@@ -388,18 +499,52 @@ export default {
 
   computed: {
     filteredProviders() {
-      if (!this.searchQuery) return this.providers;
-      const query = this.searchQuery.toLowerCase();
-      return this.providers.filter((p) =>
-        `${p.name} ${p.email} ${p.rif} ${p.businessName} ${p.serviceType}`.toLowerCase().includes(query)
-      );
+      let filtered = this.providers;
+      
+      // Filtrar por búsqueda
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter((p) =>
+          `${p.name} ${p.email} ${p.rif} ${p.businessName} ${p.serviceType} ${p.phone}`.toLowerCase().includes(query)
+        );
+      }
+      
+      // Filtrar por estado
+      if (this.filterStatus) {
+        filtered = filtered.filter(p => {
+          switch(this.filterStatus) {
+            case 'active':
+              return p.isActive !== false && !p.paused && !this.isExpired(p.subscription?.expirationDate);
+            case 'blocked':
+              return p.isActive === false;
+            case 'paused':
+              return p.paused;
+            case 'expired':
+              return this.isExpired(p.subscription?.expirationDate);
+            default:
+              return true;
+          }
+        });
+      }
+      
+      // Filtrar por servicio
+      if (this.filterService) {
+        filtered = filtered.filter(p => p.serviceType === this.filterService);
+      }
+      
+      return filtered;
     },
+    
     activeProviders() {
-      return this.providers.filter(p => !p.paused && !this.isExpired(p.subscription?.expirationDate)).length;
+      return this.providers.filter(p => 
+        p.isActive !== false && !p.paused && !this.isExpired(p.subscription?.expirationDate)
+      ).length;
     },
+    
     pausedProviders() {
       return this.providers.filter(p => p.paused).length;
     },
+    
     expiredSubscriptions() {
       return this.providers.filter(p => this.isExpired(p.subscription?.expirationDate)).length;
     }
@@ -415,7 +560,6 @@ export default {
       return new Date(date).toLocaleDateString("es-VE");
     },
 
-    // Formatear fecha para input type="date"
     formatDateForInput(dateString) {
       if (!dateString) return "";
       const date = new Date(dateString);
@@ -485,6 +629,65 @@ export default {
       }
     },
 
+    toggleProviderStatus(provider) {
+      this.selectedProvider = provider;
+      this.statusAction = provider.isActive === false ? 'activate' : 'block';
+      this.showStatusModal = true;
+    },
+
+    closeStatusModal() {
+      this.showStatusModal = false;
+      this.selectedProvider = null;
+      this.statusAction = 'block';
+    },
+
+    async confirmToggleStatus() {
+      if (!this.selectedProvider) return;
+      
+      const providerId = this.selectedProvider._id;
+      const newStatus = this.statusAction === 'activate';
+      
+      try {
+        // Usar la misma ruta que en la gestión de usuarios
+        const res = await api.patch(`/admin/users/${providerId}/toggle-status`);
+        
+        if (res.data.success) {
+          // Actualizar el proveedor en la lista
+          const index = this.providers.findIndex(p => p._id === providerId);
+          if (index !== -1) {
+            this.providers[index].isActive = newStatus;
+          }
+          
+          alert(res.data.message || `Proveedor ${newStatus ? 'activado' : 'bloqueado'} exitosamente`);
+        } else {
+          alert(res.data.message || "Error al cambiar el estado");
+        }
+      } catch (error) {
+        console.error("Error toggling provider status:", error);
+        
+        // Intentar método alternativo
+        try {
+          // Actualizar directamente el campo isActive
+          const updateRes = await api.put(`/admin/providers/${providerId}`, {
+            isActive: newStatus
+          });
+          
+          if (updateRes.data) {
+            const index = this.providers.findIndex(p => p._id === providerId);
+            if (index !== -1) {
+              this.providers[index].isActive = newStatus;
+            }
+            alert(`Proveedor ${newStatus ? 'activado' : 'bloqueado'} exitosamente`);
+          }
+        } catch (altError) {
+          console.error("Alternative update also failed:", altError);
+          alert("Error al cambiar el estado del proveedor");
+        }
+      }
+      
+      this.closeStatusModal();
+    },
+
     openModal() {
       this.showModal = true;
       this.editingProvider = null;
@@ -528,7 +731,9 @@ export default {
           
           const { data } = await api.put(`/admin/providers/${this.editingProvider._id}`, formData);
           const index = this.providers.findIndex((p) => p._id === data._id);
-          this.providers.splice(index, 1, data);
+          if (index !== -1) {
+            this.providers.splice(index, 1, data);
+          }
           this.closeModal();
           alert("✅ Proveedor actualizado exitosamente");
           
@@ -630,7 +835,7 @@ export default {
 
 /* Botón principal purple */
 .btn-primary-purple {
-  background: linear-gradient(135deg, #10b981, #0d9488);;
+  background: linear-gradient(135deg, #10b981, #0d9488);
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 12px;
@@ -735,6 +940,32 @@ export default {
 .btn-reschedule-admin:hover {
   background-color: #4932d8 !important;
   transform: scale(1.1) !important;
+}
+
+/* Botón de bloquear/activar - COLOR #f59e0b */
+.bg-amber-600 {
+  background-color: #f59e0b !important;
+}
+
+.bg-amber-600:hover {
+  background-color: #d97706 !important;
+}
+
+.bg-amber-700:hover {
+  background-color: #b45309 !important;
+}
+
+/* Botón verde para activar */
+.bg-green-600 {
+  background-color: #22c55e !important;
+}
+
+.bg-green-600:hover {
+  background-color: #16a34a !important;
+}
+
+.bg-green-700:hover {
+  background-color: #15803d !important;
 }
 
 /* Badges admin */

@@ -285,6 +285,9 @@ const getWeekNumber = (date) => {
 // ======================================================
 // 📌 Exportar reporte en PDF
 // ======================================================
+// ======================================================
+// 📌 Exportar reporte en PDF
+// ======================================================
 export const exportReportPDF = async (req, res) => {
   console.log('🔔 Petición GET /provider/reports/export/pdf recibida');
   
@@ -470,22 +473,39 @@ export const exportReportPDF = async (req, res) => {
           doc.addPage();
         }
         
+        // Ajustar alineación a la izquierda (sin sangría)
+        const leftMargin = 50;
+        
         doc.fontSize(9).fillColor('#000000')
-          .text(`Cita #${index + 1}`, { bold: true })
-          .text(`• Fecha y Hora: ${appt.date} ${appt.time}`)
-          .text(`• Cliente: ${appt.user.name} ${appt.user.lastname} | Tel: ${appt.user.phone || 'N/A'}`)
-          .text(`• Mascota: ${appt.pet.name} (${appt.pet.type}${appt.pet.breed ? ` - ${appt.pet.breed}` : ''})`)
-          .text(`• Servicio: ${appt.serviceName || 'N/A'}`)
-          .text(`• Estado: ${getStatusText(appt.status)}`)
-          .text(`• Precio: $${(appt.servicePrice || 0).toFixed(2)}`);
+          .text(`Cita #${index + 1}`, leftMargin, doc.y, { bold: true, continued: false });
+        doc.moveDown(0.3);
+        
+        doc.text(`• Fecha y Hora: ${appt.date} ${appt.time}`, leftMargin, doc.y);
+        doc.moveDown(0.3);
+        
+        doc.text(`• Cliente: ${appt.user.name} ${appt.user.lastname}${appt.user.phone ? ` | Tel: ${appt.user.phone}` : ''}`, leftMargin, doc.y);
+        doc.moveDown(0.3);
+        
+        doc.text(`• Mascota: ${appt.pet.name} (${appt.pet.type}${appt.pet.breed ? ` - ${appt.pet.breed}` : ''})`, leftMargin, doc.y);
+        doc.moveDown(0.3);
+        
+        doc.text(`• Servicio: ${appt.serviceName || 'N/A'}`, leftMargin, doc.y);
+        doc.moveDown(0.3);
+        
+        doc.text(`• Estado: ${getStatusText(appt.status)}`, leftMargin, doc.y);
+        doc.moveDown(0.3);
+        
+        doc.text(`• Precio: $${(appt.servicePrice || 0).toFixed(2)}`, leftMargin, doc.y);
+        doc.moveDown(0.3);
         
         if (appt.notes) {
-          doc.text(`• Notas: ${appt.notes}`);
+          doc.text(`• Notas: ${appt.notes}`, leftMargin, doc.y);
+          doc.moveDown(0.3);
         }
         
         doc.moveDown(0.5);
         doc.strokeColor('#e2e8f0').lineWidth(0.5)
-          .moveTo(50, doc.y)
+          .moveTo(leftMargin, doc.y)
           .lineTo(550, doc.y)
           .stroke();
         doc.moveDown(0.5);

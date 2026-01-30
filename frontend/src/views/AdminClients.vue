@@ -19,6 +19,19 @@
               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-gray-50"
             />
           </div>
+          
+          <!-- Filtros -->
+          <div class="flex flex-wrap gap-2">
+            <select
+              v-model="filterStatus"
+              class="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
+            >
+              <option value="">Todos los estados</option>
+              <option value="active">Activo</option>
+              <option value="blocked">Bloqueado</option>
+            </select>
+          </div>
+          
           <button
             @click="openModal"
             class="btn-primary-purple flex items-center space-x-2 whitespace-nowrap"
@@ -30,7 +43,7 @@
       </div>
 
       <!-- Tarjeta de estadísticas -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <div class="card-modern p-4">
           <div class="text-2xl font-bold text-purple-600">{{ clients.length }}</div>
           <div class="text-sm text-gray-500">Total Clientes</div>
@@ -38,6 +51,10 @@
         <div class="card-modern p-4">
           <div class="text-2xl font-bold text-green-600">{{ activeClients }}</div>
           <div class="text-sm text-gray-500">Activos</div>
+        </div>
+        <div class="card-modern p-4">
+          <div class="text-2xl font-bold text-red-600">{{ blockedClients }}</div>
+          <div class="text-sm text-gray-500">Bloqueados</div>
         </div>
         <div class="card-modern p-4">
           <div class="text-2xl font-bold text-yellow-600">{{ newThisMonth }}</div>
@@ -66,7 +83,8 @@
               <tr
                 v-for="client in filteredClients"
                 :key="client._id"
-                class="hover:bg-gray-50 transition-colors duration-200 group"
+                :class="client.isActive === false ? 'bg-red-50' : 'hover:bg-gray-50'"
+                class="transition-colors duration-200 group"
               >
                 <!-- Información del cliente -->
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -87,19 +105,33 @@
                 <td class="px-6 py-4">
                   <div class="text-sm font-medium text-gray-800">{{ client.email }}</div>
                   <div class="text-sm text-gray-500">{{ client.phone || 'Sin teléfono' }}</div>
+                  <div class="text-xs text-gray-400 mt-1">
+                    Registrado: {{ formatDate(client.createdAt) }}
+                  </div>
                 </td>
 
                 <!-- Información adicional -->
                 <td class="px-6 py-4">
                   <div class="text-sm text-gray-800">Cédula: {{ client.cedula || 'No registrada' }}</div>
                   <div class="text-sm text-gray-500">Nac: {{ formatDate(client.birthdate) }}</div>
+                  <div v-if="client.pets && client.pets.length > 0" class="text-xs text-blue-600 mt-1">
+                    {{ client.pets.length }} mascota(s)
+                  </div>
                 </td>
 
                 <!-- Estado -->
                 <td class="px-6 py-4">
-                  <span class="badge-outline-admin bg-green-100 text-green-800 border-green-400">
-                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                    Activo
+                  <span 
+                    :class="client.isActive === false 
+                      ? 'badge-outline-admin bg-red-100 text-red-800 border-red-400' 
+                      : 'badge-outline-admin bg-green-100 text-green-800 border-green-400'"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                  >
+                    <span 
+                      class="w-2 h-2 rounded-full mr-2"
+                      :class="client.isActive === false ? 'bg-red-500' : 'bg-green-500'"
+                    ></span>
+                    {{ client.isActive === false ? 'Bloqueado' : 'Activo' }}
                   </span>
                 </td>
 
@@ -109,13 +141,29 @@
                     <button
                       @click="editClient(client)"
                       class="btn-details-admin"
+                      title="Editar cliente"
                     >
                       <span>✏️</span>
                       <span>Editar</span>
                     </button>
+                    
+                    <!-- Botón de bloquear/activar -->
+                    <button
+                      @click="toggleClientStatus(client)"
+                      :class="client.isActive === false 
+                        ? 'bg-green-600 hover:bg-green-700' 
+                        : 'bg-amber-600 hover:bg-amber-700'"
+                      class="flex items-center space-x-1 px-3 py-2 rounded-lg text-white font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md"
+                      :title="client.isActive === false ? 'Activar cuenta' : 'Bloquear cuenta'"
+                    >
+                      <span>{{ client.isActive === false ? '✅' : '⛔' }}</span>
+                      <span>{{ client.isActive === false ? 'Activar' : 'Bloquear' }}</span>
+                    </button>
+                    
                     <button
                       @click="deleteClient(client._id)"
                       class="btn-cancel-admin"
+                      title="Eliminar cliente"
                     >
                       <span>🗑️</span>
                       <span>Eliminar</span>
@@ -221,6 +269,35 @@
                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
                 />
               </div>
+              
+              <!-- Estado de la cuenta -->
+              <div class="md:col-span-2">
+                <label class="block mb-3 font-semibold text-gray-700 text-sm">Estado de la Cuenta</label>
+                <div class="flex items-center space-x-6">
+                  <label class="flex items-center">
+                    <input
+                      type="radio"
+                      v-model="form.isActive"
+                      :value="true"
+                      class="mr-2 h-4 w-4 text-green-600"
+                    />
+                    <span class="text-sm text-gray-700">Activo</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input
+                      type="radio"
+                      v-model="form.isActive"
+                      :value="false"
+                      class="mr-2 h-4 w-4 text-red-600"
+                    />
+                    <span class="text-sm text-gray-700">Bloqueado</span>
+                  </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                  * Los clientes bloqueados no podrán iniciar sesión en el sistema
+                </p>
+              </div>
+
               <div v-if="!editingClient" class="md:col-span-2">
                 <label class="block mb-3 font-semibold text-gray-700 text-sm">Contraseña Temporal</label>
                 <input 
@@ -255,6 +332,66 @@
       </div>
     </div>
 
+    <!-- Modal de confirmación para bloquear/activar -->
+    <div v-if="showStatusModal" class="modal-overlay">
+      <div class="modal-modern-box w-full max-w-md">
+        <div class="modal-modern-header">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="modal-section-title-admin">
+                {{ statusAction === 'block' ? '🔒 Bloquear Cliente' : '✅ Activar Cliente' }}
+              </h2>
+              <p class="text-gray-600 text-sm">
+                {{ statusAction === 'block' 
+                  ? 'El cliente no podrá iniciar sesión en el sistema.' 
+                  : 'El cliente podrá acceder nuevamente al sistema.' }}
+              </p>
+            </div>
+            <button @click="closeStatusModal" class="btn-modal-close">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-modern-content">
+          <div class="p-4 bg-gray-50 rounded-lg mb-6">
+            <div class="flex items-center space-x-3">
+              <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <span class="text-purple-600 font-semibold">
+                  {{ getInitials(selectedClient?.name, selectedClient?.lastname) }}
+                </span>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-800">{{ selectedClient?.name }} {{ selectedClient?.lastname }}</h4>
+                <p class="text-sm text-gray-600">{{ selectedClient?.email }}</p>
+                <p class="text-xs text-gray-500">Cédula: {{ selectedClient?.cedula || 'No registrada' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-modern-actions">
+            <button 
+              type="button" 
+              @click="closeStatusModal"
+              class="btn-modal-ghost"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="button" 
+              @click="confirmToggleStatus"
+              :class="statusAction === 'block' 
+                ? 'bg-amber-600 hover:bg-amber-700' 
+                : 'bg-green-600 hover:bg-green-700'"
+              class="px-6 py-3 rounded-lg text-white font-medium transition-all shadow-sm hover:shadow-md"
+            >
+              {{ statusAction === 'block' ? 'Confirmar Bloqueo' : 'Confirmar Activación' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <Chatbot />
   </AdminLayout>
 </template>
@@ -270,8 +407,12 @@ export default {
   data() {
     return {
       searchQuery: "",
+      filterStatus: "",
       showModal: false,
+      showStatusModal: false,
       editingClient: null,
+      selectedClient: null,
+      statusAction: 'block',
       form: {
         name: "",
         lastname: "",
@@ -280,26 +421,56 @@ export default {
         cedula: "",
         birthdate: "",
         password: "",
+        isActive: true,
       },
       clients: [],
     };
   },
   computed: {
     filteredClients() {
-      if (!this.searchQuery) return this.clients;
-      const query = this.searchQuery.toLowerCase();
-      return this.clients.filter((c) =>
-        `${c.name} ${c.lastname} ${c.email} ${c.cedula}`.toLowerCase().includes(query)
-      );
+      let filtered = this.clients;
+      
+      // Filtrar por búsqueda
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter((c) =>
+          `${c.name} ${c.lastname} ${c.email} ${c.cedula} ${c.phone}`.toLowerCase().includes(query)
+        );
+      }
+      
+      // Filtrar por estado
+      if (this.filterStatus) {
+        filtered = filtered.filter(c => {
+          switch(this.filterStatus) {
+            case 'active':
+              return c.isActive !== false;
+            case 'blocked':
+              return c.isActive === false;
+            default:
+              return true;
+          }
+        });
+      }
+      
+      return filtered;
     },
     activeClients() {
-      return this.clients.length;
+      return this.clients.filter(c => c.isActive !== false).length;
+    },
+    blockedClients() {
+      return this.clients.filter(c => c.isActive === false).length;
     },
     newThisMonth() {
-      return Math.floor(this.clients.length * 0.15);
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      return this.clients.filter(c => {
+        const createdDate = new Date(c.createdAt);
+        return createdDate.getMonth() === currentMonth && 
+               createdDate.getFullYear() === currentYear;
+      }).length;
     },
     withPets() {
-      return Math.floor(this.clients.length * 0.65);
+      return this.clients.filter(c => c.pets && c.pets.length > 0).length;
     }
   },
   methods: {
@@ -327,6 +498,7 @@ export default {
         cedula: "",
         birthdate: "",
         password: "",
+        isActive: true,
       };
     },
     
@@ -337,7 +509,7 @@ export default {
     async saveClient() {
       try {
         // Crear objeto sin password si está vacío durante edición
-        const formData = { ...this.form };
+        const formData = { ...this.form, role: 'client' };
         
         if (this.editingClient) {
           // Para edición: eliminar password si está vacío
@@ -347,7 +519,9 @@ export default {
           
           const { data } = await api.put(`/admin/clients/${this.editingClient._id}`, formData);
           const index = this.clients.findIndex((c) => c._id === data._id);
-          this.clients.splice(index, 1, data);
+          if (index !== -1) {
+            this.clients.splice(index, 1, data);
+          }
           this.closeModal();
           alert("✅ Cliente actualizado exitosamente");
           
@@ -367,11 +541,9 @@ export default {
       } catch (err) {
         console.error("❌ Error al guardar cliente:", err);
         
-        // Mostrar mensaje de error más específico
         let errorMessage = "Error al guardar el cliente";
         
         if (err.response) {
-          // El servidor respondió con un código de error
           const serverError = err.response.data;
           
           if (serverError.message) {
@@ -382,10 +554,8 @@ export default {
             errorMessage = serverError.error;
           }
         } else if (err.request) {
-          // La solicitud fue hecha pero no hubo respuesta
           errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
         } else {
-          // Algo pasó al configurar la solicitud
           errorMessage = err.message || "Error desconocido";
         }
         
@@ -398,7 +568,8 @@ export default {
       this.form = { 
         ...client, 
         password: "",
-        birthdate: client.birthdate ? this.formatDateForInput(client.birthdate) : ""
+        birthdate: client.birthdate ? this.formatDateForInput(client.birthdate) : "",
+        isActive: client.isActive !== undefined ? client.isActive : true
       };
       this.showModal = true;
     },
@@ -418,7 +589,11 @@ export default {
     
     formatDate(date) {
       if (!date) return "-";
-      return new Date(date).toLocaleDateString("es-VE");
+      return new Date(date).toLocaleDateString("es-VE", {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
     },
     
     // Formato especial para input type="date" (YYYY-MM-DD)
@@ -426,12 +601,70 @@ export default {
       if (!dateString) return "";
       const date = new Date(dateString);
       return date.toISOString().split('T')[0];
+    },
+    
+    toggleClientStatus(client) {
+      this.selectedClient = client;
+      this.statusAction = client.isActive === false ? 'activate' : 'block';
+      this.showStatusModal = true;
+    },
+
+    closeStatusModal() {
+      this.showStatusModal = false;
+      this.selectedClient = null;
+      this.statusAction = 'block';
+    },
+
+    async confirmToggleStatus() {
+      if (!this.selectedClient) return;
+      
+      const clientId = this.selectedClient._id;
+      const newStatus = this.statusAction === 'activate';
+      
+      try {
+        // Usar la misma ruta que en la gestión de usuarios
+        const res = await api.patch(`/admin/users/${clientId}/toggle-status`);
+        
+        if (res.data.success) {
+          // Actualizar el cliente en la lista
+          const index = this.clients.findIndex(c => c._id === clientId);
+          if (index !== -1) {
+            this.clients[index].isActive = newStatus;
+          }
+          
+          alert(res.data.message || `Cliente ${newStatus ? 'activado' : 'bloqueado'} exitosamente`);
+        } else {
+          alert(res.data.message || "Error al cambiar el estado");
+        }
+      } catch (error) {
+        console.error("Error toggling client status:", error);
+        
+        // Intentar método alternativo
+        try {
+          // Actualizar directamente el campo isActive
+          const updateRes = await api.put(`/admin/clients/${clientId}`, {
+            isActive: newStatus
+          });
+          
+          if (updateRes.data) {
+            const index = this.clients.findIndex(c => c._id === clientId);
+            if (index !== -1) {
+              this.clients[index].isActive = newStatus;
+            }
+            alert(`Cliente ${newStatus ? 'activado' : 'bloqueado'} exitosamente`);
+          }
+        } catch (altError) {
+          console.error("Alternative update also failed:", altError);
+          alert("Error al cambiar el estado del cliente");
+        }
+      }
+      
+      this.closeStatusModal();
     }
   },
   
   mounted() {
     this.fetchClients();
-    // Agregar animación de entrada
     setTimeout(() => {
       const element = document.querySelector('.fade-up');
       if (element) element.classList.add('show');
@@ -471,7 +704,7 @@ export default {
 
 /* Botón principal purple */
 .btn-primary-purple {
-  background: linear-gradient(135deg, #10b981, #0d9488);;
+  background: linear-gradient(135deg, #10b981, #0d9488);
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 12px;
@@ -540,25 +773,6 @@ export default {
   transform: scale(1.1) !important;
 }
 
-.btn-complete-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.25rem 0.5rem !important;
-  background-color: #3b82f6 !important;
-  color: white !important;
-  font-size: 0.75rem !important;
-  font-weight: 500 !important;
-  border-radius: 0.375rem !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.2s !important;
-}
-
-.btn-complete-admin:hover {
-  background-color: #2563eb !important;
-  transform: scale(1.1) !important;
-}
-
 .btn-cancel-admin {
   display: inline-flex !important;
   align-items: center !important;
@@ -595,6 +809,32 @@ export default {
 .btn-reschedule-admin:hover {
   background-color: #4932d8 !important;
   transform: scale(1.1) !important;
+}
+
+/* Botón de bloquear/activar - COLOR #f59e0b */
+.bg-amber-600 {
+  background-color: #f59e0b !important;
+}
+
+.bg-amber-600:hover {
+  background-color: #d97706 !important;
+}
+
+.bg-amber-700:hover {
+  background-color: #b45309 !important;
+}
+
+/* Botón verde para activar */
+.bg-green-600 {
+  background-color: #22c55e !important;
+}
+
+.bg-green-600:hover {
+  background-color: #16a34a !important;
+}
+
+.bg-green-700:hover {
+  background-color: #15803d !important;
 }
 
 /* Badges admin */
@@ -658,83 +898,7 @@ export default {
   cursor: not-allowed;
 }
 
-.btn-modal-confirm-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.75rem 1.5rem !important;
-  background-color: #22c55e !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border-radius: 10px !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-.btn-modal-confirm-admin:hover:not(:disabled) {
-  background-color: #16a34a !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3) !important;
-}
-
-.btn-modal-complete-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.75rem 1.5rem !important;
-  background-color: #3b82f6 !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border-radius: 10px !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-.btn-modal-complete-admin:hover:not(:disabled) {
-  background-color: #2563eb !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3) !important;
-}
-
-.btn-modal-cancel-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.75rem 1.5rem !important;
-  background-color: #f43f5e !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border-radius: 10px !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-.btn-modal-cancel-admin:hover:not(:disabled) {
-  background-color: #e11d48 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 20px rgba(244, 63, 94, 0.3) !important;
-}
-
-.btn-modal-reschedule-admin {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 0.75rem 1.5rem !important;
-  background-color: #a855f7 !important;
-  color: white !important;
-  font-weight: 600 !important;
-  border-radius: 10px !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-
-.btn-modal-reschedule-admin:hover:not(:disabled) {
-  background-color: #9333ea !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 20px rgba(168, 85, 247, 0.3) !important;
-}
-
-/* Estilos del modal */
+/* Resto de estilos del modal (se mantienen igual) */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -789,10 +953,6 @@ export default {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid #e5e7eb;
-}
-
-.avatar-modern-lg {
-  flex-shrink: 0;
 }
 
 .btn-modal-close {
@@ -850,24 +1010,7 @@ export default {
   border-color: #8b5cf6;
 }
 
-.animate-pulse {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
+/* Responsive */
 @media (max-width: 768px) {
   .modal-modern-box {
     padding: 1rem;
@@ -885,21 +1028,8 @@ export default {
     justify-content: center;
   }
   
-  .text-5xl {
-    font-size: 2.5rem;
-  }
-  
-  .text-6xl {
-    font-size: 3rem;
-  }
-  
-  .grid.grid-cols-12 {
-    grid-template-columns: 1fr;
-  }
-  
-  .col-span-1,
-  .col-span-2 {
-    grid-column: span 1;
+  .grid.grid-cols-5 {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

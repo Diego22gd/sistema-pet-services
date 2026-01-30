@@ -139,79 +139,24 @@
         </div>
       </div>
 
-      <!-- Gráficos y métricas -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
-        <!-- Gráfico principal -->
-        <div class="lg:col-span-2 fade-up card-modern" :class="{ show: animated }">
-          <div class="p-4 sm:p-6">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
-              <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Evolución de Citas</h2>
-              <div class="flex gap-2">
-                <button 
-                  @click="setChartType('monthly')"
-                  :class="[
-                    'px-3 py-1.5 text-xs sm:text-sm rounded-xl transition-all duration-200 font-medium',
-                    chartType === 'monthly' 
-                      ? 'bg-emerald-500 text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  ]"
-                >
-                  Mensual
-                </button>
-                <button 
-                  @click="setChartType('weekly')"
-                  :class="[
-                    'px-3 py-1.5 text-xs sm:text-sm rounded-xl transition-all duration-200 font-medium',
-                    chartType === 'weekly' 
-                      ? 'bg-emerald-500 text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  ]"
-                >
-                  Semanal
-                </button>
+      <!-- Métricas clave -->
+      <div class="fade-up card-modern mb-6" :class="{ show: animated }">
+        <div class="p-4 sm:p-6">
+          <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Métricas Clave</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div 
+              v-for="metric in keyMetrics"
+              :key="metric.title"
+              class="flex justify-between items-center p-4 sm:p-6 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors duration-200"
+            >
+              <div>
+                <p class="text-xs sm:text-sm text-gray-500">{{ metric.title }}</p>
+                <p :class="metric.valueClass" class="text-xl sm:text-2xl font-bold mt-1">
+                  {{ metric.value }}
+                </p>
               </div>
-            </div>
-            <div class="h-60 sm:h-80">
-              <canvas id="appointmentsChart"></canvas>
-            </div>
-            
-            <!-- Leyenda del gráfico -->
-            <div class="flex flex-wrap gap-3 sm:gap-4 mt-4 sm:mt-6">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-                <span class="text-xs sm:text-sm text-gray-600">Citas Completadas</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                <span class="text-xs sm:text-sm text-gray-600">Citas Canceladas</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-amber-500"></div>
-                <span class="text-xs sm:text-sm text-gray-600">Citas Pendientes</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Métricas clave -->
-        <div class="fade-up card-modern" :class="{ show: animated }">
-          <div class="p-4 sm:p-6">
-            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Métricas Clave</h2>
-            <div class="space-y-4 sm:space-y-6">
-              <div 
-                v-for="metric in keyMetrics"
-                :key="metric.title"
-                class="flex justify-between items-center p-3 sm:p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors duration-200"
-              >
-                <div>
-                  <p class="text-xs sm:text-sm text-gray-500">{{ metric.title }}</p>
-                  <p :class="metric.valueClass" class="text-xl sm:text-2xl font-bold mt-1">
-                    {{ metric.value }}
-                  </p>
-                </div>
-                <div :class="metric.iconBg" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center">
-                  <span :class="metric.iconColor" class="text-xl sm:text-2xl">{{ metric.icon }}</span>
-                </div>
+              <div :class="metric.iconBg" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center">
+                <span :class="metric.iconColor" class="text-xl sm:text-2xl">{{ metric.icon }}</span>
               </div>
             </div>
           </div>
@@ -227,7 +172,7 @@
                 Exportar Reportes
               </h2>
               <p class="text-xs sm:text-sm text-gray-500">
-                Descarga un reporte detallado de las citas en el período seleccionado
+                Descarga un reporte detallado de las citas en el período seleccionado en formato PDF
               </p>
               
               <!-- Resumen del período -->
@@ -252,18 +197,10 @@
               <button 
                 @click="exportReport('pdf')"
                 :disabled="loading || !hasData"
-                class="btn-modal-complete px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl flex items-center gap-2 justify-center text-sm sm:text-base"
+                class="btn-primary px-6 sm:px-8 py-3 sm:py-4 rounded-xl flex items-center gap-3 justify-center text-sm sm:text-base font-semibold"
               >
-                <span>📊</span>
-                <span>Exportar PDF</span>
-              </button>
-              <button 
-                @click="exportReport('excel')"
-                :disabled="loading || !hasData"
-                class="btn-modal-confirm px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl flex items-center gap-2 justify-center text-sm sm:text-base"
-              >
-                <span>📄</span>
-                <span>Exportar Excel</span>
+                
+                <span>Exportar Reporte PDF</span>
               </button>
             </div>
           </div>
@@ -271,26 +208,71 @@
           <!-- Información del reporte -->
           <div v-if="hasData" class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
             <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">
-              Resumen del Reporte
+              Características del Reporte PDF:
             </h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              <div class="text-center p-2 sm:p-3 bg-gray-50 rounded-xl">
-                <p class="text-xl sm:text-2xl font-bold text-gray-900">{{ stats.total }}</p>
-                <p class="text-xs sm:text-sm text-gray-500">Total Citas</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div class="p-3 sm:p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span class="text-blue-600 text-sm">📊</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900">Formato Profesional</p>
+                </div>
+                <p class="text-xs text-gray-500">Diseño optimizado para impresión y visualización</p>
               </div>
-              <div class="text-center p-2 sm:p-3 bg-emerald-50 rounded-xl">
-                <p class="text-xl sm:text-2xl font-bold text-emerald-700">{{ stats.completed }}</p>
-                <p class="text-xs sm:text-sm text-emerald-600">Completadas</p>
+              <div class="p-3 sm:p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <span class="text-green-600 text-sm">📋</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900">Detalles al Costado</p>
+                </div>
+                <p class="text-xs text-gray-500">Información de citas organizada en el lado izquierdo</p>
               </div>
-              <div class="text-center p-2 sm:p-3 bg-red-50 rounded-xl">
-                <p class="text-xl sm:text-2xl font-bold text-red-700">{{ stats.cancelled }}</p>
-                <p class="text-xs sm:text-sm text-red-600">Canceladas</p>
+              <div class="p-3 sm:p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <span class="text-purple-600 text-sm">💰</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900">Métricas Completas</p>
+                </div>
+                <p class="text-xs text-gray-500">Incluye todas las estadísticas y análisis</p>
               </div>
-              <div class="text-center p-2 sm:p-3 bg-blue-50 rounded-xl">
-                <p class="text-xl sm:text-2xl font-bold text-blue-700">
-                  ${{ formatCurrency(stats.revenue) }}
-                </p>
-                <p class="text-xs sm:text-sm text-blue-600">Ingresos</p>
+              <div class="p-3 sm:p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <span class="text-amber-600 text-sm">📈</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900">Fácil de Compartir</p>
+                </div>
+                <p class="text-xs text-gray-500">Formato universal compatible con cualquier dispositivo</p>
+              </div>
+            </div>
+            
+            <!-- Resumen estadístico -->
+            <div class="mt-4 sm:mt-6 p-4 sm:p-6 bg-gray-50 rounded-xl">
+              <h4 class="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">
+                Resumen Estadístico que Incluye el PDF:
+              </h4>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                <div class="text-center p-2 sm:p-3 bg-white rounded-xl border border-gray-200">
+                  <p class="text-xl sm:text-2xl font-bold text-gray-900">{{ stats.total }}</p>
+                  <p class="text-xs sm:text-sm text-gray-500">Total Citas</p>
+                </div>
+                <div class="text-center p-2 sm:p-3 bg-white rounded-xl border border-emerald-200">
+                  <p class="text-xl sm:text-2xl font-bold text-emerald-700">{{ stats.completed }}</p>
+                  <p class="text-xs sm:text-sm text-emerald-600">Completadas</p>
+                </div>
+                <div class="text-center p-2 sm:p-3 bg-white rounded-xl border border-red-200">
+                  <p class="text-xl sm:text-2xl font-bold text-red-700">{{ stats.cancelled }}</p>
+                  <p class="text-xs sm:text-sm text-red-600">Canceladas</p>
+                </div>
+                <div class="text-center p-2 sm:p-3 bg-white rounded-xl border border-blue-200">
+                  <p class="text-xl sm:text-2xl font-bold text-blue-700">
+                    ${{ formatCurrency(stats.revenue) }}
+                  </p>
+                  <p class="text-xs sm:text-sm text-blue-600">Ingresos</p>
+                </div>
               </div>
             </div>
           </div>
@@ -308,8 +290,8 @@
                 </div>
               </div>
               <div>
-                <h3 class="text-lg sm:text-xl font-bold text-gray-900">Generando Reporte</h3>
-                <p class="text-xs sm:text-sm text-gray-500">Procesando los datos, por favor espera...</p>
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900">Generando Reporte PDF</h3>
+                <p class="text-xs sm:text-sm text-gray-500">Preparando documento con formato mejorado...</p>
               </div>
             </div>
           </div>
@@ -323,6 +305,18 @@
                      :style="{ width: progressWidth }"></div>
               </div>
             </div>
+            
+            <div class="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <p class="text-xs sm:text-sm text-blue-700 font-medium mb-2">
+                🎨 <span class="ml-1">Formato mejorado aplicado:</span>
+              </p>
+              <ul class="text-xs text-blue-600 space-y-1 pl-5">
+                <li>• Detalles de citas al costado izquierdo</li>
+                <li>• Diseño profesional optimizado</li>
+                <li>• Estadísticas organizadas</li>
+                <li>• Listo para imprimir o compartir</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -335,7 +329,6 @@
 import ProviderLayout from "@/components/ProviderLayout.vue";
 import Chatbot from "@/components/Chatbot.vue";
 import { onMounted, ref, computed, reactive } from "vue";
-import Chart from "chart.js/auto";
 import api from "@/api/api";
 
 export default {
@@ -354,8 +347,6 @@ export default {
     const appointments = ref([]);
     const loading = ref(false);
     const animated = ref(false);
-    const chartInstance = ref(null);
-    const chartType = ref('monthly');
     const showLoadingModal = ref(false);
     const loadingProgress = ref('Cargando datos...');
     const exportProgress = ref(0);
@@ -556,13 +547,6 @@ export default {
         if (data.success) {
           appointments.value = data.appointments || [];
           Object.assign(stats, data.stats || {});
-          
-          // Inicializar gráfico
-          if (appointments.value.length > 0) {
-            initializeChart(data.chart);
-          } else {
-            destroyChart();
-          }
         } else {
           console.error("Error en la respuesta del servidor:", data.message);
         }
@@ -577,112 +561,6 @@ export default {
       }
     };
 
-    const initializeChart = (chartData) => {
-      // Destruir gráfico anterior
-      destroyChart();
-
-      const ctx = document.getElementById("appointmentsChart");
-      if (!ctx) return;
-
-      const data = chartType.value === 'monthly' ? chartData.monthly : chartData.weekly;
-
-      chartInstance.value = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: data.labels || [],
-          datasets: [
-            {
-              label: "Citas Completadas",
-              data: data.completed || [],
-              borderColor: "#10b981",
-              backgroundColor: "rgba(16, 185, 129, 0.1)",
-              fill: true,
-              tension: 0.4,
-              borderWidth: 2,
-              pointRadius: 4,
-              pointBackgroundColor: "#10b981"
-            },
-            {
-              label: "Citas Canceladas",
-              data: data.cancelled || [],
-              borderColor: "#ef4444",
-              backgroundColor: "rgba(239, 68, 68, 0.1)",
-              fill: true,
-              tension: 0.4,
-              borderWidth: 2,
-              pointRadius: 4,
-              pointBackgroundColor: "#ef4444"
-            },
-            {
-              label: "Citas Pendientes",
-              data: data.pending || [],
-              borderColor: "#f59e0b",
-              backgroundColor: "rgba(245, 158, 11, 0.1)",
-              fill: true,
-              tension: 0.4,
-              borderWidth: 2,
-              pointRadius: 4,
-              pointBackgroundColor: "#f59e0b"
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { 
-              display: false,
-              position: 'top'
-            },
-            tooltip: {
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              titleColor: '#1f2937',
-              bodyColor: '#4b5563',
-              borderColor: '#e5e7eb',
-              borderWidth: 1,
-              cornerRadius: 8,
-              padding: 12,
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: {
-                color: "rgba(0, 0, 0, 0.05)",
-                drawBorder: false
-              },
-              ticks: {
-                color: '#6b7280'
-              }
-            },
-            x: {
-              grid: {
-                display: false
-              },
-              ticks: {
-                color: '#6b7280'
-              }
-            }
-          }
-        }
-      });
-    };
-
-    const destroyChart = () => {
-      if (chartInstance.value) {
-        chartInstance.value.destroy();
-        chartInstance.value = null;
-      }
-    };
-
-    const setChartType = (type) => {
-      chartType.value = type;
-      if (appointments.value.length > 0) {
-        loadReports(); // Recargar datos para el nuevo tipo de gráfico
-      }
-    };
-
     const exportReport = async (format) => {
       if (!hasData.value) {
         alert('No hay datos para exportar. Aplica filtros primero.');
@@ -691,21 +569,24 @@ export default {
 
       showLoadingModal.value = true;
       exportProgress.value = 0;
-      loadingProgress.value = 'Preparando datos para exportación...';
+      loadingProgress.value = 'Preparando documento PDF con formato mejorado...';
 
       try {
         // Simular progreso
         const progressInterval = setInterval(() => {
           if (exportProgress.value < 90) {
             exportProgress.value += 10;
-            loadingProgress.value = `Generando ${format.toUpperCase()}... ${exportProgress.value}%`;
+            loadingProgress.value = `Generando PDF mejorado... ${exportProgress.value}%`;
           }
         }, 200);
 
+        // Enviar parámetros específicos para el PDF mejorado
         const params = {
           startDate: filters.startDate,
           endDate: filters.endDate,
-          format: format
+          format: 'pdf',
+          improvedFormat: true, // Nueva bandera para formato mejorado
+          detailsOnLeft: true   // Especificar que los detalles vayan al costado izquierdo
         };
 
         const response = await api.get("/provider/reports/export", { 
@@ -715,12 +596,12 @@ export default {
 
         clearInterval(progressInterval);
         exportProgress.value = 100;
-        loadingProgress.value = 'Descargando archivo...';
+        loadingProgress.value = 'Descargando archivo PDF...';
 
         // Crear descarga
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
-        const fileName = `reporte-citas-${filters.startDate || 'inicio'}-al-${filters.endDate || 'fin'}.${format}`;
+        const fileName = `reporte-citas-${filters.startDate || 'inicio'}-al-${filters.endDate || 'fin'}.pdf`;
         
         link.href = url;
         link.setAttribute('download', fileName);
@@ -736,7 +617,7 @@ export default {
 
       } catch (error) {
         console.error("Error exportando reporte:", error);
-        alert("Error al exportar el reporte. Por favor, intenta nuevamente.");
+        alert("Error al exportar el reporte PDF. Por favor, intenta nuevamente.");
         showLoadingModal.value = false;
       }
     };
@@ -747,7 +628,6 @@ export default {
       filters.quickPeriod = '';
       appointments.value = [];
       resetStats();
-      destroyChart();
     };
 
     const resetStats = () => {
@@ -775,7 +655,6 @@ export default {
       quickPeriods,
       loading,
       animated,
-      chartType,
       hasData,
       summaryCards,
       keyMetrics,
@@ -791,7 +670,6 @@ export default {
       setQuickPeriod,
       loadReports,
       resetFilters,
-      setChartType,
       exportReport
     };
   }

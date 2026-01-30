@@ -61,6 +61,8 @@
                     type="email"
                     placeholder="ejemplo@email.com"
                     required
+                    @input="validateLoginField('email')"
+                    @blur="validateLoginField('email')"
                     class="form-input pl-12"
                     :class="{ 'border-red-500': loginErrors.email }"
                   />
@@ -82,6 +84,8 @@
                     type="password"
                     placeholder="********"
                     required
+                    @input="validateLoginField('password')"
+                    @blur="validateLoginField('password')"
                     class="form-input pl-12"
                     :class="{ 'border-red-500': loginErrors.password }"
                   />
@@ -181,7 +185,7 @@
               </div>
             </div>
           </div>
-          <button @click="showRegisterClient = false" class="btn-modal-close">
+          <button @click="closeClientModal" class="btn-modal-close">
             ✕
           </button>
         </div>
@@ -192,49 +196,105 @@
               <!-- Nombre -->
               <div class="form-group">
                 <label class="form-label">Nombre <span class="text-red-500">*</span></label>
-                <input v-model="clientForm.name" type="text" class="form-input" placeholder="Juan" required />
+                <input 
+                  v-model="clientForm.name" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Juan" 
+                  @input="validateClientField('name')"
+                  @blur="validateClientField('name')"
+                  :class="{ 'border-red-500': clientErrors.name }"
+                />
                 <p v-if="clientErrors.name" class="text-red-500 text-xs mt-1">{{ clientErrors.name }}</p>
               </div>
 
               <!-- Apellido -->
               <div class="form-group">
                 <label class="form-label">Apellido <span class="text-red-500">*</span></label>
-                <input v-model="clientForm.lastname" type="text" class="form-input" placeholder="Pérez" required />
+                <input 
+                  v-model="clientForm.lastname" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Pérez" 
+                  @input="validateClientField('lastname')"
+                  @blur="validateClientField('lastname')"
+                  :class="{ 'border-red-500': clientErrors.lastname }"
+                />
                 <p v-if="clientErrors.lastname" class="text-red-500 text-xs mt-1">{{ clientErrors.lastname }}</p>
               </div>
 
               <!-- Cédula -->
               <div class="form-group">
                 <label class="form-label">Cédula <span class="text-red-500">*</span></label>
-                <input v-model="clientForm.cedula" type="text" class="form-input" placeholder="V-12345678" required />
+                <input 
+                  v-model="clientForm.cedula" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="V-12345678" 
+                  @input="validateClientField('cedula')"
+                  @blur="validateClientField('cedula')"
+                  :class="{ 'border-red-500': clientErrors.cedula }"
+                />
                 <p v-if="clientErrors.cedula" class="text-red-500 text-xs mt-1">{{ clientErrors.cedula }}</p>
               </div>
 
               <!-- Email -->
               <div class="form-group">
                 <label class="form-label">Correo electrónico <span class="text-red-500">*</span></label>
-                <input v-model="clientForm.email" type="email" class="form-input" placeholder="email@ejemplo.com" required />
+                <input 
+                  v-model="clientForm.email" 
+                  type="email" 
+                  class="form-input" 
+                  placeholder="email@ejemplo.com" 
+                  @input="validateClientField('email')"
+                  @blur="validateClientField('email')"
+                  :class="{ 'border-red-500': clientErrors.email }"
+                />
                 <p v-if="clientErrors.email" class="text-red-500 text-xs mt-1">{{ clientErrors.email }}</p>
               </div>
 
               <!-- Teléfono -->
               <div class="form-group">
                 <label class="form-label">Teléfono <span class="text-red-500">*</span></label>
-                <input v-model="clientForm.phone" type="tel" class="form-input" placeholder="+58 412 1234567" required />
+                <input 
+                  v-model="clientForm.phone" 
+                  type="tel" 
+                  class="form-input" 
+                  placeholder="+58 412 1234567" 
+                  @input="validateClientField('phone')"
+                  @blur="validateClientField('phone')"
+                  :class="{ 'border-red-500': clientErrors.phone }"
+                />
                 <p v-if="clientErrors.phone" class="text-red-500 text-xs mt-1">{{ clientErrors.phone }}</p>
               </div>
 
               <!-- Contraseña -->
               <div class="form-group">
                 <label class="form-label">Contraseña <span class="text-red-500">*</span></label>
-                <input v-model="clientForm.password" type="password" class="form-input" placeholder="********" required />
+                <input 
+                  v-model="clientForm.password" 
+                  type="password" 
+                  class="form-input" 
+                  placeholder="********" 
+                  @input="validateClientField('password')"
+                  @blur="validateClientField('password')"
+                  :class="{ 'border-red-500': clientErrors.password }"
+                />
                 <p v-if="clientErrors.password" class="text-red-500 text-xs mt-1">{{ clientErrors.password }}</p>
               </div>
 
               <!-- Confirmar Contraseña -->
               <div class="form-group">
                 <label class="form-label">Confirmar Contraseña <span class="text-red-500">*</span></label>
-                <input v-model="clientForm.confirmPassword" type="password" class="form-input" placeholder="********" required />
+                <input 
+                  v-model="clientForm.confirmPassword" 
+                  type="password" 
+                  class="form-input" 
+                  placeholder="********" 
+                  @input="validateClientField('confirmPassword')"
+                  @blur="validateClientField('confirmPassword')"
+                  :class="{ 'border-red-500': clientErrors.confirmPassword }"
+                />
                 <p v-if="clientErrors.confirmPassword" class="text-red-500 text-xs mt-1">{{ clientErrors.confirmPassword }}</p>
               </div>
             </div>
@@ -249,7 +309,7 @@
 
             <!-- Botones del modal -->
             <div class="modal-modern-actions mx-6">
-              <button type="button" @click="showRegisterClient = false" class="btn-modal-ghost">
+              <button type="button" @click="closeClientModal" class="btn-modal-ghost">
                 Cancelar
               </button>
               <button type="submit" class="btn-modal-primary group" :disabled="isRegistering">
@@ -280,7 +340,7 @@
               </div>
             </div>
           </div>
-          <button @click="showRegisterProvider = false" class="btn-modal-close">
+          <button @click="closeProviderModal" class="btn-modal-close">
             ✕
           </button>
         </div>
@@ -291,49 +351,103 @@
               <!-- Nombre -->
               <div class="form-group">
                 <label class="form-label">Nombre <span class="text-red-500">*</span></label>
-                <input v-model="providerForm.name" type="text" class="form-input" placeholder="Carlos" required />
+                <input 
+                  v-model="providerForm.name" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Carlos" 
+                  @input="validateProviderField('name')"
+                  @blur="validateProviderField('name')"
+                  :class="{ 'border-red-500': providerErrors.name }"
+                />
                 <p v-if="providerErrors.name" class="text-red-500 text-xs mt-1">{{ providerErrors.name }}</p>
               </div>
 
               <!-- Apellido -->
               <div class="form-group">
                 <label class="form-label">Apellido <span class="text-red-500">*</span></label>
-                <input v-model="providerForm.lastname" type="text" class="form-input" placeholder="Gómez" required />
+                <input 
+                  v-model="providerForm.lastname" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Gómez" 
+                  @input="validateProviderField('lastname')"
+                  @blur="validateProviderField('lastname')"
+                  :class="{ 'border-red-500': providerErrors.lastname }"
+                />
                 <p v-if="providerErrors.lastname" class="text-red-500 text-xs mt-1">{{ providerErrors.lastname }}</p>
               </div>
 
               <!-- Email -->
               <div class="form-group">
                 <label class="form-label">Correo electrónico <span class="text-red-500">*</span></label>
-                <input v-model="providerForm.email" type="email" class="form-input" placeholder="email@ejemplo.com" required />
+                <input 
+                  v-model="providerForm.email" 
+                  type="email" 
+                  class="form-input" 
+                  placeholder="email@ejemplo.com" 
+                  @input="validateProviderField('email')"
+                  @blur="validateProviderField('email')"
+                  :class="{ 'border-red-500': providerErrors.email }"
+                />
                 <p v-if="providerErrors.email" class="text-red-500 text-xs mt-1">{{ providerErrors.email }}</p>
               </div>
 
               <!-- Teléfono -->
               <div class="form-group">
                 <label class="form-label">Teléfono <span class="text-red-500">*</span></label>
-                <input v-model="providerForm.phone" type="tel" class="form-input" placeholder="+58 414 7654321" required />
+                <input 
+                  v-model="providerForm.phone" 
+                  type="tel" 
+                  class="form-input" 
+                  placeholder="+58 414 7654321" 
+                  @input="validateProviderField('phone')"
+                  @blur="validateProviderField('phone')"
+                  :class="{ 'border-red-500': providerErrors.phone }"
+                />
                 <p v-if="providerErrors.phone" class="text-red-500 text-xs mt-1">{{ providerErrors.phone }}</p>
               </div>
 
               <!-- RIF -->
               <div class="form-group">
                 <label class="form-label">RIF <span class="text-red-500">*</span></label>
-                <input v-model="providerForm.rif" type="text" class="form-input" placeholder="J-12345678-9" required />
+                <input 
+                  v-model="providerForm.rif" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="J-12345678-9" 
+                  @input="validateProviderField('rif')"
+                  @blur="validateProviderField('rif')"
+                  :class="{ 'border-red-500': providerErrors.rif }"
+                />
                 <p v-if="providerErrors.rif" class="text-red-500 text-xs mt-1">{{ providerErrors.rif }}</p>
               </div>
 
               <!-- Nombre del Negocio -->
               <div class="form-group">
                 <label class="form-label">Nombre del Negocio <span class="text-red-500">*</span></label>
-                <input v-model="providerForm.businessName" type="text" class="form-input" placeholder="Veterinaria Patitas Felices" required />
+                <input 
+                  v-model="providerForm.businessName" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Veterinaria Patitas Felices" 
+                  @input="validateProviderField('businessName')"
+                  @blur="validateProviderField('businessName')"
+                  :class="{ 'border-red-500': providerErrors.businessName }"
+                />
                 <p v-if="providerErrors.businessName" class="text-red-500 text-xs mt-1">{{ providerErrors.businessName }}</p>
               </div>
 
               <!-- Tipo de Servicio -->
               <div class="form-group">
                 <label class="form-label">Tipo de Servicio <span class="text-red-500">*</span></label>
-                <select v-model="providerForm.serviceType" class="form-input" required>
+                <select 
+                  v-model="providerForm.serviceType" 
+                  class="form-input" 
+                  @input="validateProviderField('serviceType')"
+                  @blur="validateProviderField('serviceType')"
+                  :class="{ 'border-red-500': providerErrors.serviceType }"
+                >
                   <option disabled value="">Selecciona una opción</option>
                   <option>Veterinaria</option>
                   <option>Peluquería</option>
@@ -349,14 +463,30 @@
               <!-- Contraseña -->
               <div class="form-group">
                 <label class="form-label">Contraseña <span class="text-red-500">*</span></label>
-                <input v-model="providerForm.password" type="password" class="form-input" placeholder="********" required />
+                <input 
+                  v-model="providerForm.password" 
+                  type="password" 
+                  class="form-input" 
+                  placeholder="********" 
+                  @input="validateProviderField('password')"
+                  @blur="validateProviderField('password')"
+                  :class="{ 'border-red-500': providerErrors.password }"
+                />
                 <p v-if="providerErrors.password" class="text-red-500 text-xs mt-1">{{ providerErrors.password }}</p>
               </div>
 
               <!-- Confirmar Contraseña -->
               <div class="form-group">
                 <label class="form-label">Confirmar Contraseña <span class="text-red-500">*</span></label>
-                <input v-model="providerForm.confirmPassword" type="password" class="form-input" placeholder="********" required />
+                <input 
+                  v-model="providerForm.confirmPassword" 
+                  type="password" 
+                  class="form-input" 
+                  placeholder="********" 
+                  @input="validateProviderField('confirmPassword')"
+                  @blur="validateProviderField('confirmPassword')"
+                  :class="{ 'border-red-500': providerErrors.confirmPassword }"
+                />
                 <p v-if="providerErrors.confirmPassword" class="text-red-500 text-xs mt-1">{{ providerErrors.confirmPassword }}</p>
               </div>
             </div>
@@ -371,7 +501,7 @@
 
             <!-- Botones del modal -->
             <div class="modal-modern-actions mx-6">
-              <button type="button" @click="showRegisterProvider = false" class="btn-modal-ghost">
+              <button type="button" @click="closeProviderModal" class="btn-modal-ghost">
                 Cancelar
               </button>
               <button type="submit" class="btn-modal-primary group" :disabled="isRegistering">
@@ -395,13 +525,13 @@
       </div>
     </footer>
   </div>
-  <Chatbot />
+  
 </template>
 
 <script setup>
 import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "vue-router";
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, watch } from "vue";
 import Chatbot from "@/components/Chatbot.vue";
 
 const router = useRouter();
@@ -483,6 +613,89 @@ onMounted(() => {
   }
 });
 
+// 🔹 Watchers para validación en tiempo real del formulario de cliente
+watch(() => clientForm.name, () => {
+  if (clientForm.name.trim()) validateClientField('name');
+});
+
+watch(() => clientForm.lastname, () => {
+  if (clientForm.lastname.trim()) validateClientField('lastname');
+});
+
+watch(() => clientForm.cedula, () => {
+  if (clientForm.cedula.trim()) validateClientField('cedula');
+});
+
+watch(() => clientForm.email, () => {
+  if (clientForm.email.trim()) validateClientField('email');
+});
+
+watch(() => clientForm.phone, () => {
+  if (clientForm.phone.trim()) validateClientField('phone');
+});
+
+watch(() => clientForm.password, () => {
+  if (clientForm.password) {
+    validateClientField('password');
+    // Si hay confirmPassword, validarlo también cuando cambie la contraseña
+    if (clientForm.confirmPassword) validateClientField('confirmPassword');
+  }
+});
+
+watch(() => clientForm.confirmPassword, () => {
+  if (clientForm.confirmPassword) validateClientField('confirmPassword');
+});
+
+// 🔹 Watchers para validación en tiempo real del formulario de proveedor
+watch(() => providerForm.name, () => {
+  if (providerForm.name.trim()) validateProviderField('name');
+});
+
+watch(() => providerForm.lastname, () => {
+  if (providerForm.lastname.trim()) validateProviderField('lastname');
+});
+
+watch(() => providerForm.email, () => {
+  if (providerForm.email.trim()) validateProviderField('email');
+});
+
+watch(() => providerForm.phone, () => {
+  if (providerForm.phone.trim()) validateProviderField('phone');
+});
+
+watch(() => providerForm.rif, () => {
+  if (providerForm.rif.trim()) validateProviderField('rif');
+});
+
+watch(() => providerForm.businessName, () => {
+  if (providerForm.businessName.trim()) validateProviderField('businessName');
+});
+
+watch(() => providerForm.serviceType, () => {
+  if (providerForm.serviceType) validateProviderField('serviceType');
+});
+
+watch(() => providerForm.password, () => {
+  if (providerForm.password) {
+    validateProviderField('password');
+    // Si hay confirmPassword, validarlo también cuando cambie la contraseña
+    if (providerForm.confirmPassword) validateProviderField('confirmPassword');
+  }
+});
+
+watch(() => providerForm.confirmPassword, () => {
+  if (providerForm.confirmPassword) validateProviderField('confirmPassword');
+});
+
+// 🔹 Watchers para login
+watch(() => email.value, () => {
+  if (email.value.trim()) validateLoginField('email');
+});
+
+watch(() => password.value, () => {
+  if (password.value) validateLoginField('password');
+});
+
 // Validaciones
 const validateEmail = (email) => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -509,157 +722,217 @@ const validatePassword = (password) => {
   return regex.test(password);
 };
 
-// 🔹 Validación del formulario de login
+// 🔹 Validación individual de campos del login
+const validateLoginField = (field) => {
+  loginErrors[field] = "";
+  
+  switch (field) {
+    case 'email':
+      if (!email.value.trim()) {
+        loginErrors.email = "El correo electrónico es obligatorio";
+      } else if (!validateEmail(email.value)) {
+        loginErrors.email = "Formato de correo inválido";
+      }
+      break;
+      
+    case 'password':
+      if (!password.value) {
+        loginErrors.password = "La contraseña es obligatoria";
+      } else if (password.value.length < 8) {
+        loginErrors.password = "La contraseña debe tener al menos 8 caracteres";
+      }
+      break;
+  }
+};
+
+// 🔹 Validación individual de campos del cliente
+const validateClientField = (field) => {
+  clientErrors[field] = '';
+
+  switch (field) {
+    case 'name':
+      if (!clientForm.name.trim()) {
+        clientErrors.name = "El nombre es obligatorio";
+      }
+      break;
+
+    case 'lastname':
+      if (!clientForm.lastname.trim()) {
+        clientErrors.lastname = "El apellido es obligatorio";
+      }
+      break;
+
+    case 'cedula':
+      if (!clientForm.cedula.trim()) {
+        clientErrors.cedula = "La cédula es obligatoria";
+      } else if (!validateCedula(clientForm.cedula)) {
+        clientErrors.cedula = "Formato de cédula inválido (ej: V-12345678)";
+      }
+      break;
+
+    case 'email':
+      if (!clientForm.email.trim()) {
+        clientErrors.email = "El correo electrónico es obligatorio";
+      } else if (!validateEmail(clientForm.email)) {
+        clientErrors.email = "Formato de correo inválido";
+      }
+      break;
+
+    case 'phone':
+      if (!clientForm.phone.trim()) {
+        clientErrors.phone = "El teléfono es obligatorio";
+      } else if (!validateVenezuelanPhone(clientForm.phone)) {
+        clientErrors.phone = "Formato de teléfono inválido (ej: +58 412 1234567)";
+      }
+      break;
+
+    case 'password':
+      if (!clientForm.password) {
+        clientErrors.password = "La contraseña es obligatoria";
+      } else if (!validatePassword(clientForm.password)) {
+        clientErrors.password = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
+      }
+      break;
+
+    case 'confirmPassword':
+      if (!clientForm.confirmPassword) {
+        clientErrors.confirmPassword = "Debes confirmar la contraseña";
+      } else if (clientForm.password !== clientForm.confirmPassword) {
+        clientErrors.confirmPassword = "Las contraseñas no coinciden";
+      }
+      break;
+  }
+};
+
+// 🔹 Validación individual de campos del proveedor
+const validateProviderField = (field) => {
+  providerErrors[field] = '';
+
+  switch (field) {
+    case 'name':
+      if (!providerForm.name.trim()) {
+        providerErrors.name = "El nombre es obligatorio";
+      }
+      break;
+
+    case 'lastname':
+      if (!providerForm.lastname.trim()) {
+        providerErrors.lastname = "El apellido es obligatorio";
+      }
+      break;
+
+    case 'email':
+      if (!providerForm.email.trim()) {
+        providerErrors.email = "El correo electrónico es obligatorio";
+      } else if (!validateEmail(providerForm.email)) {
+        providerErrors.email = "Formato de correo inválido";
+      }
+      break;
+
+    case 'phone':
+      if (!providerForm.phone.trim()) {
+        providerErrors.phone = "El teléfono es obligatorio";
+      } else if (!validateVenezuelanPhone(providerForm.phone)) {
+        providerErrors.phone = "Formato de teléfono inválido (ej: +58 414 7654321)";
+      }
+      break;
+
+    case 'rif':
+      if (!providerForm.rif.trim()) {
+        providerErrors.rif = "El RIF es obligatorio";
+      } else if (!validateRIF(providerForm.rif)) {
+        providerErrors.rif = "Formato de RIF inválido (ej: J-12345678-9)";
+      }
+      break;
+
+    case 'businessName':
+      if (!providerForm.businessName.trim()) {
+        providerErrors.businessName = "El nombre del negocio es obligatorio";
+      }
+      break;
+
+    case 'serviceType':
+      if (!providerForm.serviceType) {
+        providerErrors.serviceType = "Debes seleccionar un tipo de servicio";
+      }
+      break;
+
+    case 'password':
+      if (!providerForm.password) {
+        providerErrors.password = "La contraseña es obligatoria";
+      } else if (!validatePassword(providerForm.password)) {
+        providerErrors.password = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
+      }
+      break;
+
+    case 'confirmPassword':
+      if (!providerForm.confirmPassword) {
+        providerErrors.confirmPassword = "Debes confirmar la contraseña";
+      } else if (providerForm.password !== providerForm.confirmPassword) {
+        providerErrors.confirmPassword = "Las contraseñas no coinciden";
+      }
+      break;
+  }
+};
+
+// 🔹 Validación completa del formulario de login
 const validateLoginForm = () => {
   let isValid = true;
   
-  loginErrors.email = "";
-  loginErrors.password = "";
-  loginError.value = "";
+  validateLoginField('email');
+  validateLoginField('password');
   
-  if (!email.value.trim()) {
-    loginErrors.email = "El correo electrónico es obligatorio";
-    isValid = false;
-  } else if (!validateEmail(email.value)) {
-    loginErrors.email = "Formato de correo inválido";
-    isValid = false;
-  }
-  
-  if (!password.value) {
-    loginErrors.password = "La contraseña es obligatoria";
-    isValid = false;
-  } else if (password.value.length < 8) {
-    loginErrors.password = "La contraseña debe tener al menos 8 caracteres";
+  if (loginErrors.email || loginErrors.password) {
     isValid = false;
   }
   
   return isValid;
 };
 
-// 🔹 Validación cliente
+// 🔹 Validación completa del formulario de cliente
 const validateClientForm = () => {
   let isValid = true;
-  Object.keys(clientErrors).forEach(key => clientErrors[key] = '');
-
-  if (!clientForm.name.trim()) {
-    clientErrors.name = "El nombre es obligatorio";
-    isValid = false;
-  }
-
-  if (!clientForm.lastname.trim()) {
-    clientErrors.lastname = "El apellido es obligatorio";
-    isValid = false;
-  }
-
-  if (!clientForm.cedula.trim()) {
-    clientErrors.cedula = "La cédula es obligatoria";
-    isValid = false;
-  } else if (!validateCedula(clientForm.cedula)) {
-    clientErrors.cedula = "Formato de cédula inválido (ej: V-12345678)";
-    isValid = false;
-  }
-
-  if (!clientForm.email.trim()) {
-    clientErrors.email = "El correo electrónico es obligatorio";
-    isValid = false;
-  } else if (!validateEmail(clientForm.email)) {
-    clientErrors.email = "Formato de correo inválido";
-    isValid = false;
-  }
-
-  if (!clientForm.phone.trim()) {
-    clientErrors.phone = "El teléfono es obligatorio";
-    isValid = false;
-  } else if (!validateVenezuelanPhone(clientForm.phone)) {
-    clientErrors.phone = "Formato de teléfono inválido (ej: +58 412 1234567)";
-    isValid = false;
-  }
-
-  if (!clientForm.password) {
-    clientErrors.password = "La contraseña es obligatoria";
-    isValid = false;
-  } else if (!validatePassword(clientForm.password)) {
-    clientErrors.password = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
-    isValid = false;
-  }
-
-  if (!clientForm.confirmPassword) {
-    clientErrors.confirmPassword = "Debes confirmar la contraseña";
-    isValid = false;
-  } else if (clientForm.password !== clientForm.confirmPassword) {
-    clientErrors.confirmPassword = "Las contraseñas no coinciden";
-    isValid = false;
-  }
+  
+  // Validar todos los campos
+  Object.keys(clientErrors).forEach(key => {
+    validateClientField(key);
+    if (clientErrors[key]) isValid = false;
+  });
 
   return isValid;
 };
 
-// 🔹 Validación proveedor
+// 🔹 Validación completa del formulario de proveedor
 const validateProviderForm = () => {
   let isValid = true;
-  Object.keys(providerErrors).forEach(key => providerErrors[key] = '');
-
-  if (!providerForm.name.trim()) {
-    providerErrors.name = "El nombre es obligatorio";
-    isValid = false;
-  }
-
-  if (!providerForm.lastname.trim()) {
-    providerErrors.lastname = "El apellido es obligatorio";
-    isValid = false;
-  }
-
-  if (!providerForm.email.trim()) {
-    providerErrors.email = "El correo electrónico es obligatorio";
-    isValid = false;
-  } else if (!validateEmail(providerForm.email)) {
-    providerErrors.email = "Formato de correo inválido";
-    isValid = false;
-  }
-
-  if (!providerForm.phone.trim()) {
-    providerErrors.phone = "El teléfono es obligatorio";
-    isValid = false;
-  } else if (!validateVenezuelanPhone(providerForm.phone)) {
-    providerErrors.phone = "Formato de teléfono inválido (ej: +58 414 7654321)";
-    isValid = false;
-  }
-
-  if (!providerForm.rif.trim()) {
-    providerErrors.rif = "El RIF es obligatorio";
-    isValid = false;
-  } else if (!validateRIF(providerForm.rif)) {
-    providerErrors.rif = "Formato de RIF inválido (ej: J-12345678-9)";
-    isValid = false;
-  }
-
-  if (!providerForm.businessName.trim()) {
-    providerErrors.businessName = "El nombre del negocio es obligatorio";
-    isValid = false;
-  }
-
-  if (!providerForm.serviceType) {
-    providerErrors.serviceType = "Debes seleccionar un tipo de servicio";
-    isValid = false;
-  }
-
-  if (!providerForm.password) {
-    providerErrors.password = "La contraseña es obligatoria";
-    isValid = false;
-  } else if (!validatePassword(providerForm.password)) {
-    providerErrors.password = "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número";
-    isValid = false;
-  }
-
-  if (!providerForm.confirmPassword) {
-    providerErrors.confirmPassword = "Debes confirmar la contraseña";
-    isValid = false;
-  } else if (providerForm.password !== providerForm.confirmPassword) {
-    providerErrors.confirmPassword = "Las contraseñas no coinciden";
-    isValid = false;
-  }
+  
+  // Validar todos los campos
+  Object.keys(providerErrors).forEach(key => {
+    validateProviderField(key);
+    if (providerErrors[key]) isValid = false;
+  });
 
   return isValid;
+};
+
+// 🔹 Cerrar modal de cliente
+const closeClientModal = () => {
+  showRegisterClient.value = false;
+  // Limpiar errores
+  Object.keys(clientErrors).forEach(key => clientErrors[key] = '');
+  // Limpiar mensajes
+  registerError.value = '';
+  registerSuccess.value = '';
+};
+
+// 🔹 Cerrar modal de proveedor
+const closeProviderModal = () => {
+  showRegisterProvider.value = false;
+  // Limpiar errores
+  Object.keys(providerErrors).forEach(key => providerErrors[key] = '');
+  // Limpiar mensajes
+  registerError.value = '';
+  registerSuccess.value = '';
 };
 
 // 🔹 Función de login usando userStore
@@ -749,6 +1022,8 @@ async function handleRegisterClient() {
         
         // Resetear formulario
         Object.keys(clientForm).forEach(key => clientForm[key] = '');
+        // Limpiar errores
+        Object.keys(clientErrors).forEach(key => clientErrors[key] = '');
       }, 1500);
     } else {
       registerError.value = "Error al registrarse: datos de usuario no disponibles";
@@ -810,6 +1085,8 @@ async function handleRegisterProvider() {
         
         // Resetear formulario
         Object.keys(providerForm).forEach(key => providerForm[key] = '');
+        // Limpiar errores
+        Object.keys(providerErrors).forEach(key => providerErrors[key] = '');
       }, 1500);
     } else {
       registerError.value = "Error al registrarse: datos de usuario no disponibles";

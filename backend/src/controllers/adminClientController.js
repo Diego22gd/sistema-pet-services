@@ -4,11 +4,6 @@ import bcrypt from "bcryptjs";
 // 🔹 Obtener todos los clientes
 export const getClients = async (req, res) => {
   try {
-    // Si deseas proteger solo para admin, descomenta:
-    // if (req.user.role !== "admin") {
-    //   return res.status(403).json({ message: "Acceso denegado" });
-    // }
-
     const clients = await User.find({ role: "client" }).select("-password");
     res.json(clients);
   } catch (error) {
@@ -88,5 +83,94 @@ export const deleteClient = async (req, res) => {
   } catch (error) {
     console.error("❌ Error al eliminar cliente:", error);
     res.status(500).json({ message: "Error al eliminar cliente" });
+  }
+};
+
+// 🔹 BLOQUEAR/DESBLOQUEAR CLIENTE - TOGGLE STATUS
+export const toggleClientStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Buscar el cliente
+    const client = await User.findById(id);
+    if (!client) {
+      return res.status(404).json({ message: "Cliente no encontrado" });
+    }
+
+    // Verificar que sea un cliente
+    if (client.role !== "client") {
+      return res.status(400).json({ message: "Solo se puede cambiar el estado de clientes" });
+    }
+
+    // Alternar el estado (si es undefined, se establece como false/bloqueado)
+    const newStatus = client.isActive === undefined ? false : !client.isActive;
+    
+    // Actualizar el estado
+    client.isActive = newStatus;
+    client.lastLogin = new Date();
+    await client.save();
+
+    // Devolver el cliente actualizado sin password
+    const clientWithoutPassword = client.toObject();
+    delete clientWithoutPassword.password;
+
+    res.json({
+      _id: clientWithoutPassword._id,
+      name: clientWithoutPassword.name,
+      lastname: clientWithoutPassword.lastname,
+      email: clientWithoutPassword.email,
+      phone: clientWithoutPassword.phone,
+      cedula: clientWithoutPassword.cedula,
+      birthdate: clientWithoutPassword.birthdate,
+      role: clientWithoutPassword.role,
+      isActive: clientWithoutPassword.isActive,
+      createdAt: clientWithoutPassword.createdAt,
+      updatedAt: clientWithoutPassword.updatedAt,
+      lastLogin: clientWithoutPassword.lastLogin,
+      message: newStatus ? "Cliente activado exitosamente" : "Cliente bloqueado exitosamente"
+    });
+  } catch (error) {
+    console.error("❌ Error al cambiar estado del cliente:", error);
+    res.status(500).json({ message: "Error al cambiar el estado del cliente" });
+  }
+};
+
+// 🔹 CAMBIAR ESTADO ESPECÍFICO DEL CLIENTE
+export const changeClientStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    // Validar que isActive sea un booleano
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({ message: "El campo isActive debe ser true o false" });
+    }
+
+    // Buscar y actualizar el cliente
+    const client = await User.findByIdAndUpdate(
+      id,
+      { 
+        isActive,
+        lastLogin: new Date()
+      },
+      { new: true }
+    ).select("-password");
+
+    if (!client) {
+      return res.status(404).json({ message: "Cliente no encontrado" });
+    }
+
+    // Verificar que sea un cliente
+    if (client.role !== "client") {
+      return res.status(400).json({ message: "Solo se puede cambiar el estado de clientes" });
+    }
+
+    res.json({
+      ...client.toObject(),
+      message: isActive ? "Cliente activado exitosamente" : "Cliente bloqueado exitosamente"
+    });
+  } catch (error) {
+    console.error("❌ Error al cambiar estado del cliente:", error);
+    res.status(500).json({ message: "Error al cambiar el estado del cliente" });
   }
 };

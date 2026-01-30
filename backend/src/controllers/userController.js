@@ -359,9 +359,10 @@ export const loginUser = async (req, res) => {
 
     // 🔹 Verificar si el usuario está activo
     if (!user.isActive) {
+      console.log('🚫 Usuario bloqueado intentando acceder:', user.email);
       return res.status(403).json({ 
         success: false,
-        message: "Tu cuenta está desactivada. Contacta al administrador." 
+        message: "Tu cuenta está bloqueada. Contacta al administrador." 
       });
     }
 
@@ -817,6 +818,340 @@ export const getUsers = async (req, res) => {
     });
   } catch (error) {
     console.error("Error obteniendo usuarios:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error del servidor",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ===========================
+// 🔹 Actualizar usuario (admin) - RUTA: PUT /api/users/:id
+// ===========================
+export const updateUser = async (req, res) => {
+  try {
+    // Verificar si es admin
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ 
+        success: false,
+        message: "Acceso denegado. Solo administradores." 
+      });
+    }
+
+    const userId = req.params.id;
+    const updateData = req.body;
+
+    console.log(`🔄 Actualizando usuario ${userId}:`, updateData);
+
+    // 🔹 Buscar usuario existente
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Usuario no encontrado" 
+      });
+    }
+
+    // 🔹 Evitar que un admin se desactive a sí mismo
+    if (existingUser._id.toString() === req.user.id && updateData.isActive === false) {
+      return res.status(400).json({ 
+        success: false,
+        message: "No puedes desactivar tu propia cuenta" 
+      });
+    }
+
+    // 🔹 Validar email si se cambia
+    if (updateData.email && updateData.email !== existingUser.email) {
+      if (!validateEmail(updateData.email)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Formato de correo electrónico inválido" 
+        });
+      }
+      
+      const cleanedEmail = updateData.email.toLowerCase().trim();
+      const existingEmail = await User.findOne({ 
+        email: cleanedEmail, 
+        _id: { $ne: userId } 
+      });
+      
+      if (existingEmail) {
+        return res.status(409).json({ 
+          success: false,
+          message: "Ya existe un usuario con este correo electrónico" 
+        });
+      }
+    }
+
+    // 🔹 Validar teléfono si se cambia
+    if (updateData.phone && updateData.phone !== existingUser.phone) {
+      if (!validateVenezuelanPhone(updateData.phone)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Formato de teléfono inválido. Use formato venezolano" 
+        });
+      }
+    }
+
+    // 🔹 Validar cédula si se cambia (para clientes)
+    if (updateData.cedula && updateData.cedula !== existingUser.cedula) {
+      if (!validateCedula(updateData.cedula)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Formato de cédula inválido. Use formato V-12345678" 
+        });
+      }
+
+      const cleanedCedula = updateData.cedula.trim().toUpperCase();
+      const existingCedula = await User.findOne({ 
+        cedula: cleanedCedula, 
+        _id: { $ne: userId } 
+      });
+      
+      if (existingCedula) {
+        return res.status(409).json({ 
+          success: false,
+          message: "Ya existe un usuario con esta cédula" 
+        });
+      }
+    }
+
+    // 🔹 Validar RIF si se cambia (para proveedores)
+    if (updateData.rif && updateData.rif !== existingUser.rif) {
+      if (!validateRIF(updateData.rif)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Formato de RIF inválido. Use formato J-12345678-9" 
+        });
+      }
+
+      const cleanedRIF = updateData.rif.trim().toUpperCase();
+      const existingRIF = await User.findOne({ 
+        rif: cleanedRIF, 
+        _id: { $ne: userId } 
+      });
+      
+      if (existingRIF) {
+        return res.status(409).json({ 
+          success: false,
+          message: "Ya existe un usuario con este RIF" 
+        });
+      }
+    }
+
+    // 🔹 Validar contraseña si se cambia
+    if (updateData.password) {
+      if (!validatePassword(updateData.password)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número" 
+        });
+      }
+      
+      // Encriptar nueva contraseña
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(updateData.password, salt);
+    } else {
+      // No actualizar la contraseña si no se proporciona
+      delete updateData.password;
+    }
+
+    // 🔹 Limpiar datos antes de actualizar
+    const cleanedData = {};
+    
+    // 🔹 Campos básicos
+    if (updateData.name !== undefined) cleanedData.name = updateData.name.trim();
+    if (updateData.lastname !== undefined) cleanedData.lastname = updateData.lastname.trim();
+    if (updateData.email !== undefined) cleanedData.email = updateData.email.toLowerCase().trim();
+    if (updateData.phone !== undefined) cleanedData.phone = updateData.phone.trim();
+    if (updateData.role !== undefined) cleanedData.role = updateData.role;
+    if (updateData.isActive !== undefined) cleanedData.isActive = updateData.isActive;
+    
+    // 🔹 Campos específicos de clientes
+    if (updateData.cedula !== undefined) cleanedData.cedula = updateData.cedula.trim().toUpperCase();
+    if (updateData.birthdate !== undefined) cleanedData.birthdate = updateData.birthdate;
+    if (updateData.address !== undefined) cleanedData.address = updateData.address.trim();
+    
+    // 🔹 Campos específicos de proveedores
+    if (updateData.rif !== undefined) cleanedData.rif = updateData.rif.trim().toUpperCase();
+    if (updateData.businessName !== undefined) cleanedData.businessName = updateData.businessName.trim();
+    if (updateData.serviceType !== undefined) cleanedData.serviceType = updateData.serviceType.trim();
+    
+    // 🔹 Otros campos
+    if (updateData.avatar !== undefined) cleanedData.avatar = updateData.avatar;
+    if (updateData.emailVerified !== undefined) cleanedData.emailVerified = updateData.emailVerified;
+    if (updateData.password) cleanedData.password = updateData.password;
+
+    // 🔹 Actualizar usuario
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: cleanedData },
+      { 
+        new: true,
+        runValidators: true
+      }
+    ).select("-password -emailVerificationToken -resetPasswordToken -resetPasswordExpires");
+
+    // 🔹 Asegurar campos requeridos
+    const safeUser = {
+      ...updatedUser.toObject(),
+      name: updatedUser.name || "Usuario",
+      lastname: updatedUser.lastname || "Usuario",
+      phone: updatedUser.phone || "04120000000",
+      isActive: updatedUser.isActive !== undefined ? updatedUser.isActive : true,
+      emailVerified: updatedUser.emailVerified !== undefined ? updatedUser.emailVerified : false
+    };
+
+    // 🔹 Mensaje apropiado según el cambio
+    let message = "Usuario actualizado correctamente";
+    if (updateData.isActive === false) {
+      message = "Usuario bloqueado correctamente";
+    } else if (updateData.isActive === true) {
+      message = "Usuario desbloqueado correctamente";
+    }
+
+    console.log(`✅ Usuario ${userId} actualizado:`, {
+      isActive: updatedUser.isActive,
+      role: updatedUser.role
+    });
+
+    res.json({
+      success: true,
+      message,
+      user: safeUser
+    });
+    
+  } catch (error) {
+    console.error("Error actualizando usuario:", error);
+    
+    if (error.code === 11000) {
+      if (error.keyPattern && error.keyPattern.email) {
+        return res.status(409).json({ 
+          success: false,
+          message: "Ya existe un usuario con este correo electrónico" 
+        });
+      }
+      if (error.keyPattern && error.keyPattern.cedula) {
+        return res.status(409).json({ 
+          success: false,
+          message: "Ya existe un usuario con esta cédula" 
+        });
+      }
+      if (error.keyPattern && error.keyPattern.rif) {
+        return res.status(409).json({ 
+          success: false,
+          message: "Ya existe un usuario con este RIF" 
+        });
+      }
+    }
+    
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        success: false,
+        message: messages.join(', ') 
+      });
+    }
+    
+    if (error.kind === 'ObjectId') {
+      return res.status(400).json({ 
+        success: false,
+        message: "ID de usuario inválido" 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false,
+      message: "Error del servidor",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// ===========================
+// 🔹 Cambiar estado del usuario (bloquear/desbloquear) - RUTA: PATCH /api/users/:id/status
+// ===========================
+export const updateUserStatus = async (req, res) => {
+  try {
+    // Verificar si es admin
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ 
+        success: false,
+        message: "Acceso denegado. Solo administradores." 
+      });
+    }
+
+    const userId = req.params.id;
+    const { isActive } = req.body;
+
+    console.log(`🔄 Cambiando estado del usuario ${userId} a:`, isActive);
+
+    // 🔹 Validar que isActive sea un booleano
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({ 
+        success: false,
+        message: "El estado (isActive) debe ser un valor booleano" 
+      });
+    }
+
+    // 🔹 Buscar usuario existente
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Usuario no encontrado" 
+      });
+    }
+
+    // 🔹 Evitar que un admin se desactive a sí mismo
+    if (existingUser._id.toString() === req.user.id && isActive === false) {
+      return res.status(400).json({ 
+        success: false,
+        message: "No puedes desactivar tu propia cuenta" 
+      });
+    }
+
+    // 🔹 Actualizar solo el estado
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { isActive } },
+      { 
+        new: true,
+        runValidators: true
+      }
+    ).select("-password -emailVerificationToken -resetPasswordToken -resetPasswordExpires");
+
+    // 🔹 Asegurar campos requeridos
+    const safeUser = {
+      ...updatedUser.toObject(),
+      name: updatedUser.name || "Usuario",
+      lastname: updatedUser.lastname || "Usuario",
+      phone: updatedUser.phone || "04120000000"
+    };
+
+    const message = isActive 
+      ? "Usuario desbloqueado correctamente. Ahora puede iniciar sesión." 
+      : "Usuario bloqueado correctamente. Ya no podrá iniciar sesión.";
+
+    console.log(`✅ Estado del usuario ${userId} cambiado a: ${isActive}`);
+
+    res.json({
+      success: true,
+      message,
+      user: safeUser
+    });
+    
+  } catch (error) {
+    console.error("Error cambiando estado del usuario:", error);
+    
+    if (error.kind === 'ObjectId') {
+      return res.status(400).json({ 
+        success: false,
+        message: "ID de usuario inválido" 
+      });
+    }
+    
     res.status(500).json({ 
       success: false,
       message: "Error del servidor",

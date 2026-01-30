@@ -30,6 +30,15 @@
             <option value="admin">Administrador</option>
           </select>
 
+          <select
+            v-model="filterStatus"
+            class="w-full md:w-48 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white transition-all"
+          >
+            <option value="">Todos los estados</option>
+            <option value="active">Activo</option>
+            <option value="blocked">Bloqueado</option>
+          </select>
+
           <button
             @click="addUser"
             class="btn-primary-purple flex items-center space-x-2 whitespace-nowrap"
@@ -109,9 +118,16 @@
 
                 <!-- Estado -->
                 <td class="px-6 py-4">
-                  <span class="badge-outline-admin bg-green-100 text-green-800 border-green-400">
-                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                    Activo
+                  <span 
+                    :class="user.isActive 
+                      ? 'badge-outline-admin bg-green-100 text-green-800 border-green-400' 
+                      : 'badge-outline-admin bg-red-100 text-red-800 border-red-400'"
+                  >
+                    <span 
+                      class="w-2 h-2 rounded-full mr-2"
+                      :class="user.isActive ? 'bg-green-500' : 'bg-red-500'"
+                    ></span>
+                    {{ user.isActive ? 'Activo' : 'Bloqueado' }}
                   </span>
                 </td>
 
@@ -124,6 +140,16 @@
                     >
                       <span>✏️</span>
                       <span>Editar</span>
+                    </button>
+                    <button
+                      @click="toggleUserStatus(user._id, user.isActive)"
+                      :class="user.isActive 
+                        ? 'btn-block-admin bg-amber-500 hover:bg-amber-600' 
+                        : 'btn-confirm-admin'"
+                      class="flex items-center space-x-1 px-3 py-2 rounded-lg text-white font-medium text-sm transition-all duration-200"
+                    >
+                      <span>{{ user.isActive ? '⛔' : '✅' }}</span>
+                      <span>{{ user.isActive ? 'Bloquear' : 'Activar' }}</span>
                     </button>
                     <button
                       @click="deleteUser(user._id)"
@@ -203,6 +229,30 @@
                   <option value="admin">Administrador</option>
                 </select>
               </div>
+
+              <div>
+                <label class="block mb-2 font-semibold text-gray-700 text-sm">Estado</label>
+                <div class="flex items-center space-x-4">
+                  <label class="flex items-center">
+                    <input
+                      type="radio"
+                      v-model="editData.isActive"
+                      :value="true"
+                      class="mr-2"
+                    />
+                    <span class="text-sm">Activo</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input
+                      type="radio"
+                      v-model="editData.isActive"
+                      :value="false"
+                      class="mr-2"
+                    />
+                    <span class="text-sm">Bloqueado</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <!-- Botones de acción -->
@@ -242,9 +292,10 @@ export default {
     return {
       searchQuery: "",
       filterRole: "",
+      filterStatus: "",
       users: [],
       showModal: false,
-      editData: { _id: "", name: "", email: "", role: "" },
+      editData: { _id: "", name: "", email: "", role: "", isActive: true },
     };
   },
   computed: {
@@ -254,7 +305,10 @@ export default {
           user.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
           user.email.toLowerCase().includes(this.searchQuery.toLowerCase());
         const matchesRole = this.filterRole ? user.role === this.filterRole : true;
-        return matchesSearch && matchesRole;
+        const matchesStatus = this.filterStatus 
+          ? (this.filterStatus === 'active' ? user.isActive : !user.isActive)
+          : true;
+        return matchesSearch && matchesRole && matchesStatus;
       });
     },
     clientCount() {
@@ -339,6 +393,23 @@ export default {
         alert("Error al eliminar el usuario");
       }
     },
+
+    async toggleUserStatus(id, currentStatus) {
+      const action = currentStatus ? 'bloquear' : 'activar';
+      if (!confirm(`¿Estás seguro de que quieres ${action} este usuario?`)) return;
+      
+      try {
+        const res = await api.patch(`/admin/users/${id}/toggle-status`);
+        const index = this.users.findIndex((u) => u._id === id);
+        if (index !== -1) {
+          this.users[index].isActive = !this.users[index].isActive;
+        }
+        alert(res.data.message || `Usuario ${action === 'bloquear' ? 'bloqueado' : 'activado'} exitosamente`);
+      } catch (error) {
+        console.error("Error toggling user status:", error);
+        alert("Error al cambiar el estado del usuario");
+      }
+    },
   },
   mounted() {
     this.fetchUsers();
@@ -350,6 +421,7 @@ export default {
   },
 };
 </script>
+
 <style scoped>
 /* Estilos específicos para admin */
 .fade-up {
@@ -406,6 +478,26 @@ export default {
 .btn-primary-purple:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Botón Bloquear - Color ámbar */
+.btn-block-admin {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0.25rem 0.5rem !important;
+  background-color: #f59e0b !important;
+  color: white !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  border-radius: 0.375rem !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.btn-block-admin:hover {
+  background-color: #d97706 !important;
+  transform: scale(1.1) !important;
 }
 
 /* Botones de acción admin */
