@@ -526,7 +526,7 @@
                         </div>
                         <p v-if="businessData.workingHours.open && businessData.workingHours.close" 
                            class="text-sm text-emerald-600 mt-2">
-                          ⏰ Horario: {{ businessData.workingHours.open }} - {{ businessData.workingHours.close }}
+                          ⏰ Horario: {{ formatTime(businessData.workingHours.open) }} - {{ formatTime(businessData.workingHours.close) }}
                         </p>
                       </div>
 
@@ -901,7 +901,7 @@
                     </div>
                     <div v-if="selectedBusiness?.workingHours?.specialDay" class="time-card-modern">
                       <p class="font-bold text-gray-900">Horario Especial</p>
-                      <p class="text-emerald-600">{{ selectedBusiness?.workingHours?.specialOpen }} - {{ selectedBusiness?.workingHours?.specialClose }}</p>
+                      <p class="text-emerald-600">{{ formatTime(selectedBusiness?.workingHours?.specialOpen) }} - {{ formatTime(selectedBusiness?.workingHours?.specialClose) }}</p>
                       <p class="text-sm text-gray-500">{{ getSpecialDayLabel(selectedBusiness?.workingHours?.specialDay) }}</p>
                     </div>
                   </div>
@@ -1009,6 +1009,7 @@
 <script>
 import ProviderLayout from "@/components/ProviderLayout.vue";
 import api from "@/api/api";
+import { formatTimeTo12Hour } from "@/utils/timeFormatter";
 
 export default {
   name: "ProviderCommerces",
@@ -1192,9 +1193,13 @@ export default {
     formatWorkingHours(workingHours) {
       if (!workingHours) return 'No especificado';
       if (workingHours.open && workingHours.close) {
-        return `${workingHours.open} - ${workingHours.close}`;
+        return `${formatTimeTo12Hour(workingHours.open)} - ${formatTimeTo12Hour(workingHours.close)}`;
       }
       return workingHours.regular || 'No especificado';
+    },
+    
+    formatTime(time24) {
+      return formatTimeTo12Hour(time24);
     },
 
     formatWorkDays(days) {

@@ -464,7 +464,7 @@
                         </span>
                       </div>
                       <p class="text-emerald-600 font-medium">
-                        {{ selectedBusiness.workingHours?.open || '--:--' }} - {{ selectedBusiness.workingHours?.close || '--:--' }}
+                        {{ formatTime(selectedBusiness.workingHours?.open) || '--:--' }} - {{ formatTime(selectedBusiness.workingHours?.close) || '--:--' }}
                       </p>
                       <p class="text-sm text-gray-600 mt-1">
                         {{ selectedBusiness.formattedHours || 'Horario no disponible' }}
@@ -474,7 +474,7 @@
                     <div v-if="selectedBusiness.workingHours?.specialDay" class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
                       <span class="font-bold text-gray-900">Horario especial</span>
                       <p class="text-amber-600 font-medium">
-                        {{ selectedBusiness.workingHours?.specialOpen || '--:--' }} - {{ selectedBusiness.workingHours?.specialClose || '--:--' }}
+                        {{ formatTime(selectedBusiness.workingHours?.specialOpen) || '--:--' }} - {{ formatTime(selectedBusiness.workingHours?.specialClose) || '--:--' }}
                       </p>
                       <p class="text-sm text-gray-600 mt-1">
                         {{ getSpecialDayLabel(selectedBusiness.workingHours?.specialDay) }}
