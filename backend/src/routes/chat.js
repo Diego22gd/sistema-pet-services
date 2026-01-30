@@ -5,6 +5,7 @@ import Pet from "../models/Pet.js";
 import Business from "../models/Business.js";
 import Appointment from "../models/Appointment.js";
 import mongoose from "mongoose";
+import { formatTimeTo12Hour } from "../utils/timeFormatter.js";
 
 const router = express.Router();
 
@@ -650,7 +651,7 @@ class ResponseGenerator {
       const businessName = appointment.businessId?.name || 'Comercio';
       
       response += `${index + 1}. **${petName}** - ${businessName}\n`;
-      response += `   📅 ${appointment.date} a las ${appointment.time}\n`;
+      response += `   📅 ${appointment.date} a las ${formatTimeTo12Hour(appointment.time)}\n`;
       response += `   🛎️ ${appointment.serviceName || 'Servicio'}\n`;
       response += `   📍 ${appointment.status}\n`;
       
@@ -711,7 +712,7 @@ class ResponseGenerator {
       if (todayAppointments.length > 0) {
         response += `\n**Próximas citas de hoy:**\n`;
         todayAppointments.forEach((app, idx) => {
-          response += `${idx + 1}. ${app.time} - ${app.userId?.name || 'Cliente'}\n`;
+          response += `${idx + 1}. ${formatTimeTo12Hour(app.time)} - ${app.userId?.name || 'Cliente'}\n`;
         });
       }
     }
