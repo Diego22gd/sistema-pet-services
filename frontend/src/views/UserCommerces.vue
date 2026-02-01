@@ -843,6 +843,22 @@
         </div>
       </div>
 
+      <!-- Modal: Sin mascotas -->
+      <div v-if="showNoPetsModal" class="modal-overlay" @click.self="closeNoPetsModal">
+        <div class="no-pets-modal">
+          <button @click="closeNoPetsModal" class="no-pets-close" aria-label="Cerrar">✕</button>
+          <div class="no-pets-header">
+            <div class="no-pets-icon">🐾</div>
+            <h3>Registra tu mascota</h3>
+            <p>Necesitas una mascota para reservar una cita.</p>
+          </div>
+          <div class="no-pets-actions">
+            <button @click="closeNoPetsModal" class="no-pets-btn no-pets-btn-ghost">Cancelar</button>
+            <button @click="goToMyPets" class="no-pets-btn no-pets-btn-primary">Ir a Mis Mascotas</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Modal de Éxito - COMPACTO (mitad de altura) -->
       <div v-if="showSuccessModal" class="modal-overlay" @click.self="closeSuccessModal">
         <div class="success-modal-compact" @click.stop>
@@ -976,6 +992,9 @@ export default {
       // Modal de éxito
       showSuccessModal: false,
       successData: null,
+
+      // Modal: sin mascotas
+      showNoPetsModal: false,
       
       // Validaciones
       dateValidationError: "",
@@ -1601,13 +1620,8 @@ export default {
         await this.loadUserPets();
         
         if (this.userPets.length === 0) {
-          const goToRegister = confirm("No tienes mascotas registradas. ¿Deseas registrar una ahora?");
-          if (goToRegister) {
-            this.$router.push('/pets/register');
-            this.closeReservationModal();
-            this.closeDetailModal();
-            return;
-          }
+          this.showNoPetsModal = true;
+          return;
         }
       }
       
@@ -1626,6 +1640,17 @@ export default {
       this.reserving = false;
       this.dateValidationError = "";
       this.hourValidationError = "";
+    },
+
+    closeNoPetsModal() {
+      this.showNoPetsModal = false;
+    },
+
+    goToMyPets() {
+      this.showNoPetsModal = false;
+      this.closeReservationModal();
+      this.closeDetailModal();
+      this.$router.push('/MyPets');
     },
     
     selectPet(pet) {
@@ -1680,6 +1705,15 @@ export default {
           
         } catch (err) {
           console.warn('⚠️ Error cargando horas disponibles:', err.message);
+
+          // Si el comercio está cerrado ese día, mostrar error inmediato
+          if (err.response?.status === 400 && err.response?.data?.message?.toLowerCase().includes('cerrado')) {
+            this.dateValidationError = `⚠️ ${err.response.data.message}`;
+            this.availableHours = [];
+            this.reservationTime = "";
+            this.hourValidationError = "";
+            return;
+          }
           
           // Verificar tipo de error
           if (err.response?.status === 400) {
@@ -1895,7 +1929,12 @@ export default {
     },
     
     formatDate(dateString) {
-      const date = new Date(dateString);
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(dateString)
+        ? (() => {
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day);
+          })()
+        : new Date(dateString);
       // Formato compacto: "Lun 15 Ene 2024"
       return date.toLocaleDateString('es-ES', {
         weekday: 'short',
@@ -2040,6 +2079,103 @@ export default {
   color: #6b7280;
 }
 
+/* Modal: sin mascotas (compacto) */
+.no-pets-modal {
+  position: relative;
+  width: 300px;
+  max-width: 90vw;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.35s ease;
+}
+
+.no-pets-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.no-pets-close:hover {
+  background: #e5e7eb;
+}
+
+.no-pets-header {
+  text-align: center;
+  padding-top: 6px;
+}
+
+.no-pets-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 8px 0 4px;
+}
+
+.no-pets-header p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 10px;
+}
+
+.no-pets-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #ecfdf5;
+  color: #10b981;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  border: 1px solid #a7f3d0;
+  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.15);
+}
+
+.no-pets-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.no-pets-btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.no-pets-btn-ghost {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.no-pets-btn-ghost:hover {
+  background: #e5e7eb;
+}
+
+.no-pets-btn-primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+}
+
+.no-pets-btn-primary:hover {
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
+}
+
 /* Botones */
 .btn-primary {
   background: linear-gradient(135deg, #10b981, #0d9488);
@@ -2141,6 +2277,21 @@ export default {
   animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 100%;
   width: 100%;
+}
+
+.modal-modern {
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 1.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(16, 185, 129, 0.08);
+  position: relative;
+  overflow: hidden;
+  max-width: 100%;
+  width: 100%;
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes slideUp {

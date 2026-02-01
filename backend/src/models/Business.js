@@ -992,12 +992,9 @@ businessSchema.statics.getRecommendedForUser = async function(userId, limit = 6)
 
 // Índices para optimizar consultas
 businessSchema.index({ name: 'text', description: 'text', address: 'text', tags: 'text', keywords: 'text' });
-businessSchema.index({ provider: 1 });
 businessSchema.index({ category: 1 });
 businessSchema.index({ categories: 1 });
 businessSchema.index({ status: 1 });
-businessSchema.index({ approved: 1 });
-businessSchema.index({ featured: 1 });
 businessSchema.index({ isVerified: 1 });
 businessSchema.index({ createdAt: -1 });
 businessSchema.index({ updatedAt: -1 });
@@ -1007,9 +1004,7 @@ businessSchema.index({ totalAppointments: -1 });
 businessSchema.index({ averageServicePrice: 1 });
 businessSchema.index({ rating: -1 });
 businessSchema.index({ popularityScore: -1 });
-businessSchema.index({ 'location.coordinates': '2dsphere' });
 businessSchema.index({ email: 1 });
-businessSchema.index({ slug: 1 });
 businessSchema.index({ isDeleted: 1 });
 businessSchema.index({ deletedAt: -1 });
 businessSchema.index({ approvedAt: -1 });

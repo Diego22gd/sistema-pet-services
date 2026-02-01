@@ -43,6 +43,18 @@ const formatDateForVenezuela = (dateString) => {
 };
 
 // ======================================================
+// 📌 FUNCIÓN AUXILIAR: Día de la semana en español
+// ======================================================
+const getWeekdayEsFromDateString = (dateString) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return null;
+  const [year, month, day] = dateString.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const dayIndex = date.getDay(); // 0=domingo
+  const daysEs = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  return daysEs[dayIndex];
+};
+
+// ======================================================
 // 📌 Crear cita (VERSIÓN COMPLETA CORREGIDA)
 // ======================================================
 export const createAppointment = async (req, res) => {
@@ -184,6 +196,21 @@ export const createAppointment = async (req, res) => {
         providerId: providerId || null,
         businessId: businessId || null
       };
+    }
+
+    // 2.1 Validar día de trabajo del comercio
+    if (businessId && !business) {
+      business = await Business.findById(businessId);
+    }
+    if (business && Array.isArray(business.workingHours?.days) && business.workingHours.days.length > 0) {
+      const weekdayEs = getWeekdayEsFromDateString(date);
+      if (weekdayEs && !business.workingHours.days.includes(weekdayEs)) {
+        console.log('❌ Comercio cerrado en el día seleccionado:', weekdayEs);
+        return res.status(400).json({
+          success: false,
+          message: `El comercio está cerrado los ${weekdayEs}. Selecciona otro día.`
+        });
+      }
     }
 
     // ============ VALIDACIÓN DE CONFLICTOS ============
@@ -850,6 +877,27 @@ export const getAvailableHours = async (req, res) => {
         success: false,
         message: 'No se pueden consultar horas para fechas pasadas'
       });
+    }
+
+    // Validar día de trabajo del comercio
+    const business = await Business.findById(businessId).select('workingHours');
+    if (!business) {
+      return res.status(404).json({
+        success: false,
+        message: 'Comercio no encontrado'
+      });
+    }
+
+    if (Array.isArray(business.workingHours?.days) && business.workingHours.days.length > 0) {
+      const weekdayEs = getWeekdayEsFromDateString(date);
+      if (weekdayEs && !business.workingHours.days.includes(weekdayEs)) {
+        console.log('❌ Comercio cerrado en el día seleccionado:', weekdayEs);
+        return res.status(400).json({
+          success: false,
+          message: `El comercio está cerrado los ${weekdayEs}. Selecciona otro día.`,
+          closedDay: weekdayEs
+        });
+      }
     }
     
     // Buscar horas ya reservadas

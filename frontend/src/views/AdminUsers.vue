@@ -276,6 +276,60 @@
       </div>
     </div>
 
+    <!-- Modal bloquear/activar usuario -->
+    <div v-if="showStatusModal" class="modal-overlay">
+      <div class="modal-modern-box w-full max-w-md">
+        <div class="modal-modern-header">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="modal-section-title-admin">
+                {{ statusAction === 'block' ? '🔒 Bloquear Usuario' : '✅ Activar Usuario' }}
+              </h2>
+              <p class="text-gray-600 text-sm">
+                {{ statusAction === 'block'
+                  ? 'El usuario no podrá iniciar sesión en el sistema.'
+                  : 'El usuario podrá acceder nuevamente al sistema.' }}
+              </p>
+            </div>
+            <button @click="closeStatusModal" class="btn-modal-close">✕</button>
+          </div>
+        </div>
+
+        <div class="modal-modern-content">
+          <div class="p-4 bg-gray-50 rounded-lg mb-6">
+            <div class="flex items-center space-x-3">
+              <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <span class="text-purple-600 font-semibold">
+                  {{ getInitials(selectedUser?.name) }}
+                </span>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-800">{{ selectedUser?.name }}</h4>
+                <p class="text-sm text-gray-600">{{ selectedUser?.email }}</p>
+                <p class="text-xs text-gray-500">Rol: {{ getRoleText(selectedUser?.role) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-modern-actions">
+            <button type="button" @click="closeStatusModal" class="btn-modal-ghost">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              @click="confirmToggleStatus"
+              :class="statusAction === 'block'
+                ? 'bg-amber-600 hover:bg-amber-700'
+                : 'bg-green-600 hover:bg-green-700'"
+              class="px-6 py-3 rounded-lg text-white font-medium transition-all shadow-sm hover:shadow-md"
+            >
+              {{ statusAction === 'block' ? 'Confirmar Bloqueo' : 'Confirmar Activación' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <Chatbot />
   </AdminLayout>
 </template>
@@ -295,7 +349,10 @@ export default {
       filterStatus: "",
       users: [],
       showModal: false,
+      showStatusModal: false,
       editData: { _id: "", name: "", email: "", role: "", isActive: true },
+      selectedUser: null,
+      statusAction: 'block',
     };
   },
   computed: {
@@ -394,16 +451,30 @@ export default {
       }
     },
 
-    async toggleUserStatus(id, currentStatus) {
-      const action = currentStatus ? 'bloquear' : 'activar';
-      if (!confirm(`¿Estás seguro de que quieres ${action} este usuario?`)) return;
-      
+    toggleUserStatus(id, currentStatus) {
+      this.selectedUser = this.users.find((u) => u._id === id) || null;
+      this.statusAction = currentStatus ? 'block' : 'activate';
+      this.showStatusModal = true;
+    },
+
+    closeStatusModal() {
+      this.showStatusModal = false;
+      this.selectedUser = null;
+    },
+
+    async confirmToggleStatus() {
+      if (!this.selectedUser?._id) return;
+
+      const id = this.selectedUser._id;
+      const action = this.statusAction === 'block' ? 'bloquear' : 'activar';
+
       try {
         const res = await api.patch(`/admin/users/${id}/toggle-status`);
         const index = this.users.findIndex((u) => u._id === id);
         if (index !== -1) {
           this.users[index].isActive = !this.users[index].isActive;
         }
+        this.closeStatusModal();
         alert(res.data.message || `Usuario ${action === 'bloquear' ? 'bloqueado' : 'activado'} exitosamente`);
       } catch (error) {
         console.error("Error toggling user status:", error);
