@@ -96,7 +96,7 @@
         </div>
 
         <!-- Campos especiales si es proveedor -->
-        <div v-if="user.userType === 'provider'" class="mt-8 pt-6 border-t border-neutral-light">
+        <div v-if="user.role === 'provider'" class="mt-8 pt-6 border-t border-neutral-light">
           <div class="flex items-center gap-3 mb-6">
             <div class="w-2 h-8 bg-secondary rounded-full"></div>
             <h3 class="text-xl font-semibold text-neutral-dark">Información del Comercio</h3>
@@ -195,23 +195,15 @@ export default {
   },
   async created() {
     const userStore = useUserStore()
-    const token = userStore.token
-    const userId = userStore.user?._id
 
-    if (!token || !userId) {
+    if (!userStore.token) {
       this.$router.push('/login')
       return
     }
 
     try {
-      // ✅ Obtener datos completos del usuario desde el backend
-      const { data } = await api.get(`/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      this.user = data
-      userStore.user = data
-      localStorage.setItem('user', JSON.stringify(data))
+      const freshUser = await userStore.fetchUser()
+      this.user = this.normalizeUserDates(freshUser || userStore.user || {})
     } catch (error) {
       console.error('Error al obtener el perfil:', error)
       alert('No se pudo cargar el perfil')
@@ -222,8 +214,6 @@ export default {
   methods: {
     async updateProfile() {
       const userStore = useUserStore()
-      const token = userStore.token
-      const userId = userStore.user?._id
 
       // Validación básica
       if (!this.user.name || !this.user.lastname || !this.user.cedula) {
@@ -232,17 +222,28 @@ export default {
       }
 
       try {
-        const { data } = await api.put(`/users/${userId}`, this.user, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-
-        userStore.user = data
-        localStorage.setItem('user', JSON.stringify(data))
+        const updated = await userStore.updateProfile(this.user)
+        this.user = this.normalizeUserDates(updated)
         alert('✅ Perfil actualizado con éxito')
       } catch (error) {
         console.error('Error al actualizar perfil:', error)
         alert('❌ Error al actualizar el perfil')
       }
+    },
+
+    normalizeUserDates(user) {
+      if (!user) return {}
+      const normalized = { ...user }
+      if (normalized.birthdate) {
+        const d = new Date(normalized.birthdate)
+        if (!isNaN(d.getTime())) {
+          const year = d.getFullYear()
+          const month = String(d.getMonth() + 1).padStart(2, '0')
+          const day = String(d.getDate()).padStart(2, '0')
+          normalized.birthdate = `${year}-${month}-${day}`
+        }
+      }
+      return normalized
     },
     
     formatDate(dateString) {

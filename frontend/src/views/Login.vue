@@ -443,9 +443,8 @@
                 <label class="form-label">Tipo de Servicio <span class="text-red-500">*</span></label>
                 <select 
                   v-model="providerForm.serviceType" 
-                  class="form-input" 
-                  @input="validateProviderField('serviceType')"
-                  @blur="validateProviderField('serviceType')"
+                  class="form-input form-select" 
+                  @change="validateProviderField('serviceType')"
                   :class="{ 'border-red-500': providerErrors.serviceType }"
                 >
                   <option disabled value="">Selecciona una opción</option>
@@ -1223,6 +1222,14 @@ header {
   transition: all 0.3s ease;
   background: white;
   margin-left: 20px;
+  pointer-events: auto;
+}
+
+.form-select {
+  appearance: auto;
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+  background-image: none;
 }
 
 .form-input:focus {

@@ -30,6 +30,18 @@
 
             <div>
               <label class="block text-sm font-medium text-neutral-dark mb-2">
+                RIF
+              </label>
+              <input
+                v-model="provider.user.rif"
+                type="text"
+                class="w-full px-4 py-3 border border-neutral-medium rounded-lg focus:ring-2 focus:ring-primary-mint focus:border-primary-mint transition-colors duration-200 bg-white"
+                placeholder="J-12345678-9"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-neutral-dark mb-2">
                 Tipo de Servicio
               </label>
               <select
@@ -192,6 +204,7 @@ export default {
   data() {
     return {
       provider: null,
+      loading: false,
       weekDays: [
         "Lunes",
         "Martes",
@@ -211,8 +224,21 @@ export default {
   methods: {
     async loadProfile() {
       try {
+        this.loading = true;
         const userStore = useUserStore();
-        const userId = userStore.user._id;
+        if (!userStore.token) {
+          this.$router.push('/login');
+          return;
+        }
+
+        if (!userStore.user?._id) {
+          await userStore.fetchUser();
+        }
+        const userId = userStore.user?._id;
+        if (!userId) {
+          this.$router.push('/login');
+          return;
+        }
 
         const { data } = await api.get(`/provider/profile/${userId}`);
 
@@ -228,13 +254,23 @@ export default {
       } catch (err) {
         console.error("❌ Error cargando perfil", err);
         alert("Error al cargar el perfil");
+      } finally {
+        this.loading = false;
       }
     },
 
     async saveProfile() {
       try {
         const userStore = useUserStore();
-        const userId = userStore.user._id;
+        if (!userStore.token) {
+          this.$router.push('/login');
+          return;
+        }
+        const userId = userStore.user?._id;
+        if (!userId) {
+          this.$router.push('/login');
+          return;
+        }
 
         // Validación básica
         if (!this.provider.user.businessName?.trim()) {
@@ -252,6 +288,9 @@ export default {
           ...this.provider.profile,
           ...this.provider.user, // también actualiza user
         });
+
+        await userStore.fetchUser();
+        await this.loadProfile();
 
         alert("✅ Perfil actualizado correctamente");
       } catch (error) {
