@@ -1188,6 +1188,26 @@ export default {
     scrollToTop() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
+
+    addUserNotification(title, message, icon) {
+      const notifications = JSON.parse(localStorage.getItem('userNotifications') || '[]');
+      notifications.unshift({
+        id: `note_${Date.now()}`,
+        title,
+        message,
+        icon,
+        read: false,
+        createdAt: new Date().toISOString()
+      });
+      localStorage.setItem('userNotifications', JSON.stringify(notifications.slice(0, 20)));
+    },
+
+    updateAppointmentStatusMap(appointmentId, status) {
+      if (!appointmentId) return;
+      const statusMap = JSON.parse(localStorage.getItem('appointmentStatusMap') || '{}');
+      statusMap[appointmentId] = status;
+      localStorage.setItem('appointmentStatusMap', JSON.stringify(statusMap));
+    },
     
     getCategoryIcon(category) {
       const icons = {
@@ -1897,6 +1917,10 @@ export default {
           appointmentId: res.data.appointment?._id
         };
         
+        // Notificación de cita creada
+        this.addUserNotification('Cita creada', 'Has creado una cita.', '📅');
+        this.updateAppointmentStatusMap(this.successData.appointmentId, 'pendiente');
+
         // Cerrar modal de reserva
         this.closeReservationModal();
         this.closeDetailModal();

@@ -222,20 +222,50 @@
     <!-- Contenido principal del Dashboard -->
     <main class="pt-24 pb-16 px-4 min-h-screen bg-gradient-to-b from-emerald-50 to-white">
       <!-- Encabezado con notificaciones -->
-      <div class="flex justify-between items-center px-6 pt-8 pb-6 max-w-7xl mx-auto">
+      <div class="flex justify-between items-center px-6 pt-8 pb-6 max-w-7xl mx-auto relative">
         <h1 class="text-3xl font-extrabold text-neutral-dark">Panel del Cliente</h1>
         
         <!-- Botón de notificaciones -->
-        <button 
-          class="relative p-3 rounded-full bg-emerald-100 hover:bg-emerald-600 hover:text-white transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
-          @click="goToNotifications"
-        >
-          🔔
-          <span v-if="unreadNotifications > 0" 
-            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 shadow animate-pulse">
-            {{ unreadNotifications }}
-          </span>
-        </button>
+        <div class="relative">
+          <button 
+            ref="notificationsButton"
+            class="relative p-3 rounded-full bg-emerald-100 hover:bg-emerald-600 hover:text-white transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
+            @click="toggleNotificationsModal"
+          >
+            🔔
+            <span v-if="unreadNotifications > 0" 
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 shadow animate-pulse">
+              {{ unreadNotifications }}
+            </span>
+          </button>
+
+          <!-- Modal pequeño de notificaciones -->
+          <div 
+            v-if="showNotificationsModal"
+            ref="notificationsPanel"
+            class="absolute right-full mr-3 mt-3 w-96 bg-white rounded-2xl shadow-xl border border-emerald-100 z-50"
+          >
+            <div class="px-4 py-3 border-b border-emerald-100">
+              <h3 class="text-sm font-bold text-gray-900">Notificaciones</h3>
+              <p class="text-xs text-gray-500">Últimas actualizaciones</p>
+            </div>
+            <div class="p-3 space-y-2">
+              <div 
+                v-for="(note, index) in notifications"
+                :key="note.id || index"
+                class="flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-emerald-50 transition-colors"
+              >
+                <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <span class="text-emerald-600">{{ note.icon }}</span>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-gray-900">{{ note.title }}</p>
+                  <p class="text-xs text-gray-600">{{ note.message }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Grid con 4 tarjetas -->
@@ -305,7 +335,9 @@ export default {
     return {
       isMobileMenuOpen: false,
       userEmail: null,
-      unreadNotifications: 2,
+      unreadNotifications: 0,
+      showNotificationsModal: false,
+      notifications: [],
       upcomingAppointments: 1,
       petCount: 2,
       appointments: [
@@ -398,8 +430,26 @@ export default {
       this.closeMobileMenu();
     },
     
-    goToNotifications() {
-      this.$router.push('/appointments');
+    toggleNotificationsModal() {
+      this.loadNotifications();
+      this.showNotificationsModal = !this.showNotificationsModal;
+      if (this.showNotificationsModal) {
+        this.markNotificationsAsRead();
+      }
+    },
+    closeNotificationsModal() {
+      this.showNotificationsModal = false;
+    },
+    loadNotifications() {
+      const stored = JSON.parse(localStorage.getItem('userNotifications') || '[]');
+      this.notifications = stored;
+      this.unreadNotifications = stored.filter(n => !n.read).length;
+    },
+    markNotificationsAsRead() {
+      const updated = this.notifications.map(n => ({ ...n, read: true }));
+      this.notifications = updated;
+      this.unreadNotifications = 0;
+      localStorage.setItem('userNotifications', JSON.stringify(updated));
     },
     
     logout() {
@@ -414,6 +464,8 @@ export default {
       const header = this.$el.querySelector('header');
       const mobileMenu = header?.querySelector('.md\\:hidden.bg-emerald-700\\/95');
       const hamburgerButton = header?.querySelector('button.md\\:hidden');
+      const notificationsButton = this.$refs.notificationsButton;
+      const notificationsPanel = this.$refs.notificationsPanel;
       
       if (mobileMenu && hamburgerButton) {
         const isClickInsideMenu = mobileMenu.contains(event.target);
@@ -421,6 +473,14 @@ export default {
         
         if (!isClickInsideMenu && !isClickOnHamburger && this.isMobileMenuOpen) {
           this.closeMobileMenu();
+        }
+      }
+
+      if (this.showNotificationsModal) {
+        const clickInsideButton = notificationsButton && notificationsButton.contains(event.target);
+        const clickInsidePanel = notificationsPanel && notificationsPanel.contains(event.target);
+        if (!clickInsideButton && !clickInsidePanel) {
+          this.closeNotificationsModal();
         }
       }
     }
@@ -438,6 +498,7 @@ export default {
     }
     
     document.addEventListener('click', this.handleClickOutside);
+    this.loadNotifications();
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside);

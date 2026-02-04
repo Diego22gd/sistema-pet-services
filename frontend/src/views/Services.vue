@@ -326,6 +326,19 @@ export default {
       return badges[category] || badges.default;
     },
 
+    addUserNotification(title, message, icon) {
+      const notifications = JSON.parse(localStorage.getItem('userNotifications') || '[]');
+      notifications.unshift({
+        id: `note_${Date.now()}`,
+        title,
+        message,
+        icon,
+        read: false,
+        createdAt: new Date().toISOString()
+      });
+      localStorage.setItem('userNotifications', JSON.stringify(notifications.slice(0, 20)));
+    },
+
     openReservationModal(service) {
       this.selectedService = service;
       this.showReservationModal = true;
@@ -349,13 +362,20 @@ export default {
       }
 
       try {
-        await api.post("/appointments", {
+        const res = await api.post("/appointments", {
           petId: this.selectedPetId,
           serviceId: this.selectedService._id,
           date: this.reservationDate,
           time: this.reservationTime
         });
 
+        if (res?.data?.appointment?._id) {
+          const statusMap = JSON.parse(localStorage.getItem('appointmentStatusMap') || '{}');
+          statusMap[res.data.appointment._id] = 'pendiente';
+          localStorage.setItem('appointmentStatusMap', JSON.stringify(statusMap));
+        }
+
+        this.addUserNotification('Cita creada', 'Has creado una cita.', '📅');
         alert("✅ Reserva creada correctamente");
         this.closeReservationModal();
       } catch (error) {

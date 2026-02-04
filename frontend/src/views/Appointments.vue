@@ -447,7 +447,7 @@
               >
                 <option value="">Selecciona una hora</option>
                 <option v-for="hour in availableHours" :key="hour" :value="hour">
-                  {{ hour }}
+                  {{ formatTime(hour) }}
                 </option>
               </select>
             </div>
@@ -783,6 +783,43 @@ export default {
         minute: '2-digit'
       });
     },
+
+    addUserNotification(title, message, icon) {
+      const notifications = JSON.parse(localStorage.getItem('userNotifications') || '[]');
+      notifications.unshift({
+        id: `note_${Date.now()}`,
+        title,
+        message,
+        icon,
+        read: false,
+        createdAt: new Date().toISOString()
+      });
+      localStorage.setItem('userNotifications', JSON.stringify(notifications.slice(0, 20)));
+    },
+
+    syncAppointmentNotifications() {
+      const statusMap = JSON.parse(localStorage.getItem('appointmentStatusMap') || '{}');
+      this.appointments.forEach((appt) => {
+        const id = appt._id || appt.id;
+        if (!id) return;
+
+        const currentStatus = appt.status;
+        const previousStatus = statusMap[id];
+
+        if (previousStatus && previousStatus !== currentStatus) {
+          if (['confirmed', 'confirmada'].includes(currentStatus)) {
+            this.addUserNotification('Cita confirmada', 'El proveedor confirmó la cita.', '✅');
+          }
+          if (['completed', 'completada'].includes(currentStatus)) {
+            this.addUserNotification('Cita completada', 'La cita fue completada.', '🏁');
+          }
+        }
+
+        statusMap[id] = currentStatus;
+      });
+
+      localStorage.setItem('appointmentStatusMap', JSON.stringify(statusMap));
+    },
     
     isActiveAppointment(appointment) {
       const activeStatuses = ['pending', 'pendiente', 'confirmed', 'confirmada', 'rescheduled', 'reprogramada'];
@@ -814,6 +851,8 @@ export default {
           this.appointments = response.data || [];
           console.log(`✅ ${this.appointments.length} citas cargadas (formato alternativo)`);
         }
+
+        this.syncAppointmentNotifications();
         
       } catch (err) {
         console.error("❌ Error cargando citas:", err);
