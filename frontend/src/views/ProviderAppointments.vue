@@ -381,15 +381,31 @@
                 </h3>
                 <div class="space-y-3">
                   <div class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Fecha:</span>
+                    <span class="font-medium text-gray-900">Nombre del cliente:</span>
+                    <span class="font-bold">
+                      {{ selectedAppointment.userId?.name }} {{ selectedAppointment.userId?.lastname }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="font-medium text-gray-900">Nombre de la mascota:</span>
+                    <span class="font-bold">{{ selectedAppointment.petId?.name }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="font-medium text-gray-900">Nombre del servicio:</span>
+                    <span class="font-bold">
+                      {{ selectedAppointment.serviceId?.name || selectedAppointment.serviceName }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="font-medium text-gray-900">Fecha de la cita:</span>
                     <span class="font-bold">{{ formatDate(selectedAppointment.date) }}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Hora:</span>
+                    <span class="font-medium text-gray-900">Hora de la cita:</span>
                     <span class="font-bold">{{ formatTime(selectedAppointment.time) }}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="font-medium text-gray-900">Estado:</span>
+                    <span class="font-medium text-gray-900">Estado de la cita:</span>
                     <span :class="[
                       'px-3 py-1 rounded-full text-sm font-bold',
                       statusClass(selectedAppointment.status)

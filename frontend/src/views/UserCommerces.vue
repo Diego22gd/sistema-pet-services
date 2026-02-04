@@ -141,10 +141,10 @@
               <div
                 v-for="business in businesses"
                 :key="business._id"
-                class="card-modern group h-full flex flex-col hover-lift transform scale-95  hover:scale-100 transition-all duration-300"
+                class="card-modern group h-full flex flex-col hover-lift transform hover:scale-100 transition-all duration-300"
               >
                 <!-- Imagen - Reducida -->
-                <figure class="relative h-44 w-full overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50">
+                <figure class="relative h-80 w-full overflow-hidden rounded-t-2xl bg-gradient-to-br from-emerald-50 to-teal-50">
                   <img 
                     :src="getBusinessImage(business)" 
                     :alt="business.name" 
@@ -179,7 +179,7 @@
                 </figure>
                 
                 <!-- Contenido - Reducido -->
-                <div class="card-modern-body p-4 flex-1 flex flex-col">
+                <div class="card-modern-body p-6 flex-1 flex flex-col">
                   <!-- Nombre y calificación -->
                   <div class="mb-3">
                     <h3 class="card-title text-lg font-bold text-gray-900 mb-1">

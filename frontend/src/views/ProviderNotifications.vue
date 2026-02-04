@@ -338,7 +338,7 @@ export default {
     
     viewAppointment(appointmentId) {
       if (appointmentId) {
-        this.$router.push(`/provider/appointments/${appointmentId}`);
+        this.$router.push('/provider/appointments');
       }
     },
     

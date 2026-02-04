@@ -1,7 +1,7 @@
 <template>
   <ProviderLayout>
     <!-- Contenedor principal ajustado -->
-    <div class="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full pt-4 pb-8">
+    <div class="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full pt-28 sm:pt-32 pb-8">
       
       <!-- Header optimizado -->
       <div class="fade-up" :class="{ show: animated }">

@@ -205,9 +205,9 @@
               <!-- Imagen con tamaño fijo -->
               <figure class="relative h-48 w-full overflow-hidden rounded-t-2xl bg-gradient-to-br from-emerald-50 to-teal-50">
                 <img 
-                  src="/veterinaria.png" 
+                  src="/huellas.jpg" 
                   alt="AnimalCare Veterinaria" 
-                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <!-- Badges -->
                 <div class="absolute top-4 right-4">
@@ -232,7 +232,7 @@
                   </div>
                   <div class="flex-1">
                     <h3 class="card-title text-lg font-bold text-gray-900">
-                      AnimalCare
+                      Huellas
                     </h3>
                     <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
                       <span class="text-emerald-500">📍</span> Centro Comercial Los Pinos
@@ -242,7 +242,7 @@
 
                 <!-- Descripción -->
                 <p class="text-gray-700 text-sm mb-4 line-clamp-2 flex-grow">
-                  Clínica veterinaria especializada en cuidado preventivo, cirugías y emergencias 24/7.
+                  Clínica veterinaria con atención preventiva, diagnóstico y emergencias para tu mascota.
                 </p>
 
                 <!-- Tags -->
@@ -279,9 +279,9 @@
             <div class="card-modern group h-full flex flex-col">
               <figure class="relative h-48 w-full overflow-hidden rounded-t-2xl bg-gradient-to-br from-teal-50 to-cyan-50">
                 <img 
-                  src="/patasybelleza.png" 
+                  src="/estrellas%20caninas.jpg" 
                   alt="Paws & Beauty" 
-                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                   class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <div class="absolute top-4 right-4">
                   <div class="badge-primary">
@@ -304,7 +304,7 @@
                   </div>
                   <div class="flex-1">
                     <h3 class="card-title text-lg font-bold text-gray-900">
-                      Paws & Beauty
+                      Estrellas Caninas
                     </h3>
                     <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
                       <span class="text-teal-500">📍</span> Calle Principal #123
@@ -313,7 +313,7 @@
                 </div>
 
                 <p class="text-gray-700 text-sm mb-4 line-clamp-2 flex-grow">
-                  Spa y peluquería canina premium con tratamientos de lujo y productos orgánicos.
+                  Peluquería canina especializada en estilos creativos y cuidado de piel sensible.
                 </p>
 
                 <div class="flex flex-wrap gap-2 mb-4">
@@ -373,7 +373,7 @@
                   </div>
                   <div class="flex-1">
                     <h3 class="card-title text-lg font-bold text-gray-900">
-                      Happy Tails
+                      Amidogs
                     </h3>
                     <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
                       <span class="text-purple-500">📍</span> Zona Residencial Norte
@@ -857,7 +857,7 @@
                 </div>
               </div>
               <div>
-                <h2 class="text-2xl font-bold text-gray-900">AnimalCare</h2>
+                <h2 class="text-2xl font-bold text-gray-900">Huellas</h2>
                 <div class="flex items-center gap-2 mt-2">
                   <div class="badge-outline">🏥 VETERINARIA</div>
                   <div class="badge-rating">⭐ 4.8</div>
@@ -901,7 +901,7 @@
                     <span>📞</span> Contacto
                   </h3>
                   <div class="space-y-2">
-                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 123-4567</span></p>
+                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+58 412 555 1234</span></p>
                     <p class="text-gray-700">📧 Email: <span class="font-bold">info@animalcare.com</span></p>
                   </div>
                 </div>
@@ -976,7 +976,7 @@
                 </div>
               </div>
               <div>
-                <h2 class="text-2xl font-bold text-gray-900">Paws & Beauty</h2>
+                <h2 class="text-2xl font-bold text-gray-900">Estrellas Caninas</h2>
                 <div class="flex items-center gap-2 mt-2">
                   <div class="badge-outline">✂️ PELUQUERÍA</div>
                   <div class="badge-rating">⭐ 4.9</div>
@@ -1019,7 +1019,7 @@
                     <span>📞</span> Contacto
                   </h3>
                   <div class="space-y-2">
-                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 987-6543</span></p>
+                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+58 414 321 7788</span></p>
                     <p class="text-gray-700">📧 Email: <span class="font-bold">contact@pawsbeauty.com</span></p>
                   </div>
                 </div>
@@ -1093,7 +1093,7 @@
                 </div>
               </div>
               <div>
-                <h2 class="text-2xl font-bold text-gray-900">Happy Tails</h2>
+                <h2 class="text-2xl font-bold text-gray-900">Amidogs</h2>
                 <div class="flex items-center gap-2 mt-2">
                   <div class="badge-outline">🏠 GUARDERÍA</div>
                   <div class="badge-rating">⭐ 4.7</div>
@@ -1136,7 +1136,7 @@
                     <span>📞</span> Contacto
                   </h3>
                   <div class="space-y-2">
-                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 456-7890</span></p>
+                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+58 424 908 6642</span></p>
                     <p class="text-gray-700">📧 Email: <span class="font-bold">reservas@happytails.com</span></p>
                   </div>
                 </div>
@@ -1253,7 +1253,7 @@
                     <span>📞</span> Contacto
                   </h3>
                   <div class="space-y-2">
-                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+1 (555) 234-5678</span></p>
+                    <p class="text-gray-700">📱 Teléfono: <span class="font-bold">+58 416 770 5501</span></p>
                     <p class="text-gray-700">📧 Email: <span class="font-bold">urgencias@traumavet.com</span></p>
                   </div>
                 </div>
@@ -1350,7 +1350,7 @@ export default {
       businesses: [
         {
           id: 'animalcare',
-          title: "AnimalCare",
+          title: "Huellas",
           rating: "4.8",
           tag: "🏥 VETERINARIA",
           icon: "🐕",
@@ -1369,7 +1369,7 @@ export default {
         },
         {
           id: 'pawsbeauty',
-          title: "Paws & Beauty",
+          title: "Estrellas Caninas",
           rating: "4.9",
           tag: "✂️ PELUQUERÍA",
           icon: "✂️",
@@ -1388,7 +1388,7 @@ export default {
         },
         {
           id: 'happytails',
-          title: "Happy Tails",
+          title: "Amidogs",
           rating: "4.7",
           tag: "🏠 GUARDERÍA",
           icon: "🏠",
