@@ -261,7 +261,7 @@
                 <!-- Footer con precio y botón -->
                 <div class="card-actions justify-between items-center mt-2">
                   <div>
-                    <p class="text-lg font-bold text-emerald-600">Desde $25</p>
+                    <p class="text-lg font-bold text-emerald-600">Desde $25 <span class="text-xs font-normal text-gray-500 ml-1">al cambio BCV</span></p>
                     <p class="text-xs text-gray-500">por consulta</p>
                   </div>
                   <button 
@@ -330,7 +330,7 @@
 
                 <div class="card-actions justify-between items-center mt-2">
                   <div>
-                    <p class="text-lg font-bold text-teal-600">Desde $30</p>
+                    <p class="text-lg font-bold text-teal-600">Desde $30 <span class="text-xs font-normal text-gray-500 ml-1">al cambio BCV</span></p>
                     <p class="text-xs text-gray-500">servicio básico</p>
                   </div>
                   <button 
@@ -399,7 +399,7 @@
 
                 <div class="card-actions justify-between items-center mt-2">
                   <div>
-                    <p class="text-lg font-bold text-purple-600">Desde $20</p>
+                    <p class="text-lg font-bold text-purple-600">Desde $20 <span class="text-xs font-normal text-gray-500 ml-1">al cambio BCV</span></p>
                     <p class="text-xs text-gray-500">por día</p>
                   </div>
                   <button 
@@ -468,7 +468,7 @@
 
                 <div class="card-actions justify-between items-center mt-2">
                   <div>
-                    <p class="text-lg font-bold text-blue-600">Desde $40</p>
+                    <p class="text-lg font-bold text-blue-600">Desde $40 <span class="text-xs font-normal text-gray-500 ml-1">al cambio BCV</span></p>
                     <p class="text-xs text-gray-500">consulta especializada</p>
                   </div>
                   <button 
@@ -535,7 +535,7 @@
                     </div>
                     <div class="bg-emerald-600/90 backdrop-blur-sm border border-emerald-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
                       <span class="text-xs text-emerald-100 block">Desde</span>
-                      <p class="text-lg font-bold text-white">$25</p>
+                      <p class="text-lg font-bold text-white">$25 <span class="text-[10px] font-normal text-white/80 ml-1">al cambio BCV</span></p>
                     </div>
                   </div>
                 </div>
@@ -564,7 +564,7 @@
                     </div>
                     <div class="bg-teal-600/90 backdrop-blur-sm border border-teal-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
                       <span class="text-xs text-emerald-100 block">Desde</span>
-                      <p class="text-lg font-bold text-white">$30</p>
+                      <p class="text-lg font-bold text-white">$30 <span class="text-[10px] font-normal text-white/80 ml-1">al cambio BCV</span></p>
                     </div>
                   </div>
                 </div>
@@ -593,7 +593,7 @@
                     </div>
                     <div class="bg-purple-600/90 backdrop-blur-sm border border-purple-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
                       <span class="text-xs text-emerald-100 block">Desde</span>
-                      <p class="text-lg font-bold text-white">$20</p>
+                      <p class="text-lg font-bold text-white">$20 <span class="text-[10px] font-normal text-white/80 ml-1">al cambio BCV</span></p>
                     </div>
                   </div>
                 </div>
@@ -622,7 +622,7 @@
                     </div>
                     <div class="bg-amber-600/90 backdrop-blur-sm border border-amber-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
                       <span class="text-xs text-emerald-100 block">Desde</span>
-                      <p class="text-lg font-bold text-white">$35</p>
+                      <p class="text-lg font-bold text-white">$35 <span class="text-[10px] font-normal text-white/80 ml-1">al cambio BCV</span></p>
                     </div>
                   </div>
                 </div>
@@ -651,7 +651,7 @@
                     </div>
                     <div class="bg-blue-600/90 backdrop-blur-sm border border-blue-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
                       <span class="text-xs text-emerald-100 block">Desde</span>
-                      <p class="text-lg font-bold text-white">$15</p>
+                      <p class="text-lg font-bold text-white">$15 <span class="text-[10px] font-normal text-white/80 ml-1">al cambio BCV</span></p>
                     </div>
                   </div>
                 </div>
@@ -680,7 +680,7 @@
                     </div>
                     <div class="bg-indigo-600/90 backdrop-blur-sm border border-indigo-400/30 px-3 py-2 rounded-lg text-center min-w-[70px]">
                       <span class="text-xs text-emerald-100 block">Desde</span>
-                      <p class="text-lg font-bold text-white">$40</p>
+                      <p class="text-lg font-bold text-white">$40 <span class="text-[10px] font-normal text-white/80 ml-1">al cambio BCV</span></p>
                     </div>
                   </div>
                 </div>
@@ -802,18 +802,6 @@
                 <div>
                   <h3 class="text-xl font-bold text-gray-900 mb-3">¿Cómo puedo reservar un servicio?</h3>
                   <p class="text-gray-700">Simplemente busca el servicio que necesitas, selecciona el proveedor que prefieras, elige fecha y hora, y confirma tu reserva. Recibirás una confirmación inmediata en tu panel de control.</p>
-                </div>
-              </div>
-            </div>
-            
-            <div class="faq-card-modern fade-up">
-              <div class="flex items-start gap-4">
-                <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 flex-shrink-0">
-                  <span class="text-lg">Q</span>
-                </div>
-                <div>
-                  <h3 class="text-xl font-bold text-gray-900 mb-3">¿Qué métodos de pago aceptan?</h3>
-                  <p class="text-gray-700">Aceptamos tarjetas de crédito y débito (Visa, MasterCard, American Express), transferencias bancarias y PayPal. Todos los pagos se procesan de forma segura a través de nuestra plataforma encriptada.</p>
                 </div>
               </div>
             </div>

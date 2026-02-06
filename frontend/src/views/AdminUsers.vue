@@ -321,7 +321,7 @@
               :class="statusAction === 'block'
                 ? 'bg-amber-600 hover:bg-amber-700'
                 : 'bg-green-600 hover:bg-green-700'"
-              class="px-6 py-3 rounded-lg text-white font-medium transition-all shadow-sm hover:shadow-md"
+              class="px-6 py-3 rounded-lg text-black font-medium transition-all shadow-sm hover:shadow-md"
             >
               {{ statusAction === 'block' ? 'Confirmar Bloqueo' : 'Confirmar Activación' }}
             </button>

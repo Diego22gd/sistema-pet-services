@@ -13,7 +13,7 @@ const router = express.Router();
 // 🚀 CONFIGURACIÓN GEMINI
 // ============================================
 
-const GEMINI_API_KEY = "AIzaSyBLH9dXCbQmARZ_TS8jRToXcYfM90-3Afw";
+const GEMINI_API_KEY = "AIzaSyBZYfyrb3gyr2hJVVE182dZNaMqFjspBHE";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash"; // Modelo más estable
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -1011,7 +1011,7 @@ router.post("/guest", async (req, res) => {
     if (/(agendar|reservar|cita)/i.test(lowerText)) {
       return res.json({
         success: true,
-        reply: `📅 **Para agendar una cita:**\n\n**Necesitas tener una cuenta activa.**\n\n📝 **Pasos:**\n1. [Inicia sesión aquí](/login)\n2. Busca el servicio que necesitas\n3. Selecciona fecha y hora\n4. Completa los datos de tu mascota\n5. ¡Confirma tu reserva!\n\n¿Aún no tienes cuenta? ¡Créala en menos de 2 minutos!`,
+        reply: `📅 **Para agendar una cita:**\n\n**Necesitas tener una cuenta activa.**\n\n📝 **Pasos:**\n1. [Inicia sesión aquí](/login)\n2. Entra a **Comercios** y elige un comercio\n3. Selecciona el servicio que necesitas\n4. Escoge fecha y hora\n5. Completa los datos de tu mascota\n6. ¡Confirma tu reserva!\n\n¿Aún no tienes cuenta? ¡Créala en menos de 2 minutos!`,
         type: "text",
         source: "guest"
       });

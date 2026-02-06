@@ -210,6 +210,7 @@
                       <span class="text-xs font-medium text-gray-900">Servicios desde:</span>
                       <span class="text-lg font-bold text-emerald-600">
                         ${{ getMinServicePrice(business) }}
+                        <span class="text-[10px] font-normal text-gray-500 ml-1">al cambio BCV</span>
                       </span>
                     </div>
                     <div class="flex flex-wrap gap-1">
@@ -241,7 +242,7 @@
                         {{ business.isOpenNow ? 'Abierto ahora' : 'Cerrado' }}
                       </span>
                     </div>
-                    <p class="text-gray-600">{{ business.formattedHours || 'Horario no disponible' }}</p>
+                    <p class="text-gray-600">{{ formatHoursText(business.formattedHours) || 'Horario no disponible' }}</p>
                   </div>
                   
                   <!-- Botones de acción -->
@@ -1292,6 +1293,13 @@ export default {
     
     formatTime(time24) {
       return formatTimeTo12Hour(time24);
+    },
+
+    formatHoursText(hoursText) {
+      if (!hoursText) return "";
+      return hoursText.replace(/\b([01]\d|2[0-3]):[0-5]\d\b/g, (time) => {
+        return formatTimeTo12Hour(time);
+      });
     },
     
     // ============ VALIDACIONES ============

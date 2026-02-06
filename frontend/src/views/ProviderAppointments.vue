@@ -131,14 +131,14 @@
             >
               <div class="grid grid-cols-12 gap-4 items-center">
                 <!-- Información del cliente -->
-                <div class="col-span-3">
-                  <div class="flex items-center">
-                    <div class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                <div class="col-span-3 pr-8">
+                  <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                       <span class="text-emerald-600 font-semibold text-sm">
                         {{ getInitials(appt.userId?.name, appt.userId?.lastname) }}
                       </span>
                     </div>
-                    <div>
+                    <div class="min-w-0">
                       <div class="font-semibold text-gray-900">
                         {{ appt.userId?.name }} {{ appt.userId?.lastname }}
                       </div>

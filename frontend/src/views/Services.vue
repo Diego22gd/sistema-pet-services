@@ -86,7 +86,7 @@
             <div class="space-y-2 mb-3">
               <div class="flex justify-between items-center">
                 <span class="font-semibold text-neutral-dark text-sm">Precio:</span>
-                <span class="font-bold text-xl text-primary-mint">${{ service.price }}</span>
+                <span class="font-bold text-xl text-primary-mint">${{ service.price }} <span class="text-[10px] font-normal text-neutral-medium ml-1">al cambio BCV</span></span>
               </div>
               
               <div class="flex items-center text-xs text-neutral-medium">

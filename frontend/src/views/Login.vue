@@ -70,7 +70,7 @@
                     
                   </div>
                 </div>
-                <p v-if="loginErrors.email" class="text-red-500 text-xs mt-1">{{ loginErrors.email }}</p>
+                <p v-if="loginErrors.email" class="text-red-500 text-xs mt-1 ml-4">{{ loginErrors.email }}</p>
               </div>
 
               <!-- Password -->
@@ -93,7 +93,7 @@
                     
                   </div>
                 </div>
-                <p v-if="loginErrors.password" class="text-red-500 text-xs mt-1">{{ loginErrors.password }}</p>
+                <p v-if="loginErrors.password" class="text-red-500 text-xs mt-1 ml-4">{{ loginErrors.password }}</p>
               </div>
 
               <!-- Mensajes de éxito/error -->
@@ -205,7 +205,7 @@
                   @blur="validateClientField('name')"
                   :class="{ 'border-red-500': clientErrors.name }"
                 />
-                <p v-if="clientErrors.name" class="text-red-500 text-xs mt-1">{{ clientErrors.name }}</p>
+                <p v-if="clientErrors.name" class="text-red-500 text-xs mt-1 ml-4">{{ clientErrors.name }}</p>
               </div>
 
               <!-- Apellido -->
@@ -220,7 +220,7 @@
                   @blur="validateClientField('lastname')"
                   :class="{ 'border-red-500': clientErrors.lastname }"
                 />
-                <p v-if="clientErrors.lastname" class="text-red-500 text-xs mt-1">{{ clientErrors.lastname }}</p>
+                <p v-if="clientErrors.lastname" class="text-red-500 text-xs mt-1 ml-4">{{ clientErrors.lastname }}</p>
               </div>
 
               <!-- Cédula -->
@@ -235,7 +235,7 @@
                   @blur="validateClientField('cedula')"
                   :class="{ 'border-red-500': clientErrors.cedula }"
                 />
-                <p v-if="clientErrors.cedula" class="text-red-500 text-xs mt-1">{{ clientErrors.cedula }}</p>
+                <p v-if="clientErrors.cedula" class="text-red-500 text-xs mt-1 ml-4">{{ clientErrors.cedula }}</p>
               </div>
 
               <!-- Email -->
@@ -250,7 +250,7 @@
                   @blur="validateClientField('email')"
                   :class="{ 'border-red-500': clientErrors.email }"
                 />
-                <p v-if="clientErrors.email" class="text-red-500 text-xs mt-1">{{ clientErrors.email }}</p>
+                <p v-if="clientErrors.email" class="text-red-500 text-xs mt-1 ml-4">{{ clientErrors.email }}</p>
               </div>
 
               <!-- Teléfono -->
@@ -265,7 +265,7 @@
                   @blur="validateClientField('phone')"
                   :class="{ 'border-red-500': clientErrors.phone }"
                 />
-                <p v-if="clientErrors.phone" class="text-red-500 text-xs mt-1">{{ clientErrors.phone }}</p>
+                <p v-if="clientErrors.phone" class="text-red-500 text-xs mt-1 ml-4">{{ clientErrors.phone }}</p>
               </div>
 
               <!-- Contraseña -->
@@ -280,7 +280,7 @@
                   @blur="validateClientField('password')"
                   :class="{ 'border-red-500': clientErrors.password }"
                 />
-                <p v-if="clientErrors.password" class="text-red-500 text-xs mt-1">{{ clientErrors.password }}</p>
+                <p v-if="clientErrors.password" class="text-red-500 text-xs mt-1 ml-4">{{ clientErrors.password }}</p>
               </div>
 
               <!-- Confirmar Contraseña -->
@@ -295,7 +295,7 @@
                   @blur="validateClientField('confirmPassword')"
                   :class="{ 'border-red-500': clientErrors.confirmPassword }"
                 />
-                <p v-if="clientErrors.confirmPassword" class="text-red-500 text-xs mt-1">{{ clientErrors.confirmPassword }}</p>
+                <p v-if="clientErrors.confirmPassword" class="text-red-500 text-xs mt-1 ml-4">{{ clientErrors.confirmPassword }}</p>
               </div>
             </div>
 
@@ -360,7 +360,7 @@
                   @blur="validateProviderField('name')"
                   :class="{ 'border-red-500': providerErrors.name }"
                 />
-                <p v-if="providerErrors.name" class="text-red-500 text-xs mt-1">{{ providerErrors.name }}</p>
+                <p v-if="providerErrors.name" class="text-red-500 text-xs mt-1 ml-4">{{ providerErrors.name }}</p>
               </div>
 
               <!-- Apellido -->
@@ -375,7 +375,7 @@
                   @blur="validateProviderField('lastname')"
                   :class="{ 'border-red-500': providerErrors.lastname }"
                 />
-                <p v-if="providerErrors.lastname" class="text-red-500 text-xs mt-1">{{ providerErrors.lastname }}</p>
+                <p v-if="providerErrors.lastname" class="text-red-500 text-xs mt-1 ml-4">{{ providerErrors.lastname }}</p>
               </div>
 
               <!-- Email -->
@@ -390,7 +390,7 @@
                   @blur="validateProviderField('email')"
                   :class="{ 'border-red-500': providerErrors.email }"
                 />
-                <p v-if="providerErrors.email" class="text-red-500 text-xs mt-1">{{ providerErrors.email }}</p>
+                <p v-if="providerErrors.email" class="text-red-500 text-xs mt-1 ml-4">{{ providerErrors.email }}</p>
               </div>
 
               <!-- Teléfono -->
@@ -405,7 +405,7 @@
                   @blur="validateProviderField('phone')"
                   :class="{ 'border-red-500': providerErrors.phone }"
                 />
-                <p v-if="providerErrors.phone" class="text-red-500 text-xs mt-1">{{ providerErrors.phone }}</p>
+                <p v-if="providerErrors.phone" class="text-red-500 text-xs mt-1 ml-4">{{ providerErrors.phone }}</p>
               </div>
 
               <!-- RIF -->
@@ -420,7 +420,7 @@
                   @blur="validateProviderField('rif')"
                   :class="{ 'border-red-500': providerErrors.rif }"
                 />
-                <p v-if="providerErrors.rif" class="text-red-500 text-xs mt-1">{{ providerErrors.rif }}</p>
+                <p v-if="providerErrors.rif" class="text-red-500 text-xs mt-1 ml-4">{{ providerErrors.rif }}</p>
               </div>
 
               <!-- Nombre del Negocio -->
@@ -435,7 +435,7 @@
                   @blur="validateProviderField('businessName')"
                   :class="{ 'border-red-500': providerErrors.businessName }"
                 />
-                <p v-if="providerErrors.businessName" class="text-red-500 text-xs mt-1">{{ providerErrors.businessName }}</p>
+                <p v-if="providerErrors.businessName" class="text-red-500 text-xs mt-1 ml-4">{{ providerErrors.businessName }}</p>
               </div>
 
               <!-- Tipo de Servicio -->
@@ -456,7 +456,7 @@
                   <option>Paseo de mascotas</option>
                   <option>Otro</option>
                 </select>
-                <p v-if="providerErrors.serviceType" class="text-red-500 text-xs mt-1">{{ providerErrors.serviceType }}</p>
+                <p v-if="providerErrors.serviceType" class="text-red-500 text-xs mt-1 ml-4">{{ providerErrors.serviceType }}</p>
               </div>
 
               <!-- Contraseña -->
@@ -471,7 +471,7 @@
                   @blur="validateProviderField('password')"
                   :class="{ 'border-red-500': providerErrors.password }"
                 />
-                <p v-if="providerErrors.password" class="text-red-500 text-xs mt-1">{{ providerErrors.password }}</p>
+                <p v-if="providerErrors.password" class="text-red-500 text-xs mt-1 ml-4">{{ providerErrors.password }}</p>
               </div>
 
               <!-- Confirmar Contraseña -->
@@ -486,7 +486,7 @@
                   @blur="validateProviderField('confirmPassword')"
                   :class="{ 'border-red-500': providerErrors.confirmPassword }"
                 />
-                <p v-if="providerErrors.confirmPassword" class="text-red-500 text-xs mt-1">{{ providerErrors.confirmPassword }}</p>
+                <p v-if="providerErrors.confirmPassword" class="text-red-500 text-xs mt-1 ml-4">{{ providerErrors.confirmPassword }}</p>
               </div>
             </div>
 

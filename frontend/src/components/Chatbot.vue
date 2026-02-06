@@ -381,7 +381,7 @@ Como **visitante**, puedo ayudarte con:
 • 💰 Consultar precios aproximados  
 • 🏥 Encontrar veterinarias y peluquerías
 • 🐕 Consejos básicos para el cuidado de mascotas
-• 📱 Guía para registrarte y reservar
+• 🧭 Guía para registrarte y reservar
 
 **Para reservar servicios necesitas una cuenta:**
 👉 [Iniciar sesión](/login) | [Registrarse](/login)
@@ -477,7 +477,7 @@ Como **administrador**, puedo ayudarte con:
 
         // Procesar links en la respuesta
         let reply = res.data.reply || "Lo siento, no pude generar una respuesta.";
-        
+
         // Convertir [text](/path) a links clicables
         reply = this.processLinks(reply);
 
@@ -520,6 +520,7 @@ Como **administrador**, puedo ayudarte con:
         return `<a href="#" onclick="event.preventDefault(); window.location.href='${path}';" style="color: #3b82f6; text-decoration: underline; font-weight: 600;">${linkText}</a>`;
       });
     },
+
 
     sendQuick(text) {
       this.userInput = text;

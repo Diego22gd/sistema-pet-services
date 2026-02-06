@@ -264,12 +264,9 @@
                   type="text" 
                   v-model="form.name" 
                   placeholder="Ej: Max, Luna, Simba..."
-                  class="form-input-compact pl-10"
+                  class="form-input-compact"
                   required
                 />
-                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  📛
-                </div>
               </div>
             </div>
 
@@ -282,7 +279,7 @@
               <div class="relative">
                 <select 
                   v-model="form.type" 
-                  class="form-input-compact pl-10 appearance-none"
+                  class="form-input-compact appearance-none"
                   required
                 >
                   <option disabled value="">Selecciona el tipo</option>
@@ -295,9 +292,6 @@
                   <option value="Pez">🐠 Pez</option>
                   <option value="Otro">🐾 Otro</option>
                 </select>
-                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  🏷️
-                </div>
                 <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
                   ▼
                 </div>
@@ -315,11 +309,8 @@
                   type="text" 
                   v-model="form.breed" 
                   placeholder="Ej: Labrador, Siames, etc."
-                  class="form-input-compact pl-10"
+                  class="form-input-compact"
                 />
-                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  🎯
-                </div>
               </div>
             </div>
 
@@ -336,12 +327,9 @@
                   min="0" 
                   max="30"
                   placeholder="0"
-                  class="form-input-compact pl-10"
+                  class="form-input-compact"
                   required
                 />
-                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  🎂
-                </div>
               </div>
             </div>
 
@@ -359,11 +347,8 @@
                   max="100"
                   step="0.1"
                   placeholder="Ej: 5.5"
-                  class="form-input-compact pl-10"
+                  class="form-input-compact"
                 />
-                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  ⚖️
-                </div>
               </div>
             </div>
           </div>
